@@ -14,7 +14,8 @@ SNAP IQ is an iPad web game (PWA) that trains a left-handed youth QB's pre-snap 
 - No live AI or network calls during gameplay. No speech recognition; input is touch or gamepad only.
 - Target device is an older iPad (about 2020); keep rendering within the PRD §14.5 budget.
 - Pocket and footwork logic uses throwing-hand side / off-hand side, never hard-coded left/right.
-- Difficulty never removes information (PRD P3); the legibility check must pass for every camera a tier uses.
+- Every drill is drawn from Sahar's own eyes (panoramic QB-eye view, PRD §7.5); top-down only in Learn and Breakdown. His own players render see-through.
+- Difficulty never removes information (PRD P3); the legibility check must pass in his-eyes view.
 
 ## Workflow
 - Branch per change → PR → Netlify deploy preview (owner tests on the iPad) → merge to `main`.

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.2 (situational awareness, new Bubble; wireframes v2 in review) |
+| **Version** | 1.3 (every drill from his eyes; wireframes v3 in review) |
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
@@ -228,7 +228,7 @@ Defined in `content/pocket/rules.yaml`. Logic is written in terms of the **throw
 - All RPOs must respect the NFHS ineligible-downfield rule (§6.1).
 
 ### 6.9 Left-handed QB specifics
-- **Blind side = right side.** Pressure from the right is cued in perspective cameras by a right-edge flicker plus right-panned audio, as in real life.
+- **Blind side = right side.** Pressure from the right that's outside his view is cued by a right-edge flicker plus right-panned audio, as in real life.
 - **Natural rollout = left** (throwing-hand side). Rolling right requires flipping the hips.
 - All footwork is defined by throwing-hand side and mirrored for a lefty; diagrams render left-handed.
 
@@ -271,7 +271,7 @@ The routine is taught as **4 chunks**, the unit of memorization. KNOW happens in
 - Rotation: if the post-snap shell differs from the pre-snap shell, the scenario carries a rotation tag, and the tells and explanations reference it.
 - Every decision point has ≥ 1 "best" answer. Every answer has an explanation chain built only from glossary terms.
 - Hash-consistent geometry: no player out of bounds; field/boundary labels correct.
-- Projected legibility (§7.6) passes for every camera the tier uses.
+- Projected legibility (§7.6) passes in his-eyes view (and in top-down for Learn and Breakdown).
 - Every scenario carries a complete situation (§6.3), and every answer key that the situation affects cites the situation rule it used.
 
 ### 6.12 Situational awareness
@@ -339,19 +339,24 @@ Shows:
 - **Say-it habit:** pre-snap screens prompt him to say his calls out loud ("Two-high, 52's the Mike"). Nothing listens; only taps are graded.
 - **Throw buttons never light up** to signal the open receiver; his eyes must stay on the field.
 
-### 7.5 Cameras
+### 7.5 Views
+**Every drill is seen from Sahar's own eyes, at every tier.** This covers Tell Spotter, Cadence, Shell Game, Bubble, Game Day and Field Mode. There is no behind-the-QB or sky camera in any drill.
 
-| Camera | View | Default for |
+| View | What it is | Used in |
 |---|---|---|
-| **Coach cam** | Top-down. Positions shown exactly; stances shown as glyphs (orientation wedge + posture marker). | Youth reads, Learn diagrams, Breakdown replays |
-| **Sky cam** | Elevated, behind the QB, in perspective. Stances shown as silhouette poses. | JV/Varsity reads, Bubble (all tiers below Elite), Game Day |
-| **QB-eye** | Eye level, perspective, with a pre-snap **scan** (swipe to turn the head). | Elite; an optional unlock for Varsity |
+| **His eyes** (QB-eye) | Eye level from where he stands (shotgun, under center, or in the pocket as he moves). A wide panoramic view of about 140°, so wideouts near his shoulders stay in view. Stances show as front-view poses. | Every drill, every tier |
+| **Top-down** | Overhead, with exact alignments and the tell glyphs. | Learn cards and Breakdown replays only (the Breakdown can switch to his eyes) |
 
-**Camera progression is a tier feature.** In Breakdowns, he can switch cameras.
+**Rules for his-eyes view:**
+- **His own players are see-through outlines,** so a lineman or receiver never hides a defender.
+- **Edge markers:** anyone outside the view gets a marker at the screen edge (e.g. "Z ›").
+- **Look left / look right in pre-snap drills** (Tell Spotter, Cadence), to practice the scan as a head turn.
+- **Live drills look straight downfield.** Pressure from outside the view (his blind side) is also cued by an edge flicker and directional audio.
+- **The ball in his hands** shows at the bottom of the screen during live plays.
 
 ### 7.6 Readability rules (enforces P3)
-- Every defender is on screen, or one scan away in QB-eye, during the pre-snap look.
-- Minimum projected player height is **≥ 28 CSS px** in all cameras. If a scenario fails this, the camera adjusts (FOV, height or scan) automatically. The check runs in automated tests (§6.11).
+- Every defender is on screen, or marked at the edge and one look away, during the pre-snap look.
+- Minimum projected player height is **≥ 28 CSS px** in every view. To keep that at 140°, the view uses a panoramic (cylindrical) projection, and players are drawn slightly taller than true proportion. If a scenario still fails, the view adjusts (field of view, eye height) automatically. The check runs in automated tests (§6.11).
 - **Highlights by tier:**
   - Youth: exaggerated poses plus highlight glows on tells.
   - JV: exaggerated poses, no glows.
@@ -371,7 +376,7 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
 ### 8.1 Tell Spotter (warm-up, ~2 min)
 - **Purpose:** automatic perception of alignment and stance tells.
 - **Rep:**
-  1. A frozen pre-snap look (Sky cam from JV).
+  1. A frozen pre-snap look from his eyes (look left / right to scan).
   2. He has N seconds to tap defenders and label their tells from a quick radial menu, e.g. "CB: outside, 7 yd, eyes in → zone"; "S: inside hash, creeping".
 - **Scoring:** correct tells found × accuracy × speed. Missed key tells are shown in the Breakdown.
 - **Progression:**
@@ -422,9 +427,9 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
 
 ### 8.4 Bubble (pocket movement) — #1 priority
 - **Purpose:** pocket mobility while staying on his reads. He feels pressure, moves the right amount in the right direction, keeps his eyes downfield (or finds the checkdown), and delivers on time.
-- **Screen:** a behind-the-QB pseudo-3D view (Sky cam; QB-eye at Elite). It must feel 3D; it doesn't need to be true 3D.
-  - Rushers come at the camera and grow as they close; blockers' backs fill the foreground.
-  - The pocket is a ring on the ground that dents where pressure is winning.
+- **Screen:** from his eyes in the pocket at every tier. It must feel 3D; it doesn't need to be true 3D.
+  - Rushers come straight at him and grow as they close; his blockers' backs fill the foreground as see-through outlines.
+  - The pocket edge is a line on the ground at a set distance that bends toward him where pressure is breaking in.
   - The actual coverage develops downfield, so he reads and moves at the same time.
   - Blind-side pressure (the right, for a lefty) also comes as a right-edge flicker plus right-panned audio.
 - **Rep types** (each a scenario family in `content/pocket/`):
@@ -459,12 +464,12 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
   - Youth: one pressure source at a time, slower rush, lane hints.
   - JV: stunts, bull vs. speed, blitzes picked up and not picked up.
   - Varsity: all-out blitzes and simulated pressures, no hints; Unpredictable becomes the default mode.
-  - Elite: QB-eye camera; blind-side pressure cued only by flicker plus audio.
+  - Elite: blind-side pressure cued only by flicker plus audio, with no on-screen highlight.
 
 ### 8.5 Game Day (integration)
 - **Purpose:** the whole sequence, live, in game situations.
 - **Screen:**
-  - Sky cam / QB-eye;
+  - his-eyes view;
   - scoreboard: opponent (the weekly boss), score, quarter, clock, down and distance, ball spot and hash;
   - a scouting tip.
 - **Rep = one play in a drive:**
@@ -513,7 +518,7 @@ About 2 minutes, the only place abstract shapes are allowed. Teaches the throw b
 - Viewing it never costs points or rep time.
 
 **Contents:**
-1. **Annotated replay** (slow motion, camera switchable):
+1. **Annotated replay** (slow motion; switch between top-down and his eyes):
    - the situation comes first, then tells light up one at a time in cadence order (KNOW → SEE → THREATS → PLAN);
    - rotation paths drawn;
    - the read defender ringed;
@@ -545,7 +550,7 @@ About 2 minutes, the only place abstract shapes are allowed. Teaches the throw b
 
 ### 10.1 Tiers and levels
 - Tiers: Youth → JV → Varsity → Elite. Each tier has levels (e.g. 1–10) per mode.
-- A tier sets the content menu (§6.4), camera, aids and default timings. Levels tune difficulty within it.
+- A tier sets the content menu (§6.4), aids and default timings. Levels tune difficulty within it.
 
 ### 10.2 Adaptive difficulty
 - **Per skill, a weighted up/down staircase** on that skill's difficulty parameters: flash time, clock, pressure timing, number of simultaneous tells, disguise rate.
@@ -720,7 +725,7 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 ### 13.4 Scenario Lab (Parent area)
 - Browse templates; generate instances by seed.
 - Step the timeline: pre-snap → snap → +0.1 s steps.
-- Switch cameras.
+- Switch between his-eyes and top-down views.
 - Inspect tells, assignments and the answer key; preview the Breakdown.
 - Run validators.
 - Open flagged reps; render unreviewed content.
@@ -732,9 +737,8 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 ### 14.1 Stack
 - **Language and build:** TypeScript (strict), Vite.
 - **UI:** React for menus, HUD and overlays.
-- **3D:** three.js (imperative, not React-driven) for the field scene and all cameras.
-  - Orthographic for Coach cam; perspective for Sky/QB-eye.
-  - Keeps a future WebXR (VR) mode possible.
+- **Field rendering:** a 2D WebGL renderer (PixiJS) that draws the scene through our own panoramic projection (§7.5–7.6). It feels 3D without a 3D engine and stays light on the older iPad. The same renderer draws the top-down view for Learn and Breakdown.
+  - True 3D (three.js / WebXR) only if a VR mode is built later.
 - **Engine:** pure TypeScript with no rendering or DOM dependencies, fully unit-testable.
 - **Libraries:** Zod (content schemas); Dexie / IndexedDB (offline store); Supabase JS (sync, auth); vite-plugin-pwa (service worker, manifest).
 - **Tooling:** Vitest; Playwright (end-to-end smoke tests in the pre-installed Chromium); ESLint + Prettier.
@@ -755,8 +759,9 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 - **Replays:** same seed + inputs ⇒ identical timeline. Golden tests enforce this.
 
 ### 14.3 Rendering
-- **Pose library:** silhouette sprites per position group and pose (§15.2), billboarded in perspective cameras. Top-down glyphs in Coach cam.
-- **Legibility check** (§7.6) computes projected sizes per camera and scenario. It runs in tests and auto-adjusts cameras at runtime.
+- **Projection:** cylindrical panoramic projection from his eye point. Horizontal position comes from the angle to the player; size and height come from distance. Players are sorted far to near; his own players are drawn see-through.
+- **Pose library:** front-view silhouette sprites per position group and pose (§15.2) for his-eyes view, plus back views of his own players. Top-down glyphs for Learn and Breakdown.
+- **Legibility check** (§7.6) computes projected sizes per scenario. It runs in tests and adjusts the view at runtime.
 - **HUD:** an HTML/React overlay (call card, beat track, clocks, buttons) above the canvas.
 
 ### 14.4 Audio
@@ -809,7 +814,7 @@ src/
   content/   loaders, schemas
   learning/  staircase, srs, planner, fatigue, mastery
   rewards/   xp, packs, streaks, season
-  render/    scene, cameras, poses, glyphs, legibility
+  render/    projection, scene, poses, glyphs, legibility
   audio/     sfx, tts
   input/     touch, gamepad
   modes/     tell-spotter, cadence, shell-game, bubble, game-day, field-mode, learn
@@ -830,7 +835,7 @@ tools/     content compiler, diagram renderer (SVG), bible doc generator, flags 
 - **Palette:** dark turf; offense blue, defense orange, Sahar gold. Positive/open states use white or mint plus a shape.
 - **Contrast:** text meets WCAG AA contrast.
 
-### 15.2 Pose library (per position group, front view for perspective cameras)
+### 15.2 Pose library (per position group, front view for his-eyes view)
 - **DL:** 3-point weight forward / neutral / back; 4-point; 2-point standing.
 - **LB / nickel:** sitting/read, creeping, walked-up, mugged (A-gap), bail.
 - **CB:** press, off-zone (square, eyes on the QB), off-man (turned in, eyes on the WR), backpedal, turn-and-bail, squat.
@@ -870,7 +875,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 
 ### Phase 2: Playable slice (feel first)
 **Deliverables:**
-- Engine core (field, generator, sim, grading, replays) and the three.js renderer with the cameras that Bubble uses.
+- Engine core (field, generator, sim, grading, replays) and the panoramic his-eyes renderer.
 - **Bubble** (Youth and JV pressure types) playable end to end on the iPad, with Breakdown.
 - Progress saved on the device only; no backend yet.
 - Netlify deploy to the free subdomain; installable to the Home Screen.
@@ -883,13 +888,13 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 ### Phase 3: Foundation
 **Deliverables:**
 - CI, Supabase migrations and Row Level Security, auth, offline store and sync.
-- Remaining cameras, glyphs, placeholder poses and the legibility check.
+- Top-down view, glyphs, placeholder poses and the legibility check.
 - HUD framework, touch/gamepad input, the audio system.
 - Locker Room shell and navigation, Learn mode, cadence builder, Scenario Lab, Breakdown framework, the flag flow, the controls tutorial.
 
 **Acceptance:**
 - Reps sync to Supabase; the app keeps working offline.
-- The Lab renders any scenario in all cameras with the legibility check passing.
+- The Lab renders any scenario in both views with the legibility check passing.
 
 ### Phase 4: Reading drills
 **Deliverables:** Tell Spotter, Cadence (all stages), Shell Game (incl. Picture Flash, Conflict reads, Motion check), staircase, spaced repetition, interleaving, guess/shaky detection, Film Room. Full Breakdowns for these modes.
@@ -929,7 +934,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Football content is subtly wrong | Phase 1 Bible, controlled vocabulary, invariants, owner review gate (coach as needed), flag flow, `reviewed` gating |
 | Game feel is "off" (Claude can't play it) | Playable slice early (Phase 2); playtest checkpoint every phase; all feel constants in `/content/tuning` for fast iteration |
 | Older iPad struggles with the 3D scene | Performance budget (§14.5), light rendering, device test scene at every checkpoint |
-| Stances not readable | Pose library, per-tier exaggeration, automated legibility check, camera auto-adjust |
+| Stances not readable | Pose library, per-tier exaggeration, panoramic projection, look left / right, automated legibility check, view auto-adjust |
 | iPad Safari quirks (audio unlock, storage eviction, PWA limits) | Offline store + cloud sync, audio unlock on first tap, on-device testing each phase |
 | Learns the engine instead of football | Jitter, coordinator profiles, hold-out Combines and Tryouts |
 | Weak transfer to the field | Representative visuals, say-it-aloud habit, throw-as-answer, Field Mode, Combines |
@@ -956,7 +961,9 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Modes | Tell Spotter, Cadence, Shell Game, Bubble, Game Day, Field Mode, Learn |
 | Cadence | 4 chunks (Know, See, Threats, Plan); defaults per tier; custom builder with aliases |
 | Situational awareness | Shown in every drill and part of every answer key and Breakdown (§6.12) |
-| Bubble | Behind-the-QB pseudo-3D with rushers coming at him; 9 rep types; protection modes Good / Bad / Unpredictable |
+| Bubble | From his eyes, rushers coming at him; 9 rep types; protection modes Good / Bad / Unpredictable |
+| Views | His eyes (panoramic, about 140°) in every drill at every tier; top-down only in Learn and Breakdown |
+| Renderer | 2D WebGL (PixiJS) with a custom panoramic projection; true 3D only for a future VR mode |
 | Information policy | Difficulty never removes information |
 | AI | No live AI. Claude used only for authoring and rule maintenance via Claude Code. |
 | Explanations | Breakdown for every rep, assembled from reviewed snippets |
