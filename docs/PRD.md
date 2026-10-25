@@ -357,6 +357,7 @@ Shows:
 ### 7.6 Readability rules (enforces P3)
 - Every defender is on screen, or marked at the edge and one look away, during the pre-snap look.
 - Minimum projected player height is **≥ 28 CSS px** in every view. To keep that at 140°, the view uses a panoramic (cylindrical) projection, and players are drawn slightly taller than true proportion. If a scenario still fails, the view adjusts (field of view, eye height) automatically. The check runs in automated tests (§6.11).
+- **Sightline check:** from eye level, players can line up behind each other. If the key read defender is fully hidden behind another player at the decision moment, the generator nudges timing within its jitter range or drops that instance (counted in tests).
 - **Highlights by tier:**
   - Youth: exaggerated poses plus highlight glows on tells.
   - JV: exaggerated poses, no glows.
