@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.1 (owner answers folded in; wireframes in review) |
+| **Version** | 1.2 (situational awareness, new Bubble; wireframes v2 in review) |
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
@@ -117,7 +117,7 @@ Every rep is generated from these; all appear in the rep log.
 
 | Group | Variables |
 |---|---|
-| Situation | Down, distance, yard line / field zone (backed up, open field, red zone, goal line), **ball hash (left / middle / right)**, quarter, clock, score |
+| Situation | Down, distance, yard line / field zone (backed up, open field, plus territory, field-goal range, red zone, goal line), **ball hash (left / middle / right)**, quarter, clock and whether it's running, score, timeouts for both teams (§6.12) |
 | Offense | Personnel (10/11/12/20/21), formation and strength, play call (concept and side), protection, footwork, motion/shift, snap count |
 | Defense | Personnel (base/nickel/dime), front and strength call, coverage, pre-snap shell, post-snap rotation, pressure, stunts, disguise level, per-defender alignment and tells (§6.6) |
 | Engine | Seed, tier, level, jitter amounts, coordinator profile (opponent tendencies) |
@@ -233,27 +233,28 @@ Defined in `content/pocket/rules.yaml`. Logic is written in terms of the **throw
 - All footwork is defined by throwing-hand side and mirrored for a lefty; diagrams render left-handed.
 
 ### 6.10 Pre-snap routine (cadence)
-The routine is taught as **3 chunks of up to 3 beats**, the unit of memorization.
+The routine is taught as **4 chunks**, the unit of memorization. KNOW happens in the huddle; the other three at the line.
 
 | Chunk | Beat | Question it answers |
 |---|---|---|
-| **SEE** | 1. Shell | How many high safeties (2 / 1 / 0)? Depth and width vs. hashes? |
-| | 2. Front & Mike | What front, which way is strength, who is the Mike (declared)? |
-| | 3. Box | Box defenders vs. our blockers → run / pass / RPO check? |
-| **THREATS** | 4. Pressure | Who could come (tells)? |
-| | 5. Protection | Slide direction, RB responsibility, adjustment |
-| | 6. Hot | If they bring more than we block, where does the ball go? |
-| **PLAN** | 7. Read | Key defender and progression for this coverage |
-| | 8. Feet | My drop/footwork for this play |
-| | 9. Escape | If the pocket breaks, where do I go (protection weak point + hash/room + throwing hand)? |
+| **KNOW** | 1. Situation | Down and distance, field zone, clock, score, timeouts: what does it change on this play (§6.12)? |
+| **SEE** | 2. Shell | How many high safeties (2 / 1 / 0)? Depth and width vs. hashes? |
+| | 3. Front & Mike | What front, which way is strength, who is the Mike (declared)? |
+| | 4. Box | Box defenders vs. our blockers → run / pass / RPO check? |
+| **THREATS** | 5. Pressure | Who could come (tells)? |
+| | 6. Protection | Slide direction, RB responsibility, adjustment |
+| | 7. Hot | If they bring more than we block, where does the ball go? |
+| **PLAN** | 8. Read | Key defender and progression for this coverage |
+| | 9. Feet | My drop/footwork for this play |
+| | 10. Escape | If the pocket breaks, where do I go (protection weak point + hash/room + throwing hand)? |
 
 **Default cadences** (in `content/cadences/defaults.yaml`):
-- **Youth (6 beats):** Shell, Front & Mike, Box, Pressure, Read, Escape.
-- **JV / Varsity (9 beats):** all nine.
-- **Elite (9 beats + optional actions):** Motion check and Hard count.
+- **Youth (7 beats):** Situation, Shell, Front & Mike, Box, Pressure, Read, Escape.
+- **JV / Varsity (10 beats):** all ten.
+- **Elite (10 beats + optional actions):** Motion check and Hard count.
 
 **Custom cadence builder** (Parent area):
-- Add and remove beats from the beat library, which also includes Situation, Defensive personnel, Motion check, Hard count and Check-with-me.
+- Add and remove beats from the beat library, which also includes Defensive personnel, Motion check, Hard count and Check-with-me.
 - Reorder beats and set the chunk grouping.
 - Rename beats to team terminology (aliases).
 - Choose an answer type per beat.
@@ -271,6 +272,27 @@ The routine is taught as **3 chunks of up to 3 beats**, the unit of memorization
 - Every decision point has ≥ 1 "best" answer. Every answer has an explanation chain built only from glossary terms.
 - Hash-consistent geometry: no player out of bounds; field/boundary labels correct.
 - Projected legibility (§7.6) passes for every camera the tier uses.
+- Every scenario carries a complete situation (§6.3), and every answer key that the situation affects cites the situation rule it used.
+
+### 6.12 Situational awareness
+Situation is part of every rep's answer key, not decoration. Every drill shows it (situation strip, call card or scoreboard), the routine starts with it (KNOW, §6.10), and every Breakdown opens with it.
+
+**How situation changes the right answer.** Rules and exact thresholds live in `content/situations/` and are reviewed like all football content. Starting set:
+
+| Situation | What changes for the QB |
+|---|---|
+| 3rd or 4th and long | Prefer throws past the sticks; a checkdown short of them is acceptable only when everything past them is covered |
+| 3rd or 4th and short | Take the sure completion that converts |
+| 4th down | A throwaway ends the drive, so give a receiver a chance instead |
+| Two-minute drill, trailing | Sideline throws and getting out of bounds stop the clock; throw it away rather than take a sack; know the timeouts left |
+| Protecting a lead late | Ball security first; avoid risky throws; completions inbounds and runs keep the clock moving |
+| Backed up (own 1–10) | Never take a sack in the end zone (safety); get rid of the ball |
+| Field-goal range | Don't take a sack that pushes the kick out of range; throw it away instead |
+| Red zone and goal line | Compressed field: tighter windows, more man coverage; throw it away rather than force it |
+| End of half | Clock and timeouts decide between a shot, a sideline throw and a spike |
+
+- **Defenses follow situation too:** coordinator profiles (§11.6) weight coverages and pressures by down, distance and field zone (e.g. more pressure on 3rd and long, more man coverage in the red zone).
+- **NFHS clock rules** apply to every clock decision (for example, high school has no two-minute warning); Phase 1 verifies them in `content/rules/nfhs.yaml`.
 
 ---
 
@@ -322,7 +344,7 @@ Shows:
 | Camera | View | Default for |
 |---|---|---|
 | **Coach cam** | Top-down. Positions shown exactly; stances shown as glyphs (orientation wedge + posture marker). | Youth reads, Learn diagrams, Breakdown replays |
-| **Sky cam** | Elevated, behind the QB, in perspective. Stances shown as silhouette poses. | JV/Varsity reads, Bubble, Game Day |
+| **Sky cam** | Elevated, behind the QB, in perspective. Stances shown as silhouette poses. | JV/Varsity reads, Bubble (all tiers below Elite), Game Day |
 | **QB-eye** | Eye level, perspective, with a pre-snap **scan** (swipe to turn the head). | Elite; an optional unlock for Varsity |
 
 **Camera progression is a tier feature.** In Breakdowns, he can switch cameras.
@@ -363,7 +385,7 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
   - the field with offense and defense aligned;
   - a call card (formation, play, protection, down and distance, hash);
   - a pre-snap clock;
-  - the beat track (3 chunks).
+  - the beat track (4 chunks: Know, See, Threats, Plan).
 - **Rep:** he executes each beat in order before the clock expires.
   - Answer types: select defenders, number, direction swipe, multiple choice.
   - Correct beats light up and build a combo; out-of-order or skipped beats break it.
@@ -399,23 +421,45 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
 - **Motion trails:** on at Youth/JV; off from Varsity (he answers from memory).
 
 ### 8.4 Bubble (pocket movement) — #1 priority
-- **Purpose:** automate pocket and escape decisions while keeping the eyes downfield.
-- **Screen:**
-  - Sky cam at JV+ (Coach cam at Youth): pocket, OL, rushers;
-  - the **actual coverage developing downfield**, so he reads and moves at the same time.
-- **Rep:**
-  1. Snap.
-  2. Pressure events unfold over 2–4 s: edge speed, bull collapse, interior win, stunts, unblocked blitzer, missed RB pickup, full collapse.
-  3. He moves (right thumb) and throws, runs or throws away (left thumb).
-- **Rules:** §6.7. Off-hand escapes require a "set" before throwing, which costs time.
+- **Purpose:** pocket mobility while staying on his reads. He feels pressure, moves the right amount in the right direction, keeps his eyes downfield (or finds the checkdown), and delivers on time.
+- **Screen:** a behind-the-QB pseudo-3D view (Sky cam; QB-eye at Elite). It must feel 3D; it doesn't need to be true 3D.
+  - Rushers come at the camera and grow as they close; blockers' backs fill the foreground.
+  - The pocket is a ring on the ground that dents where pressure is winning.
+  - The actual coverage develops downfield, so he reads and moves at the same time.
+  - Blind-side pressure (the right, for a lefty) also comes as a right-edge flicker plus right-panned audio.
+- **Rep types** (each a scenario family in `content/pocket/`):
+
+  | Rep type | Correct response |
+  |---|---|
+  | Clean pocket | Stand in, step up, throw on time. Leaving a clean pocket ("happy feet") costs points |
+  | Edge speed rush | Climb |
+  | Bull rush / interior push | Slide away, or escape if the lane closes |
+  | Stunt / twist | Reset and slide to the gap that opens |
+  | Blitz picked up | Trust it and keep reading |
+  | Blitz not picked up | Hot, sight adjust or checkdown before the free rusher arrives |
+  | All-out blitz (Cover 0) | Hot throw now; no deep help means man coverage everywhere |
+  | Full collapse | Escape (throwing-hand side preferred, hash-aware), then throw, run or throw away |
+  | Coverage sack | Protection holds but everyone is covered: checkdown or throw it away inside the time limit |
+
+- **Protection modes** (one per drill; the planner picks by default, and Sahar or the parent can override):
+
+  | Mode | Pocket holds on | Pressure arrives |
+  |---|---|---|
+  | Good | about 70% of reps | late (2.8 s or later) |
+  | Bad | about 30% of reps | early (1.6–2.4 s) |
+  | Unpredictable | anywhere from 30% to 70%, changing within the drill, with no streak patterns | anywhere from 1.4 to 3.2 s, including pockets that hold and then break |
+
+  These are starting defaults in `content/tuning`, to be tuned in playtests.
+- **Rep loop:** snap → pressure (or a clean pocket) unfolds over 1.4–4 s → he moves (right thumb) and throws, runs or throws away (left thumb).
+- **Rules:** §6.7 for movement. Off-hand escapes require a "set" before throwing, which costs time. Situation rules apply (§6.12), e.g. no sack in field-goal range, throw it away in the two-minute drill.
 - **Designed movement drills:** boot and sprint-out, both directions; hash-aware room.
-- **Scoring:** correct movement class and timing window, sack avoided, eyes-up throw on time, ball placement.
-- **Breakdown:** his path vs. the ideal path (ghost line), decision time, and the rule that applied.
+- **Scoring:** movement class and timing; staying in a clean pocket; sack avoided; the read (the throw goes to the receiver the coverage leaves open at that moment, checkdown included); throw on time; situational correctness.
+- **Breakdown:** his path vs. the ideal path (ghost line), the moment the pressure became real, decision time, and the rule that applied.
 - **Progression:**
-  - Youth: single-source pressure with lane hints.
-  - JV: stunts, bull vs. speed.
-  - Varsity: blitzes and RB pickups, no hints.
-  - Elite: QB-eye, where blind-side pressure is cued only by flicker plus audio.
+  - Youth: one pressure source at a time, slower rush, lane hints.
+  - JV: stunts, bull vs. speed, blitzes picked up and not picked up.
+  - Varsity: all-out blitzes and simulated pressures, no hints; Unpredictable becomes the default mode.
+  - Elite: QB-eye camera; blind-side pressure cued only by flicker plus audio.
 
 ### 8.5 Game Day (integration)
 - **Purpose:** the whole sequence, live, in game situations.
@@ -470,14 +514,14 @@ About 2 minutes, the only place abstract shapes are allowed. Teaches the throw b
 
 **Contents:**
 1. **Annotated replay** (slow motion, camera switchable):
-   - tells light up one at a time in cadence order (SEE → THREATS → PLAN);
+   - the situation comes first, then tells light up one at a time in cadence order (KNOW → SEE → THREATS → PLAN);
    - rotation paths drawn;
    - the read defender ringed;
    - pressure paths drawn;
    - his pocket path vs. the ideal path;
    - the open window highlighted.
 2. **His answer vs. the best answer,** with timing (where time was lost).
-3. **The why,** spoken (on-device text-to-speech) and captioned, always as a **cue → meaning → decision** chain.
+3. **The why,** spoken (on-device text-to-speech) and captioned. It opens with what the situation changes (§6.12), then always runs as a **cue → meaning → decision** chain.
 4. **All acceptable answers,** ranked best / acceptable / wrong, each with its reason.
 5. **Links** to the Learn cards involved.
 6. **"Flag this rep"** (§13.3).
@@ -542,6 +586,7 @@ Deterministic rules:
 2. **Weakest skills next:** lowest mastery relative to priority. Pocket movement carries the highest priority weight, per §2.1.
 3. **One new concept** (Learn card + acquisition reps) when the previous concept is stable.
 4. **Game Day** at the end.
+5. **Bubble protection mode** from his pocket stats: Bad when he bails too late or takes sacks, Good when he leaves clean pockets too early, Unpredictable once both are stable. The parent can override.
 
 The planner writes a one-line, templated focus sentence ("Climb vs. edge rush + Cover 3 Sky") using his stats.
 
@@ -621,6 +666,7 @@ Profiles live in `content/opponents/season-1.yaml`; content is gated to his tier
 
 **Settings:**
 - active cadence and the cadence builder;
+- Bubble protection mode (planner, Good, Bad, Unpredictable);
 - say-it prompts on/off;
 - controls layout;
 - fatigue sensitivity;
@@ -641,7 +687,8 @@ content/
   rules/nfhs.yaml          # verified NFHS rules relevant to QB decisions
   offense/                 # personnel, formations, concepts, protections, run-rpo, footwork
   defense/                 # fronts, coverages, rotations, pressures, stunts, tells
-  pocket/rules.yaml
+  pocket/                  # pocket rules + Bubble rep-type families
+  situations/              # situation rules (§6.12)
   cadences/defaults.yaml
   explanations/            # cue/meaning/decision snippets keyed by rule id
   scenarios/               # templates + parameter ranges
@@ -853,7 +900,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 - Simulated-player tests show the staircase converging to 80% ± 5%.
 
 ### Phase 5: Pocket
-**Deliverables:** Bubble completed (all pressure types, designed movement, scramble decisions, all tiers) and Field Mode (game-called snap, tap decisions).
+**Deliverables:** Bubble completed (all 9 rep types, the 3 protection modes, designed movement, scramble decisions, all tiers) and Field Mode (game-called snap, tap decisions).
 
 **Acceptance:**
 - Every pocket rule in `content/pocket/rules.yaml` has playable scenarios with passing tests.
@@ -907,7 +954,9 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Rule set | NFHS (California CIF) |
 | Offense | Offense-agnostic standard menu; team aliases later |
 | Modes | Tell Spotter, Cadence, Shell Game, Bubble, Game Day, Field Mode, Learn |
-| Cadence | 3 chunks; defaults per tier; custom builder with aliases |
+| Cadence | 4 chunks (Know, See, Threats, Plan); defaults per tier; custom builder with aliases |
+| Situational awareness | Shown in every drill and part of every answer key and Breakdown (§6.12) |
+| Bubble | Behind-the-QB pseudo-3D with rushers coming at him; 9 rep types; protection modes Good / Bad / Unpredictable |
 | Information policy | Difficulty never removes information |
 | AI | No live AI. Claude used only for authoring and rule maintenance via Claude Code. |
 | Explanations | Breakdown for every rep, assembled from reviewed snippets |
@@ -927,7 +976,7 @@ Shell, MOFO/MOFC (middle of field open/closed), two-high, one-high, Cover 0/1/2/
 ```yaml
 id: stick-vs-2high-sky-field-01
 tier: jv
-situation: { down: 3, distance: 6, yard_line: own-42, hash: left, quarter: 4, clock: "1:48", score: { us: 17, them: 20 } }
+situation: { down: 3, distance: 6, yard_line: own-42, hash: left, quarter: 4, clock: "1:48", clock_running: true, score: { us: 17, them: 20 }, timeouts: { us: 1, them: 2 } }
 offense:
   personnel: "11"
   formation: gun-trips-right      # X alone left on the LOS; Y attached right; H slot and Z off the LOS
