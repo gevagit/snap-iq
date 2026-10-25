@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.3 (every drill from his eyes; wireframes v3 in review) |
+| **Version** | 1.4 (positions and routes from a movement model; wireframes v4 in review) |
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
@@ -271,6 +271,7 @@ The routine is taught as **4 chunks**, the unit of memorization. KNOW happens in
 - Rotation: if the post-snap shell differs from the pre-snap shell, the scenario carries a rotation tag, and the tells and explanations reference it.
 - Every decision point has ≥ 1 "best" answer. Every answer has an explanation chain built only from glossary terms.
 - Hash-consistent geometry: no player out of bounds; field/boundary labels correct.
+- **Reachability (no teleporting):** every post-snap position lies on that player's path (route, landmark path or rush lane), at a distance his speed profile allows by that time. Receivers' positions match their route waypoints; the back's position matches his protection rule (§6.13).
 - Projected legibility (§7.6) passes in his-eyes view (and in top-down for Learn and Breakdown).
 - Every scenario carries a complete situation (§6.3), and every answer key that the situation affects cites the situation rule it used.
 
@@ -293,6 +294,40 @@ Situation is part of every rep's answer key, not decoration. Every drill shows i
 
 - **Defenses follow situation too:** coordinator profiles (§11.6) weight coverages and pressures by down, distance and field zone (e.g. more pressure on 3rd and long, more man coverage in the red zone).
 - **NFHS clock rules** apply to every clock decision (for example, high school has no two-minute warning); Phase 1 verifies them in `content/rules/nfhs.yaml`.
+
+### 6.13 Movement, routes and timing
+**No post-snap position is placed by hand.** Every player's spot at time *t* after the snap comes from four things: his **alignment**, his **path**, his **speed profile**, and *t*. Wireframes, drills, Breakdowns and tests all use the same model, so the screen never shows a player where he couldn't be.
+
+- **Routes** are waypoint lists measured from the receiver's alignment, defined once in `content/offense/routes.yaml`. Receivers run the coordinates exactly (no added "realism"). Examples, to be confirmed in Phase 1:
+  - stick: 6-yard stem, settle and turn out about 1 yard;
+  - flat/arrow: angle to 2 yards deep, then flatten toward the sideline;
+  - hitch: 5 yards, come back half a yard;
+  - clear/go: vertical, holding his split;
+  - hot slant: 2 yards, then break inside at about 45°.
+- **Defenders** move to the landmark of their assignment, defined in `content/defense/`:
+  - deep third, deep middle, curl/flat, hook;
+  - man trail, from press or off;
+  - blitz lane.
+  
+  Rotations are timed to the snap (e.g. Sky: field safety spins down to curl/flat, boundary safety runs to the deep middle). Zone droppers react at the snap; off-man defenders read for a beat (about 0.2–0.3 s) before they drive.
+- **Speed profiles** (`content/tuning/speeds.yaml`): top speed, acceleration and reaction delay per position group, set for the high-school level. Starting values, for owner and coach review:
+  - receivers about 8 yd/s; tight ends 7;
+  - DBs 5–7 (bail vs. rotate); LBs 6;
+  - DL rush 6; blitzers 7.5.
+  
+  At these values a receiver is about 3 yards into his route at 0.8 s, 4 at 1.0 s, 5.5 at 1.2 s and 9.5 at 1.75 s.
+- **Linemen:**
+  - OL take the pass sets of the protection call (slide side vs. man side).
+  - DL rush the lane of their technique: 1-tech A gap, 3-tech B gap or bull rush into the guard, 5-tech C gap, 9-tech wide edge.
+- **QB depth** follows the drop: in the gun he catches at about 0.35 s at 5 yards, takes a 3-step drop to about 6.5 yards by 1.05 s, then hitches up.
+- **The back** follows his protection job:
+  - **Pre-snap:** beside the QB in the gun. That's outside the forward view, so he gets an edge marker.
+  - **After the snap:** he steps to his check point in his gap, about 2 yards behind the line and off to the side, never straight in front.
+  - Then he either check-releases (to the flat) or meets a blitzer. Meeting a blitzer in a gap is the only time he's in front of the QB.
+- **Freeze and decision times** come from the real play, not from a fixed number. For example, Stick vs. Cover 3:
+  - the rotation is readable at about 1.0–1.2 s;
+  - the stick settles at about 1.7 s;
+  - vs. Cover 0 the hot slant shows between the linemen at about 1.2 s.
 
 ---
 
@@ -357,7 +392,7 @@ Shows:
 ### 7.6 Readability rules (enforces P3)
 - Every defender is on screen, or marked at the edge and one look away, during the pre-snap look.
 - Minimum projected player height is **≥ 28 CSS px** in every view. To keep that at 140°, the view uses a panoramic (cylindrical) projection, and players are drawn slightly taller than true proportion. If a scenario still fails, the view adjusts (field of view, eye height) automatically. The check runs in automated tests (§6.11).
-- **Sightline check:** from eye level, players can line up behind each other. If the key read defender is fully hidden behind another player at the decision moment, the generator nudges timing within its jitter range or drops that instance (counted in tests).
+- **Sightline check:** from eye level, players line up behind each other, as on a real field (e.g. a 3-technique can hide most of a hook defender). At the decision moment the **key read defender and the intended target** must each be at least 60% visible. If not, the generator nudges timing within its jitter range or drops that instance (counted in tests). Other players may be partly hidden.
 - **Highlights by tier:**
   - Youth: exaggerated poses plus highlight glows on tells.
   - JV: exaggerated poses, no glows.
@@ -412,7 +447,7 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
 - **Purpose:** read the picture and its post-snap change, then decide.
 - **Rep:**
   1. The look shows for the flash window (defaults: Youth 2.0 s → JV 1.2 s → Varsity 0.7 s → Elite 0.3 s).
-  2. Snap, then 0.4–0.8 s of motion.
+  2. Snap, then everyone moves at real speed (§6.13) until the decision point (default about 1.0–1.4 s, long enough for a rotation to show).
   3. Freeze.
 - **Questions by stage:**
   - Youth/JV learning stage, up to 3 quick answers:
@@ -691,7 +726,7 @@ Profiles live in `content/opponents/season-1.yaml`; content is gated to his tier
 content/
   glossary.yaml            # controlled vocabulary + definitions + aliases
   rules/nfhs.yaml          # verified NFHS rules relevant to QB decisions
-  offense/                 # personnel, formations, concepts, protections, run-rpo, footwork
+  offense/                 # personnel, formations, concepts, routes (waypoints), protections, run-rpo, footwork
   defense/                 # fronts, coverages, rotations, pressures, stunts, tells
   pocket/                  # pocket rules + Bubble rep-type families
   situations/              # situation rules (§6.12)
@@ -700,7 +735,7 @@ content/
   scenarios/               # templates + parameter ranges
   opponents/season-1.yaml
   combines/                # hold-out batteries (never used in training)
-  tuning/                  # staircases, timings, XP constants
+  tuning/                  # speed profiles, staircases, timings, XP constants
 ```
 
 Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed content is allowed only in the Scenario Lab, never in drills.
@@ -751,7 +786,8 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 - **Seeded RNG** (e.g. sfc32). `Math.random` is banned in engine code.
 - **Simulation:**
   - fixed timestep (1/120 s);
-  - players follow assignment-derived paths with speed profiles;
+  - players follow assignment-derived paths with speed profiles (§6.13): routes from waypoints, defenders to their landmarks, linemen by pass set and rush lane, the back by protection rule;
+  - every rendered frame satisfies the reachability invariant (§6.11);
   - pressure events are authored or generated from the pressure catalog, not physics;
   - the pocket is a polygon derived from OL positions, deformed by pressure points.
 - **Grading:**
@@ -866,6 +902,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 - Glossary with definitions and aliases.
 - Verified NFHS rules sheet.
 - Tells catalog with reliability; pocket rules; default cadences; explanation snippets for every Youth/JV rule.
+- Route waypoint catalog, defender landmark paths and speed profiles (§6.13), with the reachability validator.
 - Content schemas plus invariant validators and tests.
 - An SVG top-down diagram renderer.
 - The Football Bible review doc (Claude Doc) generated from content, with diagrams.
@@ -964,6 +1001,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Situational awareness | Shown in every drill and part of every answer key and Breakdown (§6.12) |
 | Bubble | From his eyes, rushers coming at him; 9 rep types; protection modes Good / Bad / Unpredictable |
 | Views | His eyes (panoramic, about 140°) in every drill at every tier; top-down only in Learn and Breakdown |
+| Movement | Every post-snap position computed from alignment + path + speed profile + time; routes as waypoints; no hand placement (§6.13) |
 | Renderer | 2D WebGL (PixiJS) with a custom panoramic projection; true 3D only for a future VR mode |
 | Information policy | Difficulty never removes information |
 | AI | No live AI. Claude used only for authoring and rule maintenance via Claude Code. |
@@ -1003,6 +1041,16 @@ defense:
     - { id: BS31, role: S,  pre: { x: -2.0, y: 12.0 }, width: { landmark: boundary-hash, relation: outside, yards: 2.0 },
         movement: static, truth: { assignment: deep-middle } }
     # corners at 7 yd, outside leverage, eyes on QB -> deep thirds; nickel apexed -> hook/curl; Mike -> hook/curl; Will -> curl/flat (boundary)
+  paths:                           # landmark paths (yards, ball-relative) + speed profile; positions at time t are computed, never stored
+    - { id: FS6,  to: [[15.2, 6.0], [16.8, 4.5], [18.5, 3.6]], speed: db-rotate }    # spin down, then widen with #2
+    - { id: BS31, to: [[8.9, 14.0]], speed: db-rotate }                               # deep middle of the field
+    - { id: N21,  to: [[4.4, 9.5]], speed: lb-drop }                                  # hook, eyes on #3
+routes:                            # waypoints from each receiver's alignment (content/offense/routes.yaml)
+  Y: { route: stick, waypoints: [[0.7, 6.5], [1.7, 6.5]] }      # 6-yd stem from y -0.7, settle and turn out
+  H: { route: arrow, waypoints: [[1.5, 2.2], [7.5, 3.3], [10.5, 3.6]] }
+  Z: { route: clear, waypoints: [[0.5, 23.2]] }
+  X: { route: hitch, waypoints: [[0, 5.6], [0.4, 5.0]] }
+  R: { route: check-release-left, check_point: [-0.6, 1.2], release: [[-3.4, 2.4], [-6.4, 3.8]], check_until: 0.9 }
 pressure_events:
   - { t: 2.4, rusher: DE97, type: edge-speed, side: off-hand }   # right side = blind side for a lefty; only matters if the ball is held
 answers:
