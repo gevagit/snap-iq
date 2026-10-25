@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Version** | 1.0 (scope agreed, ready for owner review) |
+| **Version** | 1.1 (owner answers folded in; wireframes in review) |
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
-| **Player** | Sahar, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
-| **Next phase** | Phase 0: Football Bible |
+| **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
+| **Current phase** | Phase 0: Wireframes (in owner review). Next: Phase 1, Football Bible |
 
 ---
 
@@ -16,7 +16,7 @@
 - **All football content comes from `/content`** (the machine-readable Football Bible). Never invent football terms, alignments, rules or explanations in code. If something is missing, add it to `/content`, mark it `reviewed: false`, and tell the owner it needs coach review.
 - **The game is deterministic.** No live AI calls anywhere in the app. Randomness only from the seeded RNG.
 - When this PRD and coach-reviewed content disagree on football, the content wins; update the PRD.
-- Terms like "Cover 3 Sky" or "9-technique" are defined in `/content/glossary.yaml` once Phase 0 exists; until then, Appendix A lists the seed terms.
+- Terms like "Cover 3 Sky" or "9-technique" are defined in `/content/glossary.yaml` once Phase 1 exists; until then, Appendix A lists the seed terms.
 
 ---
 
@@ -46,7 +46,7 @@ Cross-cutting: domain-specific processing speed, real-time decisions under time 
 - **Field (optional log):** the parent can record practice/game observations in the dashboard (pre-snap ID, handling pressure, sacks taken).
 
 ### 2.3 Non-goals for v1
-Multi-profile UI (the data model is ready, §14.6), App Store build, live AI of any kind, VR, camera-based movement tracking, commercial-grade art, online multiplayer, monetization, a custom domain.
+Multi-profile UI (the data model is ready, §14.7), App Store build, live AI of any kind, VR, camera-based movement tracking, commercial-grade art, online multiplayer, monetization, a custom domain.
 
 ## 3. Users and roles
 
@@ -54,7 +54,7 @@ Multi-profile UI (the data model is ready, §14.6), App Store build, live AI of 
 |---|---|
 | **Player** (Sahar) | Plays everything outside the Parent area. |
 | **Parent / admin** | Parent area behind a PIN: dashboard, settings, cadence builder, Scenario Lab, flagged reps. |
-| **Coach reviewer** | Reviews the Football Bible doc by commenting. Needs no app access. |
+| **Football reviewer** | The owner reviews the Football Bible first. A specific coach is brought in (doc access only) when the owner wants more input. |
 | **Future players** | Supported by the data model (profiles keyed by user); no UI in v1. |
 
 ## 4. Design principles (non-negotiable)
@@ -65,7 +65,7 @@ Multi-profile UI (the data model is ready, §14.6), App Store build, live AI of 
 | P2 | **Deterministic** | Same scenario + seed ⇒ same play, same answer key, same feedback. No live AI. |
 | P3 | **Never remove information** | Higher tiers get harder through less time, real disguises, more simultaneous elements and fewer highlight aids. Never by hiding, shrinking below legibility, or blurring cues (§7.6). |
 | P4 | **Representative from day one** | Real football visuals and real decisions at every tier, simplified at Youth. Abstract shapes only in the 2-minute controls tutorial. |
-| P5 | **Real response modes** | Voice-first for pre-snap calls; "throw to the right receiver" is the answer, not naming a coverage. Taps are the learning stage and the fallback. |
+| P5 | **Real response modes** | Taps and swipes that map to real decisions; "throw to the right receiver" is the answer, not naming a coverage. Saying calls out loud is prompted as a habit but never recognized or scored (no speech recognition). |
 | P6 | **Consistent before variable** | Tells are honest at Youth, so cue→response mappings become automatic; disguises arrive gradually from JV. |
 | P7 | **Learn → automate** | Labeled → faded → recall. Checklist → chunks → one call. Name it → act on it. |
 | P8 | **Explain everything** | Every rep has a full Breakdown on demand, right or wrong (§9). |
@@ -74,9 +74,9 @@ Multi-profile UI (the data model is ready, §14.6), App Store build, live AI of 
 
 ## 5. Platform and constraints
 
-- **Primary device:** iPad in landscape, Safari, installed to the Home Screen as a PWA. Target iPadOS 17+ (confirm model, §18). Also runs in desktop browsers for testing.
+- **Primary device:** Sahar's iPad, an older model (about 2020, A12/A14 chip class, likely 10.2-inch) on the latest iPadOS, in landscape, Safari, installed to the Home Screen as a PWA. All performance and layout targets are set for this device class; wireframes use 1080 × 810. Also runs in desktop browsers for testing.
 - **Hosting:** Netlify free subdomain (e.g. `snap-iq.netlify.app`). A custom domain can be added later with no code change.
-- **Inputs:** touch (two thumbs, lefty layout), optional Bluetooth gamepad, voice (speech recognition), audio output (headphones recommended for directional pressure audio).
+- **Inputs:** touch (two thumbs, lefty layout), optional Bluetooth gamepad. Audio output through headphones (available) for directional pressure audio. **No speech recognition.**
 - **Offline-first:** all gameplay runs on-device; progress syncs to the database when online.
 - **Performance targets:**
   - 60 fps minimum during play (use 120 Hz where available).
@@ -89,11 +89,11 @@ Multi-profile UI (the data model is ready, §14.6), App Store build, live AI of 
 
 ## 6. Football foundation
 
-The full content is the Phase 0 deliverable (Football Bible). This section fixes its structure and the rules the engine must honour.
+The full content is the Phase 1 deliverable (Football Bible). This section fixes its structure and the rules the engine must honour.
 
 ### 6.1 Rule set and field
 - **Rules: NFHS (high school), California CIF.** Never assume NFL or NCAA rules.
-- **Phase 0 verifies the NFHS rules that touch QB decisions** and records them in `content/rules/nfhs.yaml`:
+- **Phase 1 verifies the NFHS rules that touch QB decisions** and records them in `content/rules/nfhs.yaml`:
   - forward pass and intentional grounding (throwaway legality);
   - the free-blocking zone;
   - ineligible receivers downfield (critical for RPOs);
@@ -314,10 +314,7 @@ Shows:
   - A throw-away button sits in the left cluster.
 - **Mirror option** for right-thumb throwing.
 - **Gamepad:** the Gamepad API maps face buttons to receivers and the left stick to movement.
-- **Voice:**
-  - Push-to-talk or always-listening during pre-snap.
-  - Matches a constrained vocabulary per beat (§14.4).
-  - Tap fallback is always available.
+- **Say-it habit:** pre-snap screens prompt him to say his calls out loud ("Two-high, 52's the Mike"). Nothing listens; only taps are graded.
 - **Throw buttons never light up** to signal the open receiver; his eyes must stay on the field.
 
 ### 7.5 Cameras
@@ -347,7 +344,7 @@ Every mode shares the rep loop:
 
 > **setup → look → (snap → action) → result flash → Breakdown on demand → next rep**
 
-Every mode logs each rep fully (§14.6) and feeds mastery, spaced repetition and XP.
+Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and XP.
 
 ### 8.1 Tell Spotter (warm-up, ~2 min)
 - **Purpose:** automatic perception of alignment and stance tells.
@@ -368,15 +365,15 @@ Every mode logs each rep fully (§14.6) and feeds mastery, spaced repetition and
   - a pre-snap clock;
   - the beat track (3 chunks).
 - **Rep:** he executes each beat in order before the clock expires.
-  - Answer types: select defenders, number, direction swipe, multiple choice, or **voice phrase**.
+  - Answer types: select defenders, number, direction swipe, multiple choice.
   - Correct beats light up and build a combo; out-of-order or skipped beats break it.
   - Beats derive their answers from the scenario (e.g. Hot is computed from rushers vs. blockers).
 - **Stages (per beat, per mastery):**
   1. Labeled beats with Learn hints.
   2. Icons only.
   3. Blank track: pure recall.
-  4. **One call:** a single spoken line covering the chunk, e.g. "Two-high, 52's the Mike, six in the box".
-  5. **Elite:** the whole routine as one call within the clock.
+  4. **Chunk entry:** all beats of a chunk answered in one rapid tap sequence with no prompts in between, while he says the chunk out loud (habit, not scored).
+  5. **Elite:** the whole routine as one rapid entry within the clock.
 - **Actions at higher tiers:**
   - Motion check: send motion, watch for travel vs. bump.
   - Hard count: watch for defenders who flinch or show.
@@ -428,7 +425,7 @@ Every mode logs each rep fully (§14.6) and feeds mastery, spaced repetition and
   - a scouting tip.
 - **Rep = one play in a drive:**
   1. Call card (Varsity+: choose from a 3-play call sheet).
-  2. Condensed Cadence with no prompts (voice).
+  2. Condensed Cadence with no prompts (rapid tap entry).
   3. Snap, live read, pocket, throw/run.
 
   Outcomes move the chains; sacks, interceptions and penalties cost.
@@ -440,11 +437,12 @@ Every mode logs each rep fully (§14.6) and feeds mastery, spaced repetition and
 - **Purpose:** turn decisions into body movement ("muscle memory").
 - **Setup:** iPad on a stand at eye level about 2–3 m away; the defense is shown large; headphones or speaker.
 - **Rep:**
-  1. He runs the cadence out loud.
-  2. **His spoken snap count snaps the ball** (voice-detected "set… hut").
-  3. The screen and audio cue the rotation and pressure ("Edge left!", "A-gap!").
-  4. He physically drops, climbs, slides or escapes, and calls his action and target aloud ("Climb… Stick!").
-- **Grading:** v1 grades the spoken decisions and their timing. Camera-based movement checking is a later phase.
+  1. He gets in his stance and says his pre-snap calls out loud (habit, not scored).
+  2. **The game calls the cadence and snaps the ball** ("set… hut").
+  3. The screen and audio cue the rotation and pressure ("Edge right!", "A-gap!"), panned to the side it comes from.
+  4. He physically drops, climbs, slides or escapes.
+  5. He taps large decision buttons within a time window: movement first (climb, slide, escape), then target (◆ ● ▲ ■ or throw away).
+- **Grading:** the decision taps and their timing from the cue. Camera-based movement checking is a later phase.
 - **Safety:** prompt for clear space; no ball required.
 
 ### 8.7 Learn mode
@@ -459,7 +457,7 @@ Every mode logs each rep fully (§14.6) and feeds mastery, spaced repetition and
 - **Cadence lessons:** each beat taught as a short animated card.
 
 ### 8.8 Controls tutorial
-About 2 minutes, the only place abstract shapes are allowed. Teaches the throw buttons, movement pad, voice and Breakdown.
+About 2 minutes, the only place abstract shapes are allowed. Teaches the throw buttons, movement pad and Breakdown.
 
 ---
 
@@ -568,7 +566,7 @@ Built for daily return and competitiveness while rewarding **quality**:
 | **Daily Look** | One hard look per day; first-try success gives a bonus pack |
 | **Season Pass** | 12-week track. Advances by XP. Nodes give packs, cosmetics and titles. Combines in Weeks 1, 6 and 12. |
 | **Weekly boss** | Unlocks after 3 workouts that week; retry until beaten; a win gives an Epic pack |
-| **Notifications (optional, Phase 4)** | Web push for Home Screen apps: a streak reminder at a parent-set time |
+| **Notifications (optional, Phase 6)** | Web push for Home Screen apps: a streak reminder at a parent-set time |
 
 **Session Wrap:**
 - XP tally (with breakdown);
@@ -623,7 +621,7 @@ Profiles live in `content/opponents/season-1.yaml`; content is gated to his tier
 
 **Settings:**
 - active cadence and the cadence builder;
-- voice on/off;
+- say-it prompts on/off;
 - controls layout;
 - fatigue sensitivity;
 - notification time;
@@ -635,7 +633,7 @@ Profiles live in `content/opponents/season-1.yaml`; content is gated to his tier
 
 ### 13.1 Source of truth
 - `/content`: YAML files, compiled to JSON at build time with a content version hash. Every rep stores the content version.
-- **Football Bible review doc:** a shareable Claude Doc generated from `/content` (human-readable, with top-down diagrams) for coach review. Coach comments are resolved by editing `/content`, then the doc is regenerated.
+- **Football Bible review doc:** a shareable Claude Doc generated from `/content` (human-readable, with top-down diagrams). The owner reviews it first and shares it with the coach when more input is needed. Comments are resolved by editing `/content`, then the doc is regenerated.
 
 ```
 content/
@@ -714,13 +712,16 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 - **Legibility check** (§7.6) computes projected sizes per camera and scenario. It runs in tests and auto-adjusts cameras at runtime.
 - **HUD:** an HTML/React overlay (call card, beat track, clocks, buttons) above the canvas.
 
-### 14.4 Audio and voice
-- **Web Audio:** SFX with stereo panning for directional pressure; audio is unlocked on first tap (iPadOS requirement).
+### 14.4 Audio
+- **Web Audio:** SFX with stereo panning for directional pressure (headphones); audio is unlocked on first tap (iPadOS requirement).
 - **Narration:** `speechSynthesis` (on-device voices), with captions always on.
-- **Speech recognition:** the WebKit SpeechRecognition API with a constrained per-beat vocabulary and fuzzy keyword matching, e.g. numbers, "two-high", "Mike", "slide right", "hot".
-  - **Phase 1 spike** decides go / no-go and acceptable latency for a child's voice. The tap fallback always remains.
+- **No speech recognition.** Safari's speech recognition isn't reliable enough for timed, graded play with a child's voice and football terms. All input is touch or gamepad.
 
-### 14.5 Hosting, CI and environments
+### 14.5 Performance on the older iPad
+- Keep the scene light: instanced sprites, no real-time shadows, capped device pixel ratio (≤ 2), texture atlases for poses.
+- Frame-time budget 16 ms; a performance test scene runs on the device at every playtest checkpoint.
+
+### 14.6 Hosting, CI and environments
 - **Netlify:**
   - builds from GitHub (`npm run build`, publishes `dist`);
   - SPA redirect;
@@ -728,9 +729,9 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
   - deploy previews for every PR; production from `main`.
 - **Environment variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. The anon key is public by design; Row Level Security protects data.
 - **GitHub Actions:** lint, typecheck, unit tests, content validation and build on every PR.
-- **Setup:** `docs/SETUP.md` (Phase 1) walks the owner through creating the Supabase project, running migrations and setting Netlify variables. **Secrets are never pasted into chat or committed.**
+- **Setup:** `docs/SETUP.md` (Phase 3) walks the owner through creating the Supabase project, running migrations and setting Netlify variables. **Secrets are never pasted into chat or committed.**
 
-### 14.6 Data model (Supabase Postgres; Row Level Security on every table: `profile.user_id = auth.uid()`)
+### 14.7 Data model (Supabase Postgres; Row Level Security on every table: `profile.user_id = auth.uid()`)
 | Table | Key fields |
 |---|---|
 | `profiles` | id, user_id, display_name, handedness, jersey, created_at |
@@ -748,11 +749,11 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 - **Sync:** Dexie mirrors the tables locally. Reps are append-only via an outbox queue; settings are last-write-wins.
 - **Supabase free tier:** projects pause after a week of inactivity. Gameplay continues offline and syncs after a one-click unpause.
 
-### 14.7 Privacy
+### 14.8 Privacy
 - First name only; no ads, no third-party analytics, no live AI, no data sent anywhere except his own Supabase project.
 - Before any commercial release: COPPA compliance (verifiable parental consent, data deletion) and a privacy policy.
 
-### 14.8 Repository layout
+### 14.9 Repository layout
 ```
 docs/      PRD.md, SETUP.md, decisions/
 content/   (see §13.1)
@@ -762,8 +763,8 @@ src/
   learning/  staircase, srs, planner, fatigue, mastery
   rewards/   xp, packs, streaks, season
   render/    scene, cameras, poses, glyphs, legibility
-  audio/     sfx, tts, speech
-  input/     touch, gamepad, voice
+  audio/     sfx, tts
+  input/     touch, gamepad
   modes/     tell-spotter, cadence, shell-game, bubble, game-day, field-mode, learn
   ui/        screens, hud, components
   data/      dexie, sync, supabase
@@ -801,7 +802,12 @@ Shapes plus colour, captions on all narration, adjustable text size in the HUD, 
 
 Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netlify deploy preview) before moving on.
 
-### Phase 0: Football Bible
+### Phase 0: Wireframes
+**Deliverables:** low-fi screens for every mode plus the shared Breakdown, on the design canvas (one screen per mode at its key moment, with notes).
+
+**Acceptance:** owner sign-off on layout, controls and what each screen shows.
+
+### Phase 1: Football Bible
 **Deliverables:**
 - `/content`: Youth and JV complete; Varsity and Elite outlined.
 - Glossary with definitions and aliases.
@@ -813,25 +819,32 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 
 **Acceptance:**
 - Validators pass on all content and on 1,000 generated scenarios per template.
-- The coach review is complete, all comments are resolved, and the owner signs off.
+- The owner's review is complete (coach consulted where the owner wants), all comments are resolved, and the owner signs off.
 
-### Phase 1: Foundation
+### Phase 2: Playable slice (feel first)
 **Deliverables:**
-- Scaffolding, CI, Netlify deploy, Supabase migrations and Row Level Security, auth, offline store and sync, PWA install.
-- Engine core (field, generator, sim, grading, replays).
-- three.js renderer with all 3 cameras, glyphs, placeholder poses and the legibility check.
-- HUD framework, touch/gamepad input, the voice spike, the audio system.
+- Engine core (field, generator, sim, grading, replays) and the three.js renderer with the cameras that Bubble uses.
+- **Bubble** (Youth and JV pressure types) playable end to end on the iPad, with Breakdown.
+- Progress saved on the device only; no backend yet.
+- Netlify deploy to the free subdomain; installable to the Home Screen.
+
+**Acceptance:**
+- Runs smoothly on Sahar's iPad (performance test scene within budget).
+- Owner and Sahar playtest; feel constants tuned from their notes.
+- Golden replay tests are deterministic.
+
+### Phase 3: Foundation
+**Deliverables:**
+- CI, Supabase migrations and Row Level Security, auth, offline store and sync.
+- Remaining cameras, glyphs, placeholder poses and the legibility check.
+- HUD framework, touch/gamepad input, the audio system.
 - Locker Room shell and navigation, Learn mode, cadence builder, Scenario Lab, Breakdown framework, the flag flow, the controls tutorial.
 
 **Acceptance:**
-- Installable from `snap-iq.netlify.app` on the iPad.
-- A demo scenario plays offline.
-- Reps sync to Supabase.
+- Reps sync to Supabase; the app keeps working offline.
 - The Lab renders any scenario in all cameras with the legibility check passing.
-- Golden replay tests are deterministic.
-- The voice spike is decided (go / no-go) and documented.
 
-### Phase 2: Reading drills
+### Phase 4: Reading drills
 **Deliverables:** Tell Spotter, Cadence (all stages), Shell Game (incl. Picture Flash, Conflict reads, Motion check), staircase, spaced repetition, interleaving, guess/shaky detection, Film Room. Full Breakdowns for these modes.
 
 **Acceptance:**
@@ -839,15 +852,15 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 - Every rep has a correct Breakdown.
 - Simulated-player tests show the staircase converging to 80% ± 5%.
 
-### Phase 3: Pocket
-**Deliverables:** Bubble (all pressure types, designed movement, scramble decisions) and Field Mode (voice-driven).
+### Phase 5: Pocket
+**Deliverables:** Bubble completed (all pressure types, designed movement, scramble decisions, all tiers) and Field Mode (game-called snap, tap decisions).
 
 **Acceptance:**
 - Every pocket rule in `content/pocket/rules.yaml` has playable scenarios with passing tests.
 - Off-hand escape timing is modeled.
 - Hash-aware escape room is modeled.
 
-### Phase 4: Game Day and progression
+### Phase 6: Game Day and progression
 **Deliverables:** Game Day (drives, call sheets, audibles, scouting), opponent profiles, the rewards system (§11), Season Pass, the planner, fatigue detection, Combines with hold-outs, Tryouts, Parent dashboard, Session Wrap, optional web push.
 
 **Acceptance:**
@@ -855,8 +868,8 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 - The daily workout is generated deterministically from stats.
 - Combine hold-outs are provably excluded from training pools.
 
-### Phase 5: Feel and expansion
-**Deliverables:** tuning passes from playtest notes (timings, juice, difficulty constants in `/content/tuning`), final pose art, Varsity/Elite content completion with coach review.
+### Phase 7: Feel and expansion
+**Deliverables:** tuning passes from playtest notes (timings, juice, difficulty constants in `/content/tuning`), final pose art, Varsity/Elite content completion with owner review (coach as needed).
 
 **Acceptance:** owner sign-off after a 2-week playtest.
 
@@ -866,28 +879,30 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 
 | Risk | Mitigation |
 |---|---|
-| Football content is subtly wrong | Phase 0 Bible, controlled vocabulary, invariants, coach review gate, flag flow, `reviewed` gating |
-| Game feel is "off" (Claude can't play it) | Playtest checkpoint every phase; all feel constants in `/content/tuning` for fast iteration |
-| Speech recognition unreliable for a child's voice or jargon | Phase 1 spike, constrained vocabulary, fuzzy matching, tap fallback always on |
+| Football content is subtly wrong | Phase 1 Bible, controlled vocabulary, invariants, owner review gate (coach as needed), flag flow, `reviewed` gating |
+| Game feel is "off" (Claude can't play it) | Playable slice early (Phase 2); playtest checkpoint every phase; all feel constants in `/content/tuning` for fast iteration |
+| Older iPad struggles with the 3D scene | Performance budget (§14.5), light rendering, device test scene at every checkpoint |
 | Stances not readable | Pose library, per-tier exaggeration, automated legibility check, camera auto-adjust |
 | iPad Safari quirks (audio unlock, storage eviction, PWA limits) | Offline store + cloud sync, audio unlock on first tap, on-device testing each phase |
 | Learns the engine instead of football | Jitter, coordinator profiles, hold-out Combines and Tryouts |
-| Weak transfer to the field | Representative visuals, voice-first, throw-as-answer, Field Mode, Combines |
+| Weak transfer to the field | Representative visuals, say-it-aloud habit, throw-as-answer, Field Mode, Combines |
 | Fatigue / overuse with no cap | Fatigue detection, diminishing XP, spacing bonus, streak freezes, parent dashboard |
 | Scope creep | Phase gates; new ideas go to `docs/decisions/backlog.md` |
 | Supabase free-tier pause | Offline-first; unpause instructions in SETUP.md |
 
 ## 18. Open questions
-1. iPad model and iPadOS version (sets performance and API targets).
-2. Coach reviewer's name and expected turnaround for the Phase 0 review.
-3. Sahar's jersey number and avatar preferences (for the Locker and the QB marker).
-4. Headphones available for play? (Directional pressure audio works best with them.)
-5. "SNAP IQ" is a working title; run a trademark check before any commercial release.
+1. Exact iPad model (Settings → General → About → Model Name), to confirm the performance target.
+2. Avatar and Locker preferences beyond #4.
+3. "SNAP IQ" is a working title; run a trademark check before any commercial release.
 
 ## 19. Decisions log
 | Decision | Choice |
 |---|---|
-| Device | iPad landscape, PWA (web), offline-first |
+| Device | Older iPad (about 2020) on the latest iPadOS, landscape, PWA (web), offline-first |
+| Football review | Owner first; a specific coach when the owner wants more input |
+| Jersey | #4 |
+| Speech recognition | None. Taps and swipes only; say-it-aloud is an unscored habit |
+| Build order | Wireframes → Football Bible → playable Bubble slice → backend → remaining drills |
 | Handedness | Left-handed; rules expressed by throwing-hand side |
 | Rule set | NFHS (California CIF) |
 | Offense | Offense-agnostic standard menu; team aliases later |
@@ -904,7 +919,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 
 ---
 
-## Appendix A: Glossary seed (definitions are written in Phase 0)
+## Appendix A: Glossary seed (definitions are written in Phase 1)
 Shell, MOFO/MOFC (middle of field open/closed), two-high, one-high, Cover 0/1/2/3/4/6, Robber, 2-Man, Quarters, Sky, Buzz, Cloud, spin, roll, fire zone, simulated pressure, creeper, mug, apex, overhang, conflict defender, box, tackle box, free-blocking zone, technique (0–9, 2i, 4i), shade, leverage, press, off, bail, squat, backpedal, field, boundary, hash, numbers, strength, Mike / Will / Sam / nickel, slide, half-slide, big-on-big, max protect, hot, sight adjust, check-with-me, hard count, motion (travel vs. bump), climb, slide (pocket), escape, reset/flip hips, throwing-hand side, off-hand side, blind side, boot, naked, sprint-out, RPO, zone read, power read, #1/#2/#3 receiver numbering.
 
 ## Appendix B: Example scenario (illustrative schema; final values come from the Bible)

@@ -4,4 +4,4 @@ A quarterback cognition training game for iPad: pre-snap routine, defensive read
 
 - Spec: [`docs/PRD.md`](docs/PRD.md)
 - Instructions for Claude Code: [`CLAUDE.md`](CLAUDE.md)
-- Status: scope agreed; Phase 0 (Football Bible) next.
+- Status: Phase 0 (wireframes) in review; Phase 1 (Football Bible) next.
