@@ -1780,3 +1780,85 @@ terms:
     aliases: [route change, route tag]
     see: [progression]
     reviewed: false
+
+  # ---------------------------------------------------------------- the play call (batch 3)
+  - id: play-call
+    term: Play call
+    category: quarterback
+    batch: 3
+    definition: "The play the quarterback calls in the huddle: the formation, the pass concept and the protection. Every player's job comes from it."
+    aliases: [call, the call]
+    see: [offensive-formation, pass-concept, pass-protection]
+    reviewed: false
+
+  - id: offensive-formation
+    term: Offensive formation
+    category: offense
+    batch: 3
+    definition: Where each offensive player lines up before the snap, named in the play call (for example Gun Trips or I-formation).
+    aliases: [set]
+    see: [formation-strength, legal-formation]
+    reviewed: false
+
+  - id: pass-concept
+    term: Pass concept
+    category: offense
+    batch: 3
+    definition: The set of routes the receivers run together on a pass play, with the quarterback's read and progression.
+    aliases: [concept, pass play]
+    see: [progression]
+    reviewed: false
+
+  - id: pass-protection
+    term: Pass protection
+    category: offense
+    batch: 3
+    definition: Which players stay in to block on a pass play and whom each one blocks.
+    aliases: [protection, pass pro]
+    see: [five-man-protection, slide-protection, check-release]
+    reviewed: false
+
+  - id: offensive-line
+    term: Offensive line
+    category: offense
+    batch: 3
+    definition: The five linemen on the line of scrimmage (left tackle, left guard, center, right guard, right tackle). They block and are ineligible receivers.
+    aliases: [OL, line, linemen, O-line]
+    see: [ineligible-receiver]
+    reviewed: false
+
+  - id: center
+    term: Center
+    category: offense
+    batch: 3
+    definition: The lineman in the middle who snaps the ball to the quarterback, then blocks.
+    aliases: [C]
+    see: [offensive-line]
+    reviewed: false
+
+  - id: guard
+    term: Guard
+    category: offense
+    batch: 3
+    definition: The linemen on each side of the center, the left guard and the right guard.
+    aliases: [LG, RG, left guard, right guard]
+    see: [offensive-line]
+    reviewed: false
+
+  - id: offensive-tackle
+    term: Tackle
+    category: offense
+    batch: 3
+    definition: The linemen outside each guard, the left tackle and the right tackle; the end men of the offensive line.
+    aliases: [LT, RT, left tackle, right tackle, OT]
+    see: [offensive-line]
+    reviewed: false
+
+  - id: quarterback
+    term: Quarterback
+    category: offense
+    batch: 3
+    definition: The player who takes the snap, calls the play in the huddle, and passes, hands off or runs.
+    aliases: [QB]
+    see: [play-call, pre-snap-routine]
+    reviewed: false

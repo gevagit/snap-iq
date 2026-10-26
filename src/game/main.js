@@ -5,12 +5,14 @@ import { parsePlayContent } from '../play/content';
 import { makeRep, grade, recordRep, finishWorkout, newProgress, rank, catchPoint, withChanges, routeMenu, emptyAnswers, posAt } from './drill';
 import { explain, CORNER_LABEL } from './explain';
 import { createEyes, sceneFor, setThrow, setRun, SHAPES } from './eyes.js';
-import { drawBoard } from './board.js';
+import { drawBoard, drawCall } from './board.js';
+import { callSheet } from './call';
 
 const C = parsePlayContent(raw);
 const R = C.drills.routine;
 const TERMS = new Map(raw.glossary.terms.map((t) => [t.id, t]));
 const term = (id) => (TERMS.get(id) ? TERMS.get(id).term : id);
+const def = (id) => (TERMS.get(id) ? TERMS.get(id).definition : '');
 const lower = (s) => (/^Cover \d/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1));
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
@@ -92,9 +94,70 @@ function nextRep() {
   const callText = `${rep.play.offense.formation.name} · ${C.concepts.concepts.find((c) => c.id === rep.call.concept).name} · ${C.protections.protections.find((p) => p.id === rep.call.protection).name}`;
   $('hudCall').textContent = callText;
   clock.t = -scene.rep.play.sim.dt / 2;
-  eyes.draw(clock.t);
-  routine();
+  showCall();
 }
+
+// ---------------------------------------------------------------- the call: the huddle, top-down (PRD §7.5 Learn)
+// Everyone's job comes from the call alone (src/game/call.ts). Once he breaks the huddle he has to remember it.
+const LINE = ['LT', 'LG', 'C', 'RG', 'RT'];
+let call = null;
+function showCall() {
+  const sheet = callSheet(C, rep);
+  call = { sheet, focus: null, hit: null };
+  $('callRep').textContent = `Play ${session.i} of ${R.reps} · ${term('play-call')}`;
+  $('callName').textContent = `${sheet.formation} · ${sheet.concept.name} · ${sheet.protection.name}`;
+  $('callConcept').textContent = `${sheet.concept.name}: ${def(sheet.concept.term)}`;
+  const byId = (id) => sheet.rows.find((r) => r.id === id);
+  const job = (r) => (r.job === 'block' ? 'Stays in to block' : term(r.term));
+  const btn = (key, who, title, sub, read) =>
+    `<button type="button" data-key="${key}" aria-pressed="false"><span class="who">${who}</span><span class="what"><b>${esc(title)}</b><span>${esc(sub)}</span></span>${read ? `<span class="read">${read}</span>` : '<span></span>'}</button>`;
+  const qb = byId('QB');
+  const skill = sheet.rows.filter((r) => r.id !== 'QB' && !LINE.includes(r.id)).sort((a, b) => (a.read ?? 99) - (b.read ?? 99) || ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+  const order = sheet.rows.filter((r) => r.read).sort((a, b) => a.read - b.read).map((r) => `${r.read} ${r.id}`).join(', ');
+  $('roster').innerHTML =
+    '<h4>Receivers and backs</h4>' +
+    skill.map((r) => btn(r.id, `${SHAPES[r.id] || ''} ${r.id}`, job(r), `${term(r.position)} · #${r.number}`, r.read)).join('') +
+    '<h4>You</h4>' + btn('QB', 'QB', term(qb.term), `${term('quarterback')} · #${qb.number} · read ${order}`, null) +
+    '<h4>Line</h4>' + btn('LINE', 'OL', `Blocks: ${sheet.protection.name}`, `${term('offensive-line')} · ${LINE.join(' ')}`, null);
+  for (const b of $('roster').querySelectorAll('button')) b.addEventListener('click', () => focusCall(b.dataset.key));
+  focusCall(null);
+  show('call');
+  requestAnimationFrame(drawCallBoard);
+}
+function drawCallBoard() { if (call) call.hit = drawCall($('callBoard'), rep, call.sheet, call.focus === 'LINE' ? LINE : call.focus); }
+function focusCall(key) {
+  const sheet = call.sheet;
+  call.focus = key && call.focus !== key ? key : null;
+  for (const b of $('roster').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.key === call.focus));
+  const r = sheet.rows.find((x) => x.id === call.focus);
+  const concept = C.concepts.concepts.find((c) => c.id === rep.call.concept);
+  const P = (t, d) => `<p><b>${esc(t)}:</b> ${esc(d)}</p>`;
+  let html;
+  if (!call.focus) html = P(term('play-call'), def('play-call')) + '<p>Tap a player or a line on the list to see his job. You won\'t see this sheet again once you break the huddle.</p>';
+  else if (call.focus === 'LINE') html = P(term('offensive-line'), def('offensive-line')) + P(sheet.protection.name, def(sheet.protection.term));
+  else if (r.job === 'qb') html = P(term(r.position), def(r.position)) + P(term(r.term), def(r.term)) + P(`Your key: ${term(concept.read.key)}`, def(concept.read.key)) + P(term('progression'), def('progression'));
+  else {
+    html = P(`${r.id}, ${term(r.position)}`, def(r.position));
+    if (r.job === 'route') html += P(term(r.term), def(r.term)) + (r.read ? `<p>Your read number ${r.read}.</p>` : '<p>Not in your read order.</p>');
+    else if (r.job === 'check') html += P(term(r.term), def(r.term));
+    else html += P(term(r.term), def(r.term));
+  }
+  $('callInfo').innerHTML = html;
+  drawCallBoard();
+}
+$('callBoard').addEventListener('click', (e) => {
+  if (!call || !call.hit) return;
+  const b = $('callBoard').getBoundingClientRect();
+  const id = call.hit(e.clientX - b.left, e.clientY - b.top);
+  if (id) focusCall(LINE.includes(id) ? 'LINE' : id);
+});
+$('breakBtn').addEventListener('click', () => {
+  call = null;
+  show('rep');
+  eyes.resize(); eyes.draw(clock.t);
+  routine();
+});
+$('callQuit').addEventListener('click', () => endWorkout());
 
 // ---------------------------------------------------------------- his head: drag on the field to look left and right
 let drag = null;
@@ -349,7 +412,7 @@ function endWorkout() {
 }
 $('wrapDone').addEventListener('click', () => { session = null; show('home'); renderHome(); });
 
-window.addEventListener('resize', () => { if ($('rep').classList.contains('on')) { eyes.resize(); eyes.draw(clock.t); } });
+window.addEventListener('resize', () => { if ($('rep').classList.contains('on')) { eyes.resize(); eyes.draw(clock.t); } if ($('call').classList.contains('on')) drawCallBoard(); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (scene) eyes.draw(clock.t); });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => { /* offline install is optional */ });
 renderHome();

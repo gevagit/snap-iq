@@ -84,7 +84,7 @@
 | **End of half** | The last plays before halftime or the end of the game, when the clock and timeouts decide between a shot downfield, a sideline throw and a spike. | end of game |
 | **Clock running** | Whether the game clock is running at the snap. A running clock in the last minutes changes whether to spike, hurry or let time run. | clock stopped |
 
-### Offense (batch 2) - personnel, formations, motion, routes, concepts, protections (54)
+### Offense (batch 2) - personnel, formations, motion, routes, concepts, protections (62)
 
 | Term | Meaning | Also called |
 | --- | --- | --- |
@@ -142,6 +142,14 @@
 | **Big-on-big protection** | Six-man protection - the five linemen block the five most dangerous linemen and linebackers, and the back takes the first linebacker or defensive back to blitz on his side. | BOB, man protection |
 | **Five-man protection** | Only the five linemen block, so every eligible player runs a route. A sixth rusher must be beaten by a hot route. | empty protection, five-man |
 | **Hot route** | A quick throw, usually a slant, flat or hitch, used when there are more rushers than blockers and one comes free. | hot, sight adjust |
+| **Offensive formation** | Where each offensive player lines up before the snap, named in the play call (for example Gun Trips or I-formation). | set |
+| **Pass concept** | The set of routes the receivers run together on a pass play, with the quarterback's read and progression. | concept, pass play |
+| **Pass protection** | Which players stay in to block on a pass play and whom each one blocks. | protection, pass pro |
+| **Offensive line** | The five linemen on the line of scrimmage (left tackle, left guard, center, right guard, right tackle). They block and are ineligible receivers. | OL, line, linemen, O-line |
+| **Center** | The lineman in the middle who snaps the ball to the quarterback, then blocks. | C |
+| **Guard** | The linemen on each side of the center, the left guard and the right guard. | LG, RG, left guard, right guard |
+| **Tackle** | The linemen outside each guard, the left tackle and the right tackle; the end men of the offensive line. | LT, RT, left tackle, right tackle, OT |
+| **Quarterback** | The player who takes the snap, calls the play in the huddle, and passes, hands off or runs. | QB |
 
 ### Defense (batch 2) - fronts, positions, shells, coverages, rotations, pressures (55)
 
@@ -203,7 +211,7 @@
 | **Travel** | A defender following a motioning player across the formation - a man coverage tell. | travels |
 | **Bump** | Defenders sliding over a gap or two as a motioning player passes, without following him - a zone coverage tell. | bumps, slide over |
 
-### Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions (12)
+### Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions (13)
 
 | Term | Meaning | Also called |
 | --- | --- | --- |
@@ -219,6 +227,7 @@
 | **Escape lane** | The way out of a breaking pocket. For a left-handed quarterback usually to his left (his throwing hand), unless the rush threat is greater on that side. | escape route |
 | **Quarterback run** | The quarterback keeps the ball and runs when no receiver is open and there is room in front of him. | keep, scramble, QB run |
 | **Route adjustment** | Changing a receiver's route at the line before the snap. In SNAP IQ he may change up to two routes per play. | route change, route tag |
+| **Play call** | The play the quarterback calls in the huddle: the formation, the pass concept and the protection. Every player's job comes from it. | call, the call |
 
 ---
 

@@ -4,6 +4,7 @@ import { parsePlayContent } from '../src/play/content';
 import { callReviewed, emptyAnswers, finishWorkout, grade, makeRep, newProgress, progression, rank, recordRep, rng, routeMenu, withChanges, type Answers, type Rep } from '../src/game/drill';
 import { buildPlay } from '../src/play';
 import { explain } from '../src/game/explain';
+import { callSheet } from '../src/game/call';
 
 const raw = loadRawContent();
 const c = parsePlayContent(raw);
@@ -151,5 +152,37 @@ describe('Pre-snap routine game', () => {
     expect(p.streak).toBe(1);
     expect(rank(c, 0).name).toBe(c.drills.ranks[0]![1]);
     expect(rank(c, 1e6).next).toBeNull();
+  });
+});
+
+describe('The play call (the huddle)', () => {
+  it('gives every player a glossary position and a job from the call alone', () => {
+    for (let i = 0; i < 24; i++) {
+      const rep = makeRep(c, 'jv', 11, i, true)!;
+      const sheet = callSheet(c, rep);
+      expect(sheet.rows.map((r) => r.id).sort()).toEqual(rep.play.offense.players.map((p) => p.id).sort());
+      for (const r of sheet.rows) {
+        expect(terms.has(r.position), r.position).toBe(true);
+        expect(terms.has(r.term), r.term).toBe(true);
+      }
+      const qb = sheet.rows.find((r) => r.id === 'QB')!;
+      expect(qb.term).toBe(rep.routine.drop);
+      for (const r of sheet.rows.filter((x) => x.job === 'route')) expect(r.term).toBe(rep.play.jobs.routes.find((j) => j.id === r.id)!.route);
+      for (const id of ['LT', 'LG', 'C', 'RG', 'RT']) expect(sheet.rows.find((r) => r.id === id)!.job).toBe('block');
+    }
+  });
+
+  it('numbers his reads in the order of the concept progression, from 1', () => {
+    for (let i = 0; i < 24; i++) {
+      const rep = makeRep(c, 'youth', 12, i, true)!;
+      const sheet = callSheet(c, rep);
+      const concept = c.concepts.concepts.find((x) => x.id === rep.call.concept)!;
+      const reads = sheet.rows.filter((r) => r.read).sort((a, b) => a.read! - b.read!);
+      expect(reads.map((r) => r.read)).toEqual(reads.map((_, k) => k + 1));
+      const routeOf = (r: (typeof reads)[number]) => (r.job === 'check' ? 'check-release' : r.term);
+      const idx = reads.map((r) => concept.read.progression.indexOf(routeOf(r)));
+      expect(idx.every((v) => v >= 0)).toBe(true);
+      expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    }
   });
 });
