@@ -17,48 +17,68 @@ field:
     optional: true
     height: 2                   # 6 ft
     top_from_sideline: 9        # 27 ft
-    confirm: From field-builder guides; confirm against the NFHS field diagram.
+    notes: Default in use (field-builder guides).
   goal_post:
     crossbar_height: 3.3333     # 10 ft
     uprights_inside_width: 7.7778   # 23 ft 4 in
     on: end_line
-  reviewed: false
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 
 ball_spots:
   left_hash: { x_from_left_sideline: 17.7778 }
   middle: { x_from_left_sideline: 26.6667 }
   right_hash: { x_from_left_sideline: 35.5556 }
-  reviewed: false
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 
 landmarks:
   - id: sidelines
     rule: "Left sideline x = -(ball distance from the left sideline); right sideline x = field width minus that distance."
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: hashes
     rule: "Each hash is 17.78 yd in from its sideline."
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: numbers
     rule: "Number centres 8 yd in from each sideline (tops 9 yd, 2 yd tall), on each 10-yard line."
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: field-and-boundary
     rule: "On a hash, the field side is the side with more width; the boundary side has less. In the middle there is neither."
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: free-blocking-zone
     rule: "4 yd either side of the ball, 3 yd behind each line of scrimmage; set at the snap."
     half_width: 4
     depth_behind_each_line: 3
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: box
     rule: "Laterally from 1 yd outside the end man on the line on each side; deep from the defense's line to the box depth."
     outside_end_man: 1
     depth: 6
     notes: "Owner 2026-10-26: Sahar's coach does not count the box, but Sahar should; the game uses 1 yd outside the end man, 6 yd deep."
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: apex
     rule: "Midpoint between the end man on the line and #2 on that side, at linebacker depth."
     depth: 4.5
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: receiver-numbering
     rule: "On each side of the ball, count eligible receivers from the sideline in: #1, #2, #3. A back aligned directly behind the ball counts to neither side until he releases."
-    confirm: "How Sahar's team counts a back (as #3 or #4, or not until he releases)."
-    reviewed: false
+    notes: "Default in use: a back behind the ball counts to neither side until he releases."
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

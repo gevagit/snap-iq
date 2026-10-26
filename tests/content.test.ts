@@ -14,11 +14,12 @@ describe('Football Bible content (batch 1)', () => {
     expect(r.counts.rules).toBeGreaterThan(15);
   });
 
-  it('starts every entry unreviewed until the owner signs off', () => {
+  it('records the owner sign-off on batch 1 (defaults accepted)', () => {
     const r = validateContent(raw);
-    const g = raw.glossary as { terms: { reviewed: boolean }[] };
-    expect(g.terms.every((t) => t.reviewed === false)).toBe(true);
-    expect(r.counts.needsReview).toBeGreaterThan(0);
+    const g = raw.glossary as { terms: { reviewed: boolean; reviewer?: string }[] };
+    expect(g.terms.every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
+    expect(r.counts.needsReview).toBe(0);
+    expect(r.counts.toConfirm).toBe(0);
   });
 
   it('rejects a duplicate glossary id', () => {
@@ -44,8 +45,8 @@ describe('Football Bible content (batch 1)', () => {
 
   it('rejects a reviewed entry with no reviewer', () => {
     const bad = clone(raw);
-    const g = bad.glossary as { terms: { reviewed: boolean }[] };
-    g.terms[0]!.reviewed = true;
+    const g = bad.glossary as { terms: { reviewed: boolean; reviewer?: string }[] };
+    delete g.terms[0]!.reviewer;
     expect(validateContent(bad).errors.some((e) => e.includes('reviewer'))).toBe(true);
   });
 

@@ -55,7 +55,7 @@ export const Rule = z
     terms: z.array(Id).min(1),
     check: z
       .object({
-        status: z.enum(['rule-book', 'search-summary', 'needs-confirm']),
+        status: z.enum(['rule-book', 'search-summary', 'default', 'needs-confirm']),
         note: z.string().optional(),
         sources: z.array(Source).min(1),
       })
@@ -64,8 +64,8 @@ export const Rule = z
   })
   .strict()
   .refine(reviewComplete, reviewMessage)
-  .refine((r) => r.check.status !== 'needs-confirm' || Boolean(r.check.note), {
-    message: 'needs-confirm must say what to confirm (check.note)',
+  .refine((r) => !['needs-confirm', 'default'].includes(r.check.status) || Boolean(r.check.note), {
+    message: 'needs-confirm and default must say what (check.note)',
   });
 export type Rule = z.infer<typeof Rule>;
 
@@ -108,7 +108,7 @@ export const Geometry = z
         hash_mark_length: z.number(),
         line_width: z.number(),
         yard_lines_every: z.number(),
-        numbers: z.object({ optional: z.boolean(), height: z.number(), top_from_sideline: z.number(), confirm: z.string().optional() }).strict(),
+        numbers: z.object({ optional: z.boolean(), height: z.number(), top_from_sideline: z.number(), confirm: z.string().optional(), notes: z.string().optional() }).strict(),
         goal_post: z.object({ crossbar_height: z.number(), uprights_inside_width: z.number(), on: z.literal('end_line') }).strict(),
         ...Review,
       })

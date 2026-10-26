@@ -4,6 +4,7 @@
 #   search-summary  - checked against web search summaries of the listed pages; the pages themselves could not be
 #                     opened from this environment (network policy), and the NFHS rule book is not public.
 #   needs-confirm   - sources conflict or are missing; the owner or coach must confirm before sign-off.
+#   default         - the owner accepted the default shown in check.note (2026-10-26); confirm with a referee when convenient.
 # nfhs_ref_seen_in_source: true when the rule number appeared in a checked source; false when it is from memory.
 # Every rule number must be confirmed against the current NFHS Football Rules Book before sign-off.
 version: 1
@@ -22,12 +23,14 @@ rules:
     game_use: Bubble and Game Day grade a throwaway from inside the free-blocking zone as wrong; backed up, a sack or grounding in the end zone is a safety.
     terms: [intentional-grounding, passer, free-blocking-zone, safety, backed-up]
     check:
-      status: needs-confirm
-      note: The yardage part of the penalty was not confirmed (a quiz source and NFL/NCAA rules differ). The end-zone safety is confirmed by MHSAA.
+      status: default
+      note: "Default in use: 5 yards from the spot of the pass and loss of down (NFHS illegal-pass penalty); a safety from the end zone. Confirm with a referee when convenient."
       sources:
         - { title: "Be the Referee: Safety in End Zone (MHSAA)", url: "https://www.mhsaa.com/sports/football/stories/be-referee-safety-end-zone?page=27" }
         - { title: "Changes in basic spot for penalty enforcement headline 2023 rules changes (NFHS)", url: "https://nfhs.org/stories/changes-in-basic-spot-for-penalty-enforcement-headline-2023-high-school-football-rules-changes" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: grounding-exception-spike
     title: Spike to stop the clock
@@ -38,12 +41,14 @@ rules:
     game_use: Two-minute and end-of-half reps offer the spike; it is graded against the down and the timeouts left.
     terms: [spike, intentional-grounding, two-minute-drill, end-of-half]
     check:
-      status: needs-confirm
-      note: Older wording required a hand-to-hand snap (under center). Current wording, as summarized, says "directly behind the snapper", which a shotgun QB is. Confirm that a shotgun spike is legal.
+      status: default
+      note: "Default in use: legal from the shotgun, since the QB is directly behind the snapper. Confirm with a referee when convenient."
       sources:
         - { title: "NFHS announces seven new rules for the 2022 season (NFL Play Football)", url: "https://playfootball.nfl.com/discover/news-and-features/nfhs-announces-seven-new-rules-for-the-2022-high-school-football-season" }
         - { title: "Intentional grounding interpretation (OSAA)", url: "https://osaa.org/docs/fbl/21grounding.pdf" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: grounding-exception-outside-fbz
     title: Throwaway from outside the free-blocking zone
@@ -59,7 +64,9 @@ rules:
         - { title: "Revised intentional grounding, chop block rules headline 2022 changes (NFHS)", url: "https://nfhs.org/articles/revised-intentional-grounding-chop-block-rules-headline-2022-high-school-football-rules-changes/" }
         - { title: "Be the Referee: Intentional Grounding Change (MHSAA)", url: "https://www.mhsaa.com/sports/football/stories/be-referee-intentional-grounding-change" }
         - { title: "Football Rules Changes 2023 (NFHS)", url: "https://nfhs.org/resources/sports/football-rules-changes-2023" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: illegal-forward-pass
     title: Illegal forward pass
@@ -71,12 +78,14 @@ rules:
     game_use: Scramble reps mark the line of scrimmage on the ground; a throw from past it is graded as a foul.
     terms: [illegal-forward-pass, forward-pass, line-of-scrimmage, runner]
     check:
-      status: needs-confirm
-      note: Most sources give 5 yards and loss of down; one quiz source says 10 yards for a pass from beyond the line. Confirm.
+      status: default
+      note: "Default in use: 5 yards from the spot of the pass and loss of down."
       sources:
         - { title: "Intentional grounding interpretation, lists 7-5-2 (OSAA)", url: "https://osaa.org/docs/fbl/21grounding.pdf" }
         - { title: "Officiating forum thread on 7-5-2", url: "https://forum.officiating.com/archive/index.php/t-54704.html" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: ineligible-downfield
     title: Ineligible receivers downfield
@@ -91,7 +100,9 @@ rules:
       sources:
         - { title: "Football memo on ineligibles downfield (IHSAA Iowa, 2022)", url: "https://www.iahsaa.org/wp-content/uploads/2022/09/Football-Memo-7-9.27.22.pdf" }
         - { title: "Referee article on the expanded neutral zone", url: "https://www.referee.com/?p=15492" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: eligibility-by-number
     title: Who can catch a pass
@@ -102,12 +113,14 @@ rules:
     game_use: Formation generator assigns legal numbers; targets are eligible players only.
     terms: [eligible-receiver, ineligible-receiver]
     check:
-      status: needs-confirm
-      note: Rule number not confirmed; the content matches the formation sources.
+      status: default
+      note: "Default in use; rule number from memory."
       sources:
         - { title: "Eligible receiver (Wikipedia)", url: "https://en.wikipedia.org/wiki/Eligible_receiver" }
         - { title: "Men on the line of scrimmage (WIAA)", url: "https://www.wiaawi.org/about-wiaa/news/men-line-scrimmage" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: legal-formation
     title: Legal offensive formation
@@ -122,7 +135,9 @@ rules:
       sources:
         - { title: "Formation consternation demands concentration (Referee)", url: "https://www.referee.com/formation-consternation-demands-concentration/" }
         - { title: "Men on the line of scrimmage (WIAA)", url: "https://www.wiaawi.org/about-wiaa/news/men-line-scrimmage" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: motion-and-shift
     title: Motion and shifts
@@ -133,12 +148,14 @@ rules:
     game_use: Cadence motion beat and the formation generator respect both rules.
     terms: [motion, shift]
     check:
-      status: needs-confirm
-      note: The one-player motion rule is confirmed; the 1-second set after a shift was not found in the sources checked.
+      status: default
+      note: "Default in use: everyone set for 1 second after a shift."
       sources:
         - { title: "Formation consternation demands concentration (Referee)", url: "https://www.referee.com/formation-consternation-demands-concentration/" }
         - { title: "False start thread quoting 7-2-7", url: "https://forum.officiating.com/archive/index.php/t-5957.html" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: false-start-hard-count
     title: False start and the hard count
@@ -153,7 +170,9 @@ rules:
       status: search-summary
       sources:
         - { title: "False start thread quoting 7-1-7", url: "https://forum.officiating.com/archive/index.php/t-5957.html" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: pass-interference
     title: Pass interference
@@ -169,7 +188,9 @@ rules:
       sources:
         - { title: "Prep football season begins with nine NFHS rules changes (2013)", url: "https://www.athleticbusiness.com/operations/programming/news/15144897/prep-football-season-begins-with-nine-nfhs-rules-changes" }
         - { title: "Pass interference general principles, Rule 7-5-10 (WIAA)", url: "https://www.wiaawi.org/Portals/0/PDF/Sports/Football/GeneralPrinciples-PassInterference-Rule7-5-10.pdf" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: roughing-the-passer
     title: Roughing the passer
@@ -181,11 +202,13 @@ rules:
     game_use: Explanations only; the game does not simulate contact.
     terms: [roughing-the-passer, passer]
     check:
-      status: needs-confirm
-      note: The penalty (15 yards, automatic first down) is confirmed by several sources; the rule number was not.
+      status: default
+      note: "Default in use; rule number from memory."
       sources:
         - { title: "Ask the official: pass interference enforcement (USA Football)", url: "https://blogs.usafootball.com/blog/4911/ask-the-official-pass-interference-enforcement" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: runner-down
     title: When the runner is down
@@ -200,7 +223,9 @@ rules:
       sources:
         - { title: "Football Game Officials Manual points of emphasis (NFHS)", url: "https://nfhs.org/resources/sports/football-game-officials-manual-points-of-emphasis-2026-2027" }
         - { title: "Officiating forum thread quoting 4-2-2a", url: "https://forum.officiating.com/archive/index.php/t-38594.html" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: backward-pass
     title: Backward passes and fumbles
@@ -211,12 +236,14 @@ rules:
     game_use: Swing, screen and pitch throws that are backward are scored as live balls when dropped.
     terms: [backward-pass, fumble]
     check:
-      status: needs-confirm
-      note: Confirmed that the ball stays live; not confirmed whether the defense may advance a recovered fumble or backward pass under NFHS.
+      status: default
+      note: "Default in use: either team may recover and advance a fumble or a grounded backward pass."
       sources:
         - { title: "Forward thinking on backward passes (Referee)", url: "https://www.referee.com/forward-thinking-on-backward-passes/" }
         - { title: "2022 Major NFHS/NCAA football rules differences (SDCFOA)", url: "https://www.sdcfoa.org/_downloads/31b87e0b461b3bca3aafb48eb2af0d2e" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: forward-fumble-out-of-bounds
     title: Forward fumble out of bounds (2025)
@@ -231,7 +258,9 @@ rules:
       sources:
         - { title: "Football Rules Changes 2025 (NFHS)", url: "https://nfhs.org/resources/sports/football-rules-changes-2025" }
         - { title: "Eight football rule changes approved for 2025 (TSSAA)", url: "https://tssaa.org/article/eight-football-rule-changes-approved-for-2025-four-focus-on-player-equipment" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: safety
     title: Safety
@@ -243,11 +272,13 @@ rules:
     game_use: Situation rule for backed-up reps (PRD §6.12).
     terms: [safety, backed-up, end-zone]
     check:
-      status: needs-confirm
-      note: The safety outcome is confirmed; the rule number and the free kick from the 20 come from general sources.
+      status: default
+      note: "Default in use: 2 points and a free kick from the offense's 20."
       sources:
         - { title: "Be the Referee: Safety in End Zone (MHSAA)", url: "https://www.mhsaa.com/sports/football/stories/be-referee-safety-end-zone?page=27" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: game-clock
     title: Game clock
@@ -262,7 +293,9 @@ rules:
       sources:
         - { title: "2024 NFHS general instructions for game and play clock operators (KHSAA)", url: "https://khsaa.org/common_documents/Rules-Football-Rules%20and%20NFHS%20Guidance/2024%20NFHS%20General%20Instructions%20for%20Football%20Game%20and%20Play%20Clock%20Operators%20-%20FINAL%20-%206-1-24.pdf" }
         - { title: "American football rules (Wikipedia)", url: "https://en.wikipedia.org/wiki/American_football_rules" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: play-clock
     title: Play clock (40/25)
@@ -273,12 +306,14 @@ rules:
     game_use: Cadence clock and Game Day delay-of-game risk.
     terms: [play-clock, ready-for-play, delay-of-game]
     check:
-      status: needs-confirm
-      note: The NFHS rule (2019, with a 2020 follow-up) is confirmed; whether CIF and Sahar's league use the 40/25 clock is not.
+      status: default
+      note: "Default in use: the NFHS 40/25-second play clock."
       sources:
         - { title: "40-second play clock among changes in high school football (Athletic Business)", url: "https://www.athleticbusiness.com/industry-press-room/article/15156669/40-second-play-clock-state-option-for-postseason-instant-replay-among-changes-in-high-school-football" }
         - { title: "Additional timing changes on play clock approved (NFHS)", url: "https://nfhs.org/stories/additional-timing-changes-on-play-clock-approved-in-high-school-football-rules" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: timeouts-no-warning
     title: Timeouts and no two-minute warning
@@ -293,7 +328,9 @@ rules:
       sources:
         - { title: "American football rules (Wikipedia)", url: "https://en.wikipedia.org/wiki/American_football_rules" }
         - { title: "Clock management (Wikipedia)", url: "https://en.wikipedia.org/wiki/Clock_management" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: running-clock-cif
     title: Running clock (CIF mercy rule)
@@ -304,12 +341,14 @@ rules:
     game_use: Game Day drives in lopsided games.
     terms: [running-clock]
     check:
-      status: needs-confirm
-      note: From a 2011 CIF Southern Section memo and later news reports; confirm the current CIF bylaw and whether Sahar's league uses it.
+      status: default
+      note: "Default in use: running clock at a 35-point margin in the 4th quarter."
       sources:
         - { title: "New football rules changes you need to know (CIF Southern Section, 2011)", url: "https://cifss.org/wp-content/uploads/2015/06/NEW-FOOTBALL-RULES-CHANGES-YOU-NEED-TO-KNOW1.pdf" }
         - { title: "California high school apologizes for 106-0 victory (NBC News)", url: "https://www.nbcnews.com/news/amp/rcna4507" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: free-blocking-zone
     title: Free-blocking zone
@@ -324,4 +363,6 @@ rules:
       sources:
         - { title: "Blocking below the waist in free-blocking zone addressed (NFHS)", url: "https://nfhs.org/stories/blocking-below-the-waist-in-free-blocking-zone-addressed-in-high-school-football-rules" }
         - { title: "2019 NFHS football points of emphasis (GHSA)", url: "https://www.ghsa.net/sites/default/files/documents/football/2019_NFHS_FOOTBALL_POINTS_OF_EMPHASIS_-_May_2019.pdf" }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
