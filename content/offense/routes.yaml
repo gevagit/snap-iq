@@ -1,0 +1,23 @@
+# Route waypoints, in yards from the receiver's alignment. x is toward his sideline (negative = toward the middle),
+# y is downfield. The movement model (PRD §6.13) runs them at the receiver's speed profile. Batch 2, signed off by the owner with defaults (2026-10-26).
+version: 1
+batch: 2
+sideline_room: 1.5   # no route point closer than this to the sideline
+routes:
+  - { id: go-route, waypoints: [[0.5, 25]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: fade-route, waypoints: [[1.5, 6], [3, 22]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: seam-route, waypoints: [[-0.5, 25]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: hitch-route, waypoints: [[0, 5.5], [-0.5, 4.8]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: stick-route, waypoints: [[0.4, 6], [1.4, 6]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: quick-out-route, waypoints: [[0, 5], [4, 5]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: out-route, waypoints: [[0, 10], [5, 10]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: slant-route, waypoints: [[0, 1.5], [-6, 7]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: flat-route, waypoints: [[1.5, 1.5], [8, 3], [11, 3.3]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: curl-route, waypoints: [[0, 12], [-1, 10.5]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: dig-route, waypoints: [[0, 12], [-12, 12]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: corner-route, waypoints: [[0, 10], [5, 16]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: post-route, waypoints: [[0, 10], [-5, 17]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: shallow-route, waypoints: [[-1, 2], [-16, 3.5]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: sail-route, waypoints: [[0, 9], [4, 12], [8, 12.5]], quick: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: swing-route, waypoints: [[2, 0], [7, 1.5]], quick: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: check-release, waypoints: [[3, 2], [6, 4]], quick: true, check_seconds: 0.9, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }

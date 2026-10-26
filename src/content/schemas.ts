@@ -18,6 +18,8 @@ export const GlossaryTerm = z
     id: Id,
     term: z.string().min(1),
     category: z.string().min(1),
+    /** the Bible batch that added the term (1 when absent) */
+    batch: z.number().int().optional(),
     definition: z.string().min(10),
     aliases: z.array(z.string().min(1)),
     see: z.array(Id).optional(),

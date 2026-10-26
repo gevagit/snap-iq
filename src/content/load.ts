@@ -10,15 +10,22 @@ export const CONTENT_FILES = {
   glossary: 'content/glossary.yaml',
   rules: 'content/rules/nfhs.yaml',
   geometry: 'content/field/geometry.yaml',
+  personnel: 'content/offense/personnel.yaml',
+  formations: 'content/offense/formations.yaml',
+  motions: 'content/offense/motions.yaml',
+  routes: 'content/offense/routes.yaml',
+  concepts: 'content/offense/concepts.yaml',
+  protections: 'content/offense/protections.yaml',
+  fronts: 'content/defense/fronts.yaml',
+  coverages: 'content/defense/coverages.yaml',
+  speeds: 'content/tuning/speeds.yaml',
 } as const;
 export type ContentKey = keyof typeof CONTENT_FILES;
 
 /** Raw parsed YAML for every content file; validation happens in src/validate. */
 export function loadRawContent(root: string = ROOT): Record<ContentKey, unknown> {
   const read = (rel: string) => parse(readFileSync(join(root, rel), 'utf8')) as unknown;
-  return {
-    glossary: read(CONTENT_FILES.glossary),
-    rules: read(CONTENT_FILES.rules),
-    geometry: read(CONTENT_FILES.geometry),
-  };
+  const out = {} as Record<ContentKey, unknown>;
+  for (const key of Object.keys(CONTENT_FILES) as ContentKey[]) out[key] = read(CONTENT_FILES[key]);
+  return out;
 }

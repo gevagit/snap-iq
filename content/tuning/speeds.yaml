@@ -1,0 +1,45 @@
+# Speed profiles (PRD §6.13), set for the high-school level. Starting values signed off by the owner with defaults (2026-10-26).
+# top: top speed (yd/s); tau: how fast he reaches it - distance after t seconds is top*(t - tau*(1 - e^(-t/tau)));
+# delay: reaction time after the snap before he moves. A player already moving keeps his speed and builds from it.
+version: 1
+batch: 2
+profiles:
+  WR: { top: 8.0, tau: 0.6, delay: 0.0 }
+  TE: { top: 7.0, tau: 0.6, delay: 0.05 }
+  RB: { top: 6.5, tau: 0.4, delay: 0.0 }
+  RBrel: { top: 7.0, tau: 0.5, delay: 0.0 }
+  OL: { top: 4.0, tau: 0.3, delay: 0.0 }
+  DL: { top: 6.0, tau: 0.45, delay: 0.0 }
+  DLdrop: { top: 5.5, tau: 0.45, delay: 0.1 }
+  BLZ: { top: 7.5, tau: 0.45, delay: 0.0 }
+  LBdrop: { top: 6.0, tau: 0.45, delay: 0.05 }
+  LBman: { top: 6.5, tau: 0.5, delay: 0.2 }
+  DBrot: { top: 7.0, tau: 0.4, delay: 0.05 }
+  CBbail: { top: 6.8, tau: 0.6, delay: 0.1 }   # opens and runs; was 5.0, too slow to stay over a go route
+  DBman: { top: 6.8, tau: 0.7, delay: 0.2 }
+  DBoff: { top: 6.8, tau: 0.6, delay: 0.3 }
+
+# Which profile each job uses.
+jobs:
+  route-wide-receiver: WR
+  route-tight-end: TE
+  route-back: RBrel
+  back-check: RB
+  pass-set: OL
+  rush: DL
+  blitz: BLZ
+  drop-lineman: DLdrop
+  zone-linebacker: LBdrop
+  zone-corner-deep: CBbail
+  zone-back: DBrot
+  man-linebacker: LBman
+  man-tight: DBman
+  man-off: DBoff
+
+# Before the snap: defenders walk to their alignment (and creep) at `walk`, a defender following a motion man
+# runs at up to `travel`; both re-read the offense `lag` seconds late. motion_tau is the motion man's tau.
+# A defender steps aside when a teammate passes within make_room yards.
+presnap: { walk: 2.5, travel: 7.0, lag: 0.4, accel: 6.0, motion_tau: 0.5, man_tight_within: 3.0, make_room: 1.3 }
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-26"

@@ -1,0 +1,82 @@
+# Pre-snap motion. Batch 2, signed off by the owner with defaults (2026-10-26).
+# The mover is always a back (off the line) - the glossary's motion is one back moving. The engine runs every
+# motion through the movement model and the validator checks the NFHS motion-and-shift rule at the snap:
+# one player moving, not toward the defense's goal line, everyone else set for 1 second.
+#   mover: side (strong | weak | backfield) and pick (innermost-off-line | widest-off-line | back)
+#   needs: conditions for the motion to fit the formation and protection; a call that does not fit is skipped.
+#     clear_of_teammates: the motion path must stay this far from every other player (room to move)
+#   speed: his top speed in the motion (yd/s)
+#   path: the motion's shape. x is measured from the ball toward the mover's own side, depth behind the line;
+#     inward is yards toward the ball from where he started.
+#       jet / orbit: turn (inward, depth), then any via points, then where he is at the snap (still moving)
+#       lateral: inward, still moving at the snap
+#       return: inward, a turn of radius turn_radius, then back toward where he started; still moving at the snap
+#       out-to-slot: the back moves out to the slot spot on the destination side and sets set_before_snap early
+#   after: post-snap path for a jet or orbit man, [x, y]: x from the ball toward the side he is heading to,
+#     y from the line (negative = behind it). Other movers run the concept's route from where they are.
+#   counts_to: destination - route rules count him on the side he is heading to
+version: 1
+batch: 2
+motions:
+  - id: none
+    name: No motion
+    terms: []
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+  - id: jet-motion
+    name: Jet motion
+    terms: [jet-motion]
+    mover: { side: strong, pick: innermost-off-line }
+    needs: { side_receivers_min: 3, max_from_ball: 12, clear_of_teammates: 1.5 }
+    speed: 7.0
+    path: { kind: jet, turn: { inward: 0.8, depth: 2.6 }, snap: { x: 1.0, depth: 2.6 } }
+    after: [[4, -2.6], [8, -1.2], [11, 0.4]]
+    quick: true
+    counts_to: destination
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+  - id: orbit-motion
+    name: Orbit motion
+    terms: [orbit-motion]
+    mover: { side: strong, pick: innermost-off-line }
+    needs: { side_receivers_min: 3, max_from_ball: 12, qb: [gun], clear_of_teammates: 1.5 }
+    speed: 6.0
+    path: { kind: orbit, turn: { inward: 1.5, depth: 3.5 }, via: [[2.5, 6.8]], snap: { x: 0, depth: 7.0 } }
+    after: [[3, -6.8], [7, -5.2], [11, -3.6]]
+    quick: true
+    counts_to: destination
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+  - id: short-motion
+    name: Short motion
+    terms: [short-motion]
+    mover: { side: strong, pick: widest-off-line }
+    needs: { mover_is_number: 1, clear_of_teammates: 1.5 }
+    speed: 3.0
+    path: { kind: lateral, inward: 3.0 }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+  - id: return-motion
+    name: Return motion
+    terms: [return-motion]
+    mover: { side: weak, pick: innermost-off-line }
+    needs: { clear_of_teammates: 1.5 }
+    speed: 3.5
+    path: { kind: return, inward: 3.0, turn_radius: 0.5, back: 1.5 }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+  - id: back-motion
+    name: Back motion to empty
+    terms: [back-motion, empty]
+    mover: { side: backfield, pick: back }
+    needs: { qb: [gun, pistol], protection_without_back: true, destination_receivers_max: 2, clear_of_teammates: 1.5 }
+    speed: 5.0
+    path: { kind: out-to-slot, destination: strong, set_before_snap: 1.2 }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

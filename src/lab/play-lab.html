@@ -1,0 +1,537 @@
+<title>SNAP IQ Play Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
+<style>
+/* Layout: a coaching board (the play, top-down, Look B) beside the read sheet; the call picker runs across the top. */
+:root {
+  --ground: #E9ECEF;
+  --panel: #FFFFFF;
+  --ink: #1C2430;
+  --ink-2: #5B6573;
+  --rule: #CDD2D9;
+  --off: #1F5FD1;
+  --off-soft: #E3ECFB;
+  --def: #C94A16;
+  --def-soft: #FBEDE6;
+  --ok: #2F7D4F;
+  --ok-soft: #E3F2E8;
+  --bad: #B42318;
+  --bad-soft: #FDECEA;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12161C; --panel: #1A2029; --ink: #E7EBF0; --ink-2: #9AA4B2; --rule: #2E3743;
+    --off: #7FA6F2; --off-soft: #1C2A44; --def: #F08A5D; --def-soft: #3A2219;
+    --ok: #6BCB93; --ok-soft: #173225; --bad: #F97066; --bad-soft: #3B1A18; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12161C; --panel: #1A2029; --ink: #E7EBF0; --ink-2: #9AA4B2; --rule: #2E3743;
+  --off: #7FA6F2; --off-soft: #1C2A44; --def: #F08A5D; --def-soft: #3A2219;
+  --ok: #6BCB93; --ok-soft: #173225; --bad: #F97066; --bad-soft: #3B1A18; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 16px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+header h1 { margin: 0; font-family: var(--font-display); font-weight: 800; font-stretch: 78%; font-size: 24px; letter-spacing: 0.01em; }
+header p { margin: 0; color: var(--ink-2); font-size: 13px; }
+.lab { font-size: 11px; color: var(--ink-2); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+
+/* call picker */
+.picker { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
+.picker-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.group { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; min-width: 0; }
+.group > .lab { width: 100%; }
+.group.o > .lab { color: var(--off); }
+.group.d > .lab { color: var(--def); }
+.field { display: grid; gap: 3px; min-width: 0; }
+.field span { font-size: 12px; color: var(--ink-2); }
+select, button { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 7px; padding: 6px 9px; min-height: 34px; }
+select { max-width: 100%; }
+button { cursor: pointer; font-weight: 600; }
+button:hover, select:hover { border-color: var(--ink-2); }
+:focus-visible { outline: 2px solid var(--off); outline-offset: 2px; }
+button.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.featured { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.notice { display: none; border-radius: 8px; padding: 10px 12px; background: var(--bad-soft); color: var(--ink); border: 1px solid var(--bad); gap: 8px; flex-wrap: wrap; align-items: center; }
+.notice.show { display: flex; }
+.notice b { color: var(--bad); }
+
+/* main */
+.main { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.board { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.board-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; padding: 12px 14px 8px; align-items: baseline; }
+.board-head h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-stretch: 82%; font-size: 21px; text-wrap: balance; }
+.board-head .sub { color: var(--ink-2); font-size: 13px; }
+canvas { display: block; width: 100%; touch-action: manipulation; cursor: pointer; }
+.transport { display: grid; gap: 8px; padding: 10px 14px 14px; }
+.transport-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.time { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 9.5em; }
+.scrub { position: relative; padding-bottom: 18px; }
+.scrub input { width: 100%; accent-color: var(--ink); }
+.ticks { position: absolute; left: 8px; right: 8px; bottom: 0; height: 16px; }
+.ticks span { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.ticks span.snap { color: var(--ink); font-weight: 700; }
+.toggles { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--ink-2); }
+.toggles label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.picked { min-height: 1.4em; font-size: 13px; }
+.picked b { font-weight: 700; }
+
+/* read sheet */
+.sheet { display: grid; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.card h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-stretch: 85%; font-size: 15px; letter-spacing: 0.01em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--rule); color: var(--ink-2); background: var(--panel); }
+.chip.ok { color: var(--ok); border-color: var(--ok); background: var(--ok-soft); }
+.chip.bad { color: var(--bad); border-color: var(--bad); background: var(--bad-soft); }
+.chip.warn { color: var(--def); border-color: var(--def); background: var(--def-soft); }
+dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 5px 12px; }
+dt { color: var(--ink-2); font-size: 13px; }
+dd { margin: 0; font-weight: 600; min-width: 0; }
+dd small { display: block; font-weight: 400; color: var(--ink-2); font-size: 12.5px; }
+ol.prog { margin: 0; padding-left: 1.3em; display: grid; gap: 2px; }
+.jobs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 480px) { .jobs { grid-template-columns: minmax(0, 1fr); } }
+.jobs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px; align-content: start; }
+.jobs li { display: grid; grid-template-columns: 3.6em minmax(0, 1fr); gap: 6px; padding: 2px 4px; border-radius: 5px; cursor: pointer; }
+.jobs li.sel { background: var(--off-soft); }
+.jobs li.d.sel { background: var(--def-soft); }
+.tag { font-weight: 700; font-variant-numeric: tabular-nums; }
+.o .tag { color: var(--off); }
+.d .tag { color: var(--def); }
+ul.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+ul.checks li { display: grid; grid-template-columns: 1.3em minmax(0, 1fr); gap: 6px; }
+ul.checks .mark { font-weight: 800; }
+ul.checks .pass .mark { color: var(--ok); }
+ul.checks .fail .mark { color: var(--bad); }
+ul.checks small { display: block; color: var(--ink-2); }
+.foot { color: var(--ink-2); font-size: 12.5px; max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>SNAP IQ Play Lab</h1>
+    <p>Football Bible batch 2 · every play is built by the game engine from <code>/content</code> and checked against the football invariants · nothing here is reviewed yet</p>
+  </header>
+
+  <section class="picker" aria-label="Choose a play">
+    <div class="featured">
+      <span class="lab">Sample plays</span>
+      <select id="featured" aria-label="Sample plays"></select>
+      <button id="shuffle" type="button">Shuffle a legitimate play</button>
+    </div>
+    <div class="picker-row">
+      <div class="group o">
+        <span class="lab">Offense</span>
+        <label class="field"><span>Formation</span><select id="formation"></select></label>
+        <label class="field"><span>Strength</span><select id="strength"><option value="right">Right</option><option value="left">Left</option></select></label>
+        <label class="field"><span>Motion</span><select id="motion"></select></label>
+        <label class="field"><span>Concept</span><select id="concept"></select></label>
+        <label class="field"><span>Protection</span><select id="protection"></select></label>
+      </div>
+      <div class="group d">
+        <span class="lab">Defense</span>
+        <label class="field"><span>Front</span><select id="front"></select></label>
+        <label class="field"><span>Coverage</span><select id="coverage"></select></label>
+      </div>
+      <div class="group">
+        <span class="lab">Ball</span>
+        <label class="field"><span>Spot</span><select id="spot"></select></label>
+      </div>
+    </div>
+    <div class="notice" id="notice" role="status"></div>
+  </section>
+
+  <div class="main">
+    <section class="board" aria-label="The play, seen from above">
+      <div class="board-head">
+        <h2 id="title">Stick vs Cover 3 Sky</h2>
+        <span class="sub" id="subtitle"></span>
+      </div>
+      <canvas id="field" aria-label="Top-down field showing the play"></canvas>
+      <div class="transport">
+        <div class="transport-row">
+          <button id="playBtn" class="primary" type="button">Play</button>
+          <button id="startBtn" type="button">From the start</button>
+          <button id="snapBtn" type="button">Jump to the snap</button>
+          <label class="field" style="grid-auto-flow: column; align-items: center; gap: 6px;"><span>Speed</span>
+            <select id="speed"><option value="0.25">¼×</option><option value="0.5" selected>½×</option><option value="1">1×</option></select></label>
+          <span class="time" id="time" aria-live="off"></span>
+        </div>
+        <div class="scrub">
+          <input id="scrub" type="range" min="0" max="1" step="0.001" value="0" aria-label="Time in the play">
+          <div class="ticks" id="ticks"></div>
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="tRoutes" checked> Routes</label>
+          <label><input type="checkbox" id="tJobs" checked> Defensive jobs</label>
+          <label><input type="checkbox" id="tTrails" checked> Trails</label>
+          <label><input type="checkbox" id="tRead" checked> His read</label>
+        </div>
+        <div class="picked" id="picked">Tap a player to see his job.</div>
+      </div>
+    </section>
+
+    <aside class="sheet" aria-label="What the play shows">
+      <div class="card">
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="card">
+        <h3>Before the snap</h3>
+        <dl id="pre"></dl>
+      </div>
+      <div class="card">
+        <h3>After the snap</h3>
+        <dl id="post"></dl>
+      </div>
+      <div class="card">
+        <h3>His read</h3>
+        <dl id="read"></dl>
+      </div>
+      <div class="card">
+        <h3>Every player's job</h3>
+        <div class="jobs"><ul id="jobsO" class="o"></ul><ul id="jobsD" class="d"></ul></div>
+      </div>
+      <div class="card">
+        <h3>Football checks</h3>
+        <ul class="checks" id="checks"></ul>
+      </div>
+      <p class="foot">Zone defenders drop to their landmark, then from 0.6 s read the receivers in their zone: underneath defenders wall or sit under the shallowest one, deep defenders stay deeper than the deepest. A solid orange line shows whom each one is playing; a dotted one is a man matchup.</p>
+      <p class="foot">Positions come from the movement model: alignment, path, speed profile and time. Nothing is placed by hand. A call that does not fit (a motion with no one to move, a protection with no back, more rushers than blockers and no hot route) is not a legitimate play and is not drawn. Rules are NFHS.</p>
+    </aside>
+  </div>
+</div>
+
+<script>/*__ENGINE__*/</script>
+<script>
+(function () {
+  'use strict';
+  var L = window.SnapLab;
+  var $ = function (id) { return document.getElementById(id); };
+  var KEYS = ['formation', 'strength', 'motion', 'concept', 'protection', 'front', 'coverage', 'spot'];
+  var CHECK_NAMES = {
+    'eleven-on-eleven': '11 on 11', 'legal-formation': 'Legal formation', 'eligible-receivers': 'Eligible receivers', motion: 'Motion',
+    'set-one-second': 'Set for 1 second', 'neutral-zone': 'Neutral zone', 'in-bounds': 'In bounds', spacing: 'Spacing at the snap',
+    techniques: 'Technique labels', shell: 'Shell label', 'rotation-tag': 'Rotation tag', 'coverage-complete': 'Coverage complete',
+    'hot-answer': 'Hot answer', reachability: 'Reachability (no teleporting)', landmarks: 'Zone landmarks in time', 'ineligible-downfield': 'Ineligibles downfield', 'zone-reaction': 'Zone defenders play their receivers'
+  };
+  // Look B "coaching board" (PRD §15.1), the same in both themes: the field is a picture, not page chrome
+  var B = {
+    oob: '#BAC3BA', turf: ['#CAD4C7', '#C2CDBF'], line: '#FFFFFF', los: '#1F5FD1', num: 'rgba(255,255,255,0.7)', halo: 'rgba(202,212,199,0.9)',
+    oFill: 'rgba(227,236,251,0.78)', oEdge: '#1F5FD1', oText: '#173F8F',
+    dFill: '#FFFFFF', dEdge: '#C94A16', dText: '#8A2E0A', route: 'rgba(31,95,209,0.75)', routeFaint: 'rgba(31,95,209,0.28)',
+    zone: 'rgba(201,74,22,0.55)', read2: 'rgba(201,74,22,0.85)', zoneFill: 'rgba(201,74,22,0.08)', man: 'rgba(201,74,22,0.6)', trailO: 'rgba(31,95,209,0.35)', trailD: 'rgba(201,74,22,0.35)',
+    chipBg: 'rgba(28,36,48,0.86)', chipFg: '#FFFFFF', ball: '#8A5A3C', read: '#1F5FD1'
+  };
+
+  var state = { call: null, view: null, t: 0, playing: false, speed: 0.5, last: 0, sel: null };
+  var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } } };
+
+  // ---------------- picker
+  function fill(id, list) { $(id).innerHTML = list.map(function (o) { return '<option value="' + o.id + '">' + esc(o.name) + '</option>'; }).join(''); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  fill('formation', L.options.formations); fill('motion', L.options.motions); fill('concept', L.options.concepts);
+  fill('protection', L.options.protections); fill('front', L.options.fronts); fill('coverage', L.options.coverages); fill('spot', L.options.spots);
+  $('featured').innerHTML = '<option value="">Choose a sample play…</option>' + L.featured.map(function (f, i) { return '<option value="' + i + '">' + esc(f.title) + '</option>'; }).join('');
+  function readPicker() { var c = {}; KEYS.forEach(function (k) { c[k] = $(k).value; }); return c; }
+  function setPicker(call) { KEYS.forEach(function (k) { $(k).value = call[k]; }); }
+  KEYS.forEach(function (k) { $(k).addEventListener('change', function () { $('featured').value = ''; load(readPicker(), true); }); });
+  $('featured').addEventListener('change', function () { var f = L.featured[Number($('featured').value)]; if (f) { setPicker(f.call); load(f.call, true); } });
+  var seed = (Date.now() % 2147483647) || 1;
+  function rand(n) { seed = (seed * 48271) % 2147483647; return seed % n; }
+  $('shuffle').addEventListener('click', function () {
+    for (var i = 0; i < 200; i++) {
+      var o = L.options, cv = o.coverages[rand(o.coverages.length)];
+      var call = { formation: o.formations[rand(o.formations.length)].id, strength: rand(2) ? 'right' : 'left', motion: o.motions[rand(o.motions.length)].id,
+        concept: o.concepts[rand(o.concepts.length)].id, protection: o.protections[rand(o.protections.length)].id, front: cv.fronts[rand(cv.fronts.length)], coverage: cv.id, spot: o.spots[rand(3)].id };
+      if (L.play(call).ok) { $('featured').value = ''; setPicker(call); load(call, true); return; }
+    }
+  });
+
+  function notice(reason, call) {
+    var n = $('notice');
+    if (!reason) { n.className = 'notice'; n.innerHTML = ''; return; }
+    var near = L.nearest(call);
+    n.innerHTML = '<b>This call does not fit.</b> <span>' + esc(reason) + '.</span>' +
+      (near.length ? ' <span>Try:</span>' + near.map(function (x, i) { return '<button type="button" data-i="' + i + '">' + esc(x.change) + '</button>'; }).join('') : '') +
+      (state.view ? ' <span class="foot">Still showing the last play that fits.</span>' : '');
+    n.className = 'notice show';
+    Array.prototype.forEach.call(n.querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { var c = near[Number(b.dataset.i)].call; setPicker(c); load(c, true); });
+    });
+  }
+
+  function load(call, autoplay) {
+    var r = L.play(call);
+    if (!r.ok) { notice(r.reason, call); return; }
+    notice(null);
+    state.call = call; state.view = r.view; state.sel = null;
+    store.set('snapiq-lab-call', JSON.stringify(call));
+    var v = r.view;
+    state.t0 = v.tStart; state.t1 = (v.steps - v.snapIndex) * v.dt;
+    state.t = state.t0;
+    renderSheet(v);
+    ticks(v);
+    $('picked').textContent = 'Tap a player to see his job.';
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (autoplay && !reduce) play(true); else { play(false); if (reduce) state.t = 0.9; }
+    draw();
+  }
+
+  // ---------------- read sheet
+  function row(dt, dd, small) { return '<dt>' + esc(dt) + '</dt><dd>' + dd + (small ? '<small>' + small + '</small>' : '') + '</dd>'; }
+  function who(role) { var p = playerById(role); return p ? esc(p.label) + ' #' + p.number : esc(role); }
+  function playerById(id) { var ps = state.view.players; for (var i = 0; i < ps.length; i++) if (ps[i].id === id) return ps[i]; return null; }
+  function offName(id) { var p = playerById(id); return p ? (p.label || id) + (p.number ? ' #' + p.number : '') : id; }
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function renderSheet(v) {
+    var a = v.analysis, n = v.names, c = v.call;
+    $('title').textContent = n.concept + ' vs ' + n.coverage;
+    $('subtitle').textContent = n.formation + ' (strength ' + c.strength + '), ' + (c.motion === 'none' ? 'no motion' : n.motion.toLowerCase()) + ', ' + n.protection.toLowerCase() + ' · ' + n.front + ' · ball ' + (c.spot === 'middle' ? 'in the middle' : 'on the ' + c.spot.replace('_', ' '));
+    var failed = v.checks.filter(function (x) { return !x.ok; }).length;
+    $('chips').innerHTML = '<span class="chip">' + (a.tier === 'jv' ? 'JV' : 'Youth') + ' tier</span>' +
+      '<span class="chip warn">Not reviewed (batch 2)</span>' +
+      '<span class="chip ' + (failed ? 'bad' : 'ok') + '">' + (v.checks.length - failed) + ' of ' + v.checks.length + ' checks pass</span>';
+    var side = function (s) { return s + (a.fieldSide ? (a.fieldSide === s ? ' (field)' : ' (boundary)') : ''); };
+    var motionTxt = c.motion === 'none' ? 'None' : esc(n.motion) + ' (' + esc(offName(v.mover)) + ')';
+    var motionSmall = c.motion === 'none' ? '' : (a.motionResponse === 'travel' ? 'A defender travels with him: a man coverage tell.' : 'The defense bumps; no one follows him: a zone coverage tell.');
+    var tells = v.tells.length ? v.tells.map(function (t) { return esc(t.label) + ' #' + t.number + (t.to.end_man_plus !== undefined ? ' creeps toward the edge' : ' creeps to ' + t.to.depth + ' yd') + ', ' + t.start + ' s before the snap'; }).join('<br>') : 'None';
+    $('pre').innerHTML =
+      row('Shell', esc(v.terms.shellPre)) +
+      row('Box count', String(a.boxCount), 'Defenders in the box at the snap.') +
+      row('Defense strength', esc(cap(side(a.defenseStrength)))) +
+      row('Offense strength', esc(cap(side(a.offenseStrength)))) +
+      row('Motion', motionTxt, motionSmall) +
+      row('Tells', tells);
+    var free = a.freeRushers.map(who).join(', ');
+    var back = { none: 'No back in the backfield', route: 'Runs his route', release: 'Checks his gap, then releases', block: 'Stays in to block' }[v.backJob];
+    $('post').innerHTML =
+      row('Coverage', esc(n.coverage) + ' · ' + esc(v.terms.family.toLowerCase()), esc(v.terms.shellPost)) +
+      row('Rotation', v.terms.rotation ? esc(v.terms.rotation) : 'None', v.terms.rotation ? esc(v.terms.shellPre) + ' before the snap, ' + esc(v.terms.shellPost.toLowerCase()) + ' after it.' : '') +
+      row('Rush', a.rushers + ' rushers vs ' + a.blockers + ' blockers', free ? 'Free: ' + free + '.' : 'Everyone is blocked.') +
+      (a.rushers > a.blockers ? row('Hot', a.hot.map(offName).map(esc).join(', ') || 'None', 'More rushers than blockers: the ball comes out to a hot route.') : '') +
+      row('Back', back + '.') +
+      (v.greenDogs.length ? row('Green dog', v.greenDogs.map(who).join(', '), 'His man stayed in, so he rushes.') : '');
+    $('read').innerHTML =
+      row('Key', esc(v.read.key), v.read.defenders.length ? 'Here: ' + v.read.defenders.map(function (d) { return esc(d.label) + ' #' + d.number; }).join(', ') : 'No defender has that job in this coverage.') +
+      row('Order', '<ol class="prog">' + v.read.progression.map(function (s) { return '<li>' + esc(s.route) + ' <span class="tag">' + esc(offName(s.player)) + '</span></li>'; }).join('') + '</ol>');
+    var o = v.players.filter(function (p) { return p.team === 'O' && p.label; });
+    var d = v.players.filter(function (p) { return p.team === 'D'; });
+    $('jobsO').innerHTML = o.map(function (p) { return '<li class="o" data-id="' + p.id + '"><span class="tag">' + esc(p.label) + (p.label !== String(p.number) ? ' ' + p.number : '') + '</span><span>' + esc(jobText(p)) + '</span></li>'; }).join('');
+    $('jobsD').innerHTML = d.map(function (p) { return '<li class="d" data-id="' + p.id + '"><span class="tag">' + esc(p.label) + ' ' + p.number + '</span><span>' + esc(jobText(p)) + '</span></li>'; }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('.jobs li'), function (li) { li.addEventListener('click', function () { select(li.dataset.id); }); });
+    $('checks').innerHTML = v.checks.map(function (x) { return '<li class="' + (x.ok ? 'pass' : 'fail') + '"><span class="mark">' + (x.ok ? '✓' : '✗') + '</span><span>' + esc(CHECK_NAMES[x.id] || x.id) + '<small>' + esc(x.detail) + '</small></span></li>'; }).join('');
+  }
+  function jobText(p) {
+    var j = p.job || '';
+    var z = state.view.zoneReads.filter(function (x) { return x.role === p.id; })[0];
+    if (z && state.t > 0) { var th = z.threat[Math.max(0, Math.min(z.threat.length - 1, Math.round(state.t / state.view.dt)))]; if (th) return j.replace(/-/g, ' ') + ', playing ' + offName(th); }
+    var r = state.view.routes.filter(function (x) { return x.id === p.id; })[0];
+    if (r) return r.name + (r.quick ? ' (quick)' : '');
+    return j.replace(/-/g, ' ');
+  }
+  function select(id) {
+    state.sel = id;
+    Array.prototype.forEach.call(document.querySelectorAll('.jobs li'), function (li) { li.classList.toggle('sel', li.dataset.id === id); });
+    var p = playerById(id);
+    $('picked').innerHTML = p ? '<b>' + esc(p.team === 'O' ? offName(p.id) : p.label + ' #' + p.number) + '</b>: ' + esc(jobText(p)) : '';
+    draw();
+  }
+
+  function ticks(v) {
+    var span = state.t1 - state.t0, out = [];
+    var pct = function (t) { return ((t - state.t0) / span) * 100; };
+    out.push('<span class="snap" style="left:' + pct(0) + '%">Snap</span>');
+    if (v.mover) { var mt = motionStart(v); if (mt !== null && pct(0) - pct(mt) > 9) out.push('<span style="left:' + pct(mt) + '%">Motion</span>'); }
+    v.tells.forEach(function (t) { if (pct(0) - pct(-t.start) > 9) out.push('<span style="left:' + pct(-t.start) + '%">Tell</span>'); });
+    if (pct(1.0) - pct(0) > 9) out.push('<span style="left:' + pct(1.0) + '%">1 s</span>');
+    if (pct(2.0) - pct(0) > 9) out.push('<span style="left:' + pct(2.0) + '%">2 s</span>');
+    $('ticks').innerHTML = out.join('');
+  }
+  function motionStart(v) {
+    var p = playerById(v.mover); if (!p) return null;
+    for (var k = 1; k <= v.snapIndex; k++) if (Math.abs(p.xs[k] - p.xs[0]) + Math.abs(p.ys[k] - p.ys[0]) > 0.02) return v.tStart + (k - 1) * v.dt;
+    return null;
+  }
+
+  // ---------------- transport
+  function play(on) {
+    state.playing = on;
+    $('playBtn').textContent = on ? 'Pause' : 'Play';
+    if (on) { if (state.t >= state.t1 - 1e-6) state.t = state.t0; state.last = performance.now(); requestAnimationFrame(tick); }
+  }
+  function tick(now) {
+    if (!state.playing) return;
+    var dtw = Math.min(0.05, (now - state.last) / 1000); state.last = now;
+    state.t = Math.min(state.t1, state.t + dtw * state.speed);
+    draw();
+    if (state.t >= state.t1) { play(false); return; }
+    requestAnimationFrame(tick);
+  }
+  $('playBtn').addEventListener('click', function () { play(!state.playing); });
+  $('startBtn').addEventListener('click', function () { state.t = state.t0; play(true); });
+  $('snapBtn').addEventListener('click', function () { play(false); state.t = 0; draw(); });
+  $('speed').addEventListener('change', function () { state.speed = Number($('speed').value); });
+  $('scrub').addEventListener('input', function () { play(false); state.t = state.t0 + Number($('scrub').value) * (state.t1 - state.t0); draw(); });
+  ['tRoutes', 'tJobs', 'tTrails', 'tRead'].forEach(function (id) { $(id).addEventListener('change', draw); });
+
+  // ---------------- board
+  var cv = $('field'), ctx = cv.getContext('2d');
+  var Y0 = -9, Y1 = 19, geo = { s: 10, x0: 0 };
+  // show the part of the field the play uses (with room around it), never past the sidelines
+  function extent(v) {
+    var lo = Infinity, hi = -Infinity;
+    v.players.forEach(function (p) { for (var k = 0; k <= v.steps; k += 3) { lo = Math.min(lo, p.xs[k]); hi = Math.max(hi, p.xs[k]); } });
+    v.routes.forEach(function (r) { r.points.forEach(function (q) { lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); });
+    v.landmarks.forEach(function (l) { lo = Math.min(lo, l.at.x - 2); hi = Math.max(hi, l.at.x + 2); });
+    return { lo: Math.max(v.frame.leftSideline - 1, lo - 5), hi: Math.min(v.frame.rightSideline + 1, hi + 5) };
+  }
+  function resize() {
+    var w = cv.clientWidth || 600, dpr = Math.min(2, window.devicePixelRatio || 1);
+    var ex = state.view ? extent(state.view) : { lo: -27.7, hi: 27.7 };
+    var xr = ex.hi - ex.lo;
+    var h = Math.round(w * (Y1 - Y0) / xr);
+    cv.style.height = h + 'px'; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    geo = { s: w / xr, x0: ex.lo, w: w, h: h };
+  }
+  function X(x) { return (x - geo.x0) * geo.s; }
+  function Yp(y) { return (Y1 - y) * geo.s; }
+  function posAt(p, t) {
+    var v = state.view, f = (t - v.tStart) / v.dt;
+    var k = Math.max(0, Math.min(v.steps, Math.floor(f))), k2 = Math.min(v.steps, k + 1), u = Math.max(0, Math.min(1, f - k));
+    return { x: p.xs[k] + (p.xs[k2] - p.xs[k]) * u, y: p.ys[k] + (p.ys[k2] - p.ys[k]) * u };
+  }
+  function drawField(fr) {
+    var s = geo.s;
+    ctx.fillStyle = B.oob; ctx.fillRect(0, 0, geo.w, geo.h);
+    for (var y = Math.floor(Y0 / 5) * 5; y < Y1; y += 5) { ctx.fillStyle = B.turf[((y / 5) % 2 + 2) % 2]; ctx.fillRect(X(fr.leftSideline), Yp(y + 5), (fr.rightSideline - fr.leftSideline) * s, 5 * s); }
+    ctx.strokeStyle = B.line; ctx.lineWidth = Math.max(1, s * 0.12);
+    ctx.strokeRect(X(fr.leftSideline), -2, (fr.rightSideline - fr.leftSideline) * s, geo.h + 4);
+    for (var yl = Math.ceil(Y0 / 5) * 5; yl <= Y1; yl += 5) { ctx.beginPath(); ctx.moveTo(X(fr.leftSideline), Yp(yl)); ctx.lineTo(X(fr.rightSideline), Yp(yl)); ctx.stroke(); }
+    ctx.lineWidth = Math.max(1, s * 0.1);
+    for (var yy = Math.ceil(Y0); yy <= Y1; yy++) {
+      if (yy % 5 === 0) continue;
+      [fr.leftHash, fr.rightHash].forEach(function (hx) { ctx.beginPath(); ctx.moveTo(X(hx) - s * 0.35, Yp(yy)); ctx.lineTo(X(hx) + s * 0.35, Yp(yy)); ctx.stroke(); });
+      [fr.leftSideline + 0.4, fr.rightSideline - 0.4].forEach(function (hx) { ctx.beginPath(); ctx.moveTo(X(hx) - s * 0.3, Yp(yy)); ctx.lineTo(X(hx) + s * 0.3, Yp(yy)); ctx.stroke(); });
+    }
+    // yard numbers: the line of scrimmage is the offense's 35
+    ctx.fillStyle = B.num; ctx.font = '700 ' + Math.round(s * 1.7) + 'px ' + getComputedStyle(document.body).fontFamily; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (var yn = -5; yn <= Y1; yn += 10) {
+      var yard = 35 + yn; var label = String(yard > 50 ? 100 - yard : yard);
+      [fr.numbersLeft, fr.numbersRight].forEach(function (nx) { ctx.fillText(label, X(nx), Yp(yn)); });
+    }
+    ctx.strokeStyle = B.los; ctx.lineWidth = Math.max(1.5, s * 0.18); ctx.beginPath(); ctx.moveTo(X(fr.leftSideline), Yp(0)); ctx.lineTo(X(fr.rightSideline), Yp(0)); ctx.stroke();
+  }
+  function arrow(pts, color, width, dash) {
+    if (!pts || pts.length < 2) return;
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(X(pts[0].x), Yp(pts[0].y)); for (var i = 1; i < pts.length; i++) ctx.lineTo(X(pts[i].x), Yp(pts[i].y)); ctx.stroke(); ctx.setLineDash([]);
+    var a = pts[pts.length - 2], b = pts[pts.length - 1], ang = Math.atan2(-(b.y - a.y), b.x - a.x), L2 = geo.s * 0.8;
+    ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(X(b.x), Yp(b.y));
+    ctx.lineTo(X(b.x) - L2 * Math.cos(ang - 0.45), Yp(b.y) + L2 * Math.sin(ang - 0.45)); ctx.lineTo(X(b.x) - L2 * Math.cos(ang + 0.45), Yp(b.y) + L2 * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+  }
+  function chip(text, x, y, bg, fg) {
+    ctx.font = '600 ' + Math.max(10, Math.round(geo.s * 0.95)) + 'px ' + getComputedStyle(document.body).fontFamily;
+    var w = ctx.measureText(text).width + 10, h = Math.max(15, geo.s * 1.4);
+    ctx.fillStyle = bg; roundRect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill();
+    ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y + 0.5);
+  }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function draw() {
+    var v = state.view; if (!v) return;
+    resize();
+    var t = state.t, s = geo.s, font = getComputedStyle(document.body).fontFamily;
+    drawField(v.frame);
+    var after = t > 0;
+    // routes and the motion path
+    if ($('tRoutes').checked) {
+      if (v.motionPath && !after) arrow(v.motionPath, B.route, Math.max(1, s * 0.13), [s * 0.5, s * 0.35]);
+      v.routes.forEach(function (r) { arrow(r.points, after ? B.route : B.routeFaint, Math.max(1, s * (after ? 0.14 : 0.11)), after ? [] : [s * 0.4, s * 0.3]); });
+    }
+    // defensive jobs: zone landmarks and man matchups
+    if ($('tJobs').checked) {
+      v.landmarks.forEach(function (l) {
+        ctx.strokeStyle = B.zone; ctx.fillStyle = B.zoneFill; ctx.lineWidth = Math.max(1, s * 0.1); ctx.setLineDash([s * 0.35, s * 0.25]);
+        ctx.beginPath(); ctx.ellipse(X(l.at.x), Yp(l.at.y), s * 1.6, s * 1.1, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+        ctx.font = '600 ' + Math.max(9, Math.round(s * 0.8)) + 'px ' + font; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        var zl = l.zone === 'hole' ? 'robber' : l.zone.replace(/-/g, ' ');
+        ctx.strokeStyle = B.halo; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeText(zl, X(l.at.x), Yp(l.at.y) - s * 1.2);
+        ctx.fillStyle = B.dText; ctx.fillText(zl, X(l.at.x), Yp(l.at.y) - s * 1.2);
+      });
+      // after the drop: the receiver each zone defender is playing
+      if (after) v.zoneReads.forEach(function (z) {
+        var j = Math.max(0, Math.min(z.threat.length - 1, Math.round(t / v.dt))), th = z.threat[j];
+        if (!th) return;
+        var d = posAt(playerById(z.role), t), o = posAt(playerById(th), t);
+        ctx.strokeStyle = B.read2; ctx.lineWidth = Math.max(1, s * 0.11);
+        ctx.beginPath(); ctx.moveTo(X(d.x), Yp(d.y)); ctx.lineTo(X(o.x), Yp(o.y)); ctx.stroke();
+      });
+      v.man.forEach(function (m) {
+        var d = posAt(playerById(m.role), t), o = posAt(playerById(m.target), t);
+        if (v.greenDogs.indexOf(m.role) >= 0 && after && t > 0.6) return;
+        ctx.strokeStyle = B.man; ctx.lineWidth = Math.max(1, s * 0.09); ctx.setLineDash([s * 0.15, s * 0.25]);
+        ctx.beginPath(); ctx.moveTo(X(d.x), Yp(d.y)); ctx.lineTo(X(o.x), Yp(o.y)); ctx.stroke(); ctx.setLineDash([]);
+      });
+    }
+    // trails
+    if ($('tTrails').checked) {
+      v.players.forEach(function (p) {
+        var k1 = Math.min(v.steps, Math.floor((t - v.tStart) / v.dt)); if (k1 < 1) return;
+        ctx.strokeStyle = p.team === 'O' ? B.trailO : B.trailD; ctx.lineWidth = Math.max(1, s * 0.12);
+        ctx.beginPath(); ctx.moveTo(X(p.xs[0]), Yp(p.ys[0])); for (var k = 1; k <= k1; k++) ctx.lineTo(X(p.xs[k]), Yp(p.ys[k])); var e = posAt(p, t); ctx.lineTo(X(e.x), Yp(e.y)); ctx.stroke();
+      });
+    }
+    // the ball before the snap
+    if (!after) { ctx.fillStyle = B.ball; ctx.beginPath(); ctx.ellipse(X(0), Yp(0.15), s * 0.18, s * 0.3, 0, 0, Math.PI * 2); ctx.fill(); }
+    // players
+    var r = s * 0.62;
+    v.players.forEach(function (p) {
+      var q = posAt(p, t), o = p.team === 'O';
+      var isRead = $('tRead').checked && v.read.defenders.some(function (d) { return d.role === p.id; });
+      ctx.lineWidth = Math.max(1.2, s * (state.sel === p.id ? 0.24 : 0.14));
+      ctx.fillStyle = o ? B.oFill : B.dFill; ctx.strokeStyle = o ? B.oEdge : B.dEdge;
+      ctx.beginPath(); ctx.arc(X(q.x), Yp(q.y), r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      if (isRead) { ctx.strokeStyle = B.read; ctx.lineWidth = Math.max(1, s * 0.12); ctx.setLineDash([s * 0.3, s * 0.2]); ctx.beginPath(); ctx.arc(X(q.x), Yp(q.y), r * 1.75, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+      if (state.sel === p.id) { ctx.strokeStyle = o ? B.oEdge : B.dEdge; ctx.lineWidth = Math.max(1, s * 0.08); ctx.beginPath(); ctx.arc(X(q.x), Yp(q.y), r * 1.5, 0, Math.PI * 2); ctx.stroke(); }
+      if (p.label) {
+        ctx.fillStyle = o ? B.oText : B.dText; ctx.font = '700 ' + Math.max(8, Math.round(s * (p.label.length > 2 ? 0.62 : 0.78))) + 'px ' + font;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.label, X(q.x), Yp(q.y) + 0.5);
+      }
+    });
+    // free rushers and the read key, after the snap
+    if (after) v.rushers.forEach(function (ru) { if (!ru.blocker) { var q = posAt(playerById(ru.role), t); chip('free', X(q.x), Yp(q.y) - r * 2.1, '#C94A16', '#FFFFFF'); } });
+    if ($('tRead').checked && v.read.defenders.length) { var kd = posAt(playerById(v.read.defenders[0].role), t); chip('key: ' + v.read.key.toLowerCase(), X(kd.x), Yp(kd.y) - r * 2.4, B.read, '#FFFFFF'); }
+    // clock
+    var label = Math.abs(t) < v.dt / 2 ? 'Snap' : t < 0 ? (-t).toFixed(1) + ' s before the snap' : t.toFixed(1) + ' s after the snap';
+    chip(label, 12 + (ctx.measureText(label).width + 12) / 2, 16, B.chipBg, B.chipFg);
+    $('time').textContent = label;
+    $('scrub').value = String((t - state.t0) / (state.t1 - state.t0));
+  }
+  cv.addEventListener('click', function (e) {
+    var v = state.view; if (!v) return;
+    var rect = cv.getBoundingClientRect(), x = (e.clientX - rect.left) / geo.s + geo.x0, y = Y1 - (e.clientY - rect.top) / geo.s;
+    var best = null, bd = 1.6;
+    v.players.forEach(function (p) { var q = posAt(p, state.t), d = Math.hypot(q.x - x, q.y - y); if (d < bd) { bd = d; best = p; } });
+    if (best) select(best.id);
+  });
+  window.addEventListener('resize', draw);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+  // ---------------- start
+  var saved = null;
+  try { saved = JSON.parse(store.get('snapiq-lab-call') || 'null'); } catch (e) { saved = null; }
+  var first = saved && L.play(saved).ok ? saved : L.featured[0].call;
+  if (first === L.featured[0].call) $('featured').value = '0';
+  setPicker(first);
+  load(first, true);
+})();
+</script>
