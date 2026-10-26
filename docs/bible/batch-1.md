@@ -84,6 +84,151 @@
 | **End of half** | The last plays before halftime or the end of the game, when the clock and timeouts decide between a shot downfield, a sideline throw and a spike. | end of game |
 | **Clock running** | Whether the game clock is running at the snap. A running clock in the last minutes changes whether to spike, hurry or let time run. | clock stopped |
 
+### Offense (batch 2) - personnel, formations, motion, routes, concepts, protections (62)
+
+| Term | Meaning | Also called |
+| --- | --- | --- |
+| **Personnel group** | The offense's running backs and tight ends named as two digits, backs first. 11 personnel is 1 back, 1 tight end and 3 receivers; 10 is 1 back and 4 receivers. | personnel, 10 personnel, 11 personnel, 12 personnel, 20 personnel, 21 personnel |
+| **Shotgun** | The quarterback lined up about 5 yards behind the center, taking the snap through the air. | gun |
+| **Pistol** | The quarterback about 4 yards behind the center with the running back directly behind him. |  |
+| **Under center** | The quarterback directly behind the center, taking the snap hand to hand. | under |
+| **Formation strength** | The side of the formation with the tight end or, without one, with more receivers. Defenses set their front and coverage to it. | strength, strong side, passing strength |
+| **Weak side** | The side of the formation away from its strength. | weak |
+| **Split end** | The wide receiver on the line of scrimmage, usually on the weak side. Lettered X. | X receiver, X |
+| **Flanker** | The wide receiver set off the line of scrimmage, usually on the strong side. Lettered Z. | Z receiver, Z |
+| **Slot receiver** | A receiver set off the line between the end man on the line and the widest receiver. Lettered H (or Y with no tight end). | slot, H receiver, H, inside receiver |
+| **Tight end** | A receiver set on the line next to the tackle, able to block or run routes. Lettered Y. | TE, Y |
+| **Running back** | The back behind or beside the quarterback who runs the ball, blocks or runs routes. Lettered R. | RB, R, tailback |
+| **Fullback** | A second back lined up between the quarterback and the running back, usually a blocker. Lettered F. | FB, F |
+| **Attached** | A tight end set right next to the tackle on the line, rather than split out. | in-line |
+| **Two-by-two** | Two receivers on each side of the ball. | 2x2, doubles |
+| **Three-by-one** | Three receivers to one side and one to the other. The three-receiver side is the strength. | 3x1, trips |
+| **Empty** | No back beside or behind the quarterback; all five eligible players are split out. | empty backfield |
+| **Bunch** | Three receivers grouped within about 2 yards of each other, one on the line and two just behind. | bunch set |
+| **I-formation** | The quarterback under center with the fullback and running back lined up behind him in a line. | I-form, I |
+| **Jet motion** | A receiver running full speed across the formation behind the line, timed to pass the ball at the snap. | jet |
+| **Orbit motion** | A receiver running backward around the quarterback to the other side, still moving at the snap. | orbit |
+| **Short motion** | A receiver taking a few steps toward the ball before the snap, still moving at the snap. | zip motion, zip |
+| **Return motion** | A receiver starting across, then turning back toward where he started, still moving at the snap. | return |
+| **Back motion** | The running back moving out of the backfield to split wide before the snap, leaving the formation empty. | motion to empty |
+| **Go route** | A straight sprint down the field. | go, fly, vertical, clear |
+| **Fade route** | A deep route bending toward the sideline, away from the defender. | fade |
+| **Seam route** | A slot receiver or tight end running straight up the field between the deep defenders. | seam |
+| **Hitch route** | Five or six yards up the field, then a quick turn back to face the quarterback. | hitch |
+| **Stick route** | Six yards up the field, then settling and turning to the outside to face the quarterback. |  |
+| **Quick out** | Five yards up the field, then a sharp cut straight to the sideline. | speed out |
+| **Out route** | Ten yards up the field, then a sharp cut straight to the sideline. | out |
+| **Slant route** | One or two steps up the field, then a sharp angle toward the middle. | slant |
+| **Flat route** | An angle toward the sideline about 2 or 3 yards past the line of scrimmage. | arrow, flat |
+| **Curl route** | Twelve yards up the field, then turning back toward the quarterback and the middle. | curl |
+| **Dig route** | Twelve yards up the field, then a sharp cut across the middle. | dig, square in |
+| **Corner route** | Ten yards up the field, then an angle toward the back corner of the end zone. | flag route, flag |
+| **Post route** | Ten yards up the field, then an angle toward the goal posts in the middle. | post |
+| **Shallow route** | Crossing the field 2 to 4 yards past the line of scrimmage. | shallow cross, drag |
+| **Sail route** | A deep out, breaking toward the sideline about 10 to 12 yards past the line. | sail, deep out |
+| **Swing route** | The running back circling out of the backfield toward the sideline, behind or at the line of scrimmage. | swing |
+| **Check-release** | The running back checks for a blitzer in his gap first; if none comes, he runs a short route as the checkdown. | check release, checkdown |
+| **Stick concept** | A quick passing play to one side - the widest receiver runs deep to clear space, one receiver runs a flat route and one runs a stick route. The read is the flat defender. | stick |
+| **Slant-flat** | A quick passing play - the outside receiver runs a slant and the inside receiver runs a flat route. The read is the flat defender. | slant flat, slant/flat |
+| **Smash** | A two-level passing play - the outside receiver runs a hitch and the inside receiver runs a corner route. The read is the cornerback. | smash concept |
+| **Flood** | A three-level passing play to one side - a deep route, a sail route at 10 to 12 yards and a flat route. The read is the flat defender. | flood concept, three-level, sail concept |
+| **Four verticals** | Four receivers running straight up the field to stretch the deep defenders. The read is the deep middle safety. | 4 verts, verticals |
+| **Mesh** | Two shallow routes crossing each other from opposite sides, about a yard apart. Hard to cover in man; against zone the crossers settle in the open spaces. | mesh concept |
+| **Curl-flat** | A passing play - the outside receiver runs a curl and the inside receiver runs a flat route. The read is the flat defender. | curl flat, curl/flat concept |
+| **Progression** | The order in which the quarterback looks at his receivers on a passing play. | read progression |
+| **Read defender** | The defender whose movement after the snap tells the quarterback where to throw. | key defender, read key |
+| **Slide protection** | Pass protection where the offensive linemen block the gaps to one side instead of a man each. | slide |
+| **Half-slide protection** | Six-man protection - the center and the linemen on one side slide that way, the other two linemen block the man in front of them, and the back takes the next defender on that side. | half slide |
+| **Big-on-big protection** | Six-man protection - the five linemen block the five most dangerous linemen and linebackers, and the back takes the first linebacker or defensive back to blitz on his side. | BOB, man protection |
+| **Five-man protection** | Only the five linemen block, so every eligible player runs a route. A sixth rusher must be beaten by a hot route. | empty protection, five-man |
+| **Hot route** | A quick throw, usually a slant, flat or hitch, used when there are more rushers than blockers and one comes free. | hot, sight adjust |
+| **Offensive formation** | Where each offensive player lines up before the snap, named in the play call (for example Gun Trips or I-formation). | set |
+| **Pass concept** | The set of routes the receivers run together on a pass play, with the quarterback's read and progression. | concept, pass play |
+| **Pass protection** | Which players stay in to block on a pass play and whom each one blocks. | protection, pass pro |
+| **Offensive line** | The five linemen on the line of scrimmage (left tackle, left guard, center, right guard, right tackle). They block and are ineligible receivers. | OL, line, linemen, O-line |
+| **Center** | The lineman in the middle who snaps the ball to the quarterback, then blocks. | C |
+| **Guard** | The linemen on each side of the center, the left guard and the right guard. | LG, RG, left guard, right guard |
+| **Tackle** | The linemen outside each guard, the left tackle and the right tackle; the end men of the offensive line. | LT, RT, left tackle, right tackle, OT |
+| **Quarterback** | The player who takes the snap, calls the play in the huddle, and passes, hands off or runs. | QB |
+
+### Defense (batch 2) - fronts, positions, shells, coverages, rotations, pressures (55)
+
+| Term | Meaning | Also called |
+| --- | --- | --- |
+| **Front** | How the defensive linemen and linebackers line up. | defensive front |
+| **Technique** | A defensive lineman's alignment as a number counted out from the center: 0 head-up on the center, 1 the center's shoulder, 2 head-up on the guard, 3 the guard's outside shoulder, 4 head-up on the tackle, 5 the tackle's outside shoulder, 6 head-up on the tight end, 7 the tight end's inside shoulder, 9 outside the tight end. An i (2i, 4i) means the inside shoulder. | tech, 1-technique, 3-technique, 5-technique, 9-technique |
+| **Shade** | Lined up on one shoulder of an opponent rather than straight across from him. | shaded |
+| **Defensive line** | The defenders lined up on the ball in a 3- or 4-point stance - ends, tackles and the nose. | DL, D-line |
+| **Defensive end** | The defensive lineman at each end of the line, usually rushing from outside the tackle. | DE, end |
+| **Defensive tackle** | An interior defensive lineman, usually across from a guard. | DT |
+| **Nose tackle** | The defensive tackle lined up on or near the center. | nose, NT |
+| **Linebacker** | A defender lined up about 4 to 5 yards behind the defensive line, playing the run, covering or blitzing. | LB, backer |
+| **Mike** | The middle linebacker, usually the defense's signal caller. Naming him is part of the quarterback's pre-snap routine. | middle linebacker, MLB |
+| **Will** | The weak-side linebacker. | weak-side linebacker |
+| **Sam** | The strong-side linebacker, often across from the tight end. | strong-side linebacker |
+| **Defensive back** | A cornerback or safety - the defenders mainly responsible for pass coverage. | DB, secondary |
+| **Cornerback** | The defensive back lined up across from the widest receiver on each side. | corner, CB |
+| **Nickel** | A fifth defensive back who replaces a linebacker and usually covers the slot. | nickel back, nickelback |
+| **Overhang** | A defender lined up outside the box over the slot area, usually at the apex - a nickel, spur or outside linebacker. | spur, overhang defender |
+| **Free safety** | The deepest safety, usually responsible for the middle of the field. | FS |
+| **Strong safety** | The safety to the formation strength, often rolling down to help against the run or to cover a flat. | SS |
+| **Over front** | A four-man front with the 3-technique tackle and the outside end to the formation strength, and a 1-technique and 5-technique to the weak side. | Over |
+| **4-3 defense** | Four defensive linemen, three linebackers (Sam, Mike, Will) and four defensive backs. | 4-3, base defense |
+| **4-2-5 defense** | Four defensive linemen, two linebackers (Mike, Will) and five defensive backs, including a nickel. | 4-2-5, nickel defense |
+| **3-3 stack** | Three defensive linemen with a linebacker stacked behind each one, two overhangs and three deep defensive backs. | 3-3-5, 3-3 |
+| **4-4 defense** | Four defensive linemen, four linebackers and three defensive backs - common in youth football. | 4-4, 4-4 split |
+| **Shell** | The picture the safeties show before the snap - one deep safety, two deep safeties, or none. | coverage shell, safety look |
+| **One-high** | A shell with one safety deep in the middle of the field, so the middle is closed. Usually Cover 1 or Cover 3. | single-high, MOFC, middle of the field closed |
+| **Two-high** | A shell with two safeties deep, one on each side, so the middle is open. Usually Cover 2, Cover 4 or 2-Man - or a rotation. | split safeties, MOFO, middle of the field open |
+| **Zero-high** | No safety deep before the snap. Usually Cover 0 and a blitz. | no deep safety |
+| **Man coverage** | Each pass defender covers one offensive player wherever he goes. | man, man-to-man |
+| **Zone coverage** | Each pass defender covers an area of the field and the receivers who enter it. | zone |
+| **Cover 0** | Man coverage on every eligible receiver with no deep safety, so the rest of the defense blitzes. | zero coverage, Cover zero |
+| **Cover 1** | Man coverage with one free safety deep in the middle; a spare defender rushes or plays the middle short. | man free, Cover one |
+| **Cover 2** | Zone coverage with two safeties splitting the deep field in halves, corners in the flats, and three short zones in the middle. | Cover two |
+| **Cover 3** | Zone coverage with three deep defenders (two corners and a safety) splitting the deep field in thirds, and four short zones. | Cover three |
+| **Cover 4** | Zone coverage with four deep defenders (two corners and two safeties) splitting the deep field in quarters, and three short zones. | Quarters, Cover four |
+| **2-Man** | Two safeties deep in halves with man coverage underneath on every other eligible receiver. | 2-Man, two man, Cover 5 |
+| **Fire zone** | A five-man zone blitz - three deep zones and three short zones, often with a lineman dropping into coverage. | zone blitz, 3-under 3-deep |
+| **Deep third** | One of three deep zones in Cover 3 - left, middle or right. | third |
+| **Deep half** | One of two deep zones in Cover 2 and 2-Man, each a safety's side of the field. | half |
+| **Deep quarter** | One of four deep zones in Cover 4. | quarter |
+| **Curl-flat zone** | A short zone from the curl area out to the sideline, about 6 to 10 yards deep. | curl/flat, curl-flat defender |
+| **Hook zone** | A short zone in the middle of the field, about 8 to 10 yards deep, between the box and the curl area. | hook, hook/curl, hook-curl |
+| **Flat defender** | The short defender responsible for the flat on his side - the curl-flat player in Cover 3, the corner in Cover 2. Quick-game reads key him. | flat player |
+| **Robber** | A defender in the short middle who reads the quarterback and jumps crossing routes. | rat, hole player, lurk |
+| **Rotation** | The defense changing its shell at the snap, such as two-high to one-high. | spin, roll |
+| **Sky rotation** | From two-high, the safety to one side drops down to the curl-flat zone and the other runs to the deep middle - Cover 3 after the snap. | Sky, Cover 3 Sky |
+| **Robber rotation** | From two-high, one safety runs to the deep middle and the other drops into the short middle as a robber - Cover 1 after the snap. | Cover 1 Robber |
+| **Disguise** | Showing one shell or front before the snap and playing another after it. | disguised coverage |
+| **Blitz** | A linebacker or defensive back rushing the quarterback instead of covering. | pressure |
+| **Green dog** | A defender covering the running back who rushes the quarterback once the back stays in to block. | hug, add-on rush |
+| **Creep** | A defender inching toward the line or toward his landmark before the snap - often a blitz or rotation tell. | creeping, cheat |
+| **Leverage** | The side of a receiver a defender plays - inside leverage takes away routes to the middle, outside leverage routes to the sideline. | inside leverage, outside leverage |
+| **Press** | A cornerback lined up within about a yard of the receiver to jam him at the snap. | press coverage, press-man |
+| **Off coverage** | A cornerback lined up 5 to 8 yards off the receiver. | off |
+| **Bail** | A cornerback turning at the snap to run to his deep zone. | bail technique |
+| **Travel** | A defender following a motioning player across the formation - a man coverage tell. | travels |
+| **Bump** | Defenders sliding over a gap or two as a motioning player passes, without following him - a zone coverage tell. | bumps, slide over |
+
+### Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions (13)
+
+| Term | Meaning | Also called |
+| --- | --- | --- |
+| **Pre-snap routine** | The checks a quarterback makes at the line before the snap, in order: Know (his own alignment), See (the shell, the box, the corners and any tells), Threats (rushers against blockers and his hot route), Plan (route changes, his read, his drop and his escape lane). | routine, pre-snap checks |
+| **Covered receiver** | A player on the line of scrimmage with a teammate on the line outside him. He is not an end, so he may not catch a forward pass. | covered, covered up |
+| **Tell** | A clue in a defender's alignment, stance or movement before the snap that gives away his job. | tells, give-away |
+| **Blitz tell** | A tell that a defender will rush the quarterback, such as a linebacker or defensive back creeping toward the line or an edge before the snap. | blitz look |
+| **Rotation tell** | A tell that the shell will change at the snap, such as one safety creeping down while the other stays deep. | spin tell, roll tell |
+| **Catch and throw** | Gun footwork with no drop - he catches the snap and throws. | no-step |
+| **One-step drop** | Gun footwork - one step back after the catch, then throw. Used on quick routes. | one-step, 1-step |
+| **Three-step drop** | Three steps back after the snap (in the gun, after the catch), then throw on time. In the gun it fits routes about 8 to 12 yards deep; under center it is the quick game. | three-step, 3-step |
+| **Five-step drop** | Five steps back after the snap, then throw. Under center it fits routes about 10 to 15 yards deep. | five-step, 5-step |
+| **Escape lane** | The way out of a breaking pocket. For a left-handed quarterback usually to his left (his throwing hand), unless the rush threat is greater on that side. | escape route |
+| **Quarterback run** | The quarterback keeps the ball and runs when no receiver is open and there is room in front of him. | keep, scramble, QB run |
+| **Route adjustment** | Changing a receiver's route at the line before the snap. In SNAP IQ he may change up to two routes per play. | route change, route tag |
+| **Play call** | The play the quarterback calls in the huddle: the formation, the pass concept and the protection. Every player's job comes from it. | call, the call |
+
 ---
 
 | Rule | NFHS | What it says | Penalty | What it means for Sahar | Check |

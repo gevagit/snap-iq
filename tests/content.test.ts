@@ -22,8 +22,11 @@ describe('Football Bible content (batch 1)', () => {
     expect(r.counts.toConfirm).toBe(0);
   });
 
-  it('records the owner sign-off on batch 2 (defaults accepted)', () => {
+  it('records the owner sign-off on batches 2 and 3 (defaults accepted)', () => {
     const r = validateContent(raw);
+    const g = raw.glossary as { terms: { reviewed: boolean; reviewer?: string; batch?: number }[] };
+    expect(g.terms.filter((t) => t.batch === 3).length).toBeGreaterThan(0);
+    expect(g.terms.every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
     expect(r.counts.batch2.needsReview).toBe(0);
     expect(r.counts.needsReview).toBe(0);
   });

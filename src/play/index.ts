@@ -20,6 +20,8 @@ export interface PlayCall {
   front: string;
   coverage: string;
   spot: BallSpot;
+  /** route changes at the line: receiver letter -> route id */
+  overrides?: Partial<Record<string, string>>;
 }
 
 export interface Play {
@@ -64,7 +66,9 @@ export function buildPlay(c: PlayContent, call: PlayCall, dt = DEFAULT_DT): Fit<
   const offense = alignOffense(c, formation, strongSign, fieldFrame(c.geometry, call.spot));
   const plan = planMotion(c, offense, motion, protection);
   if (!plan.ok) return plan;
-  const jobs = assignRoutes(c, offense, plan.value, concept, protection);
+  if (call.overrides && Object.keys(call.overrides).length > c.adjustments.max_changes)
+    return { ok: false, reason: `at most ${c.adjustments.max_changes} route changes` };
+  const jobs = assignRoutes(c, offense, plan.value, concept, protection, call.overrides ?? {});
   if (!jobs.ok) return jobs;
   const defense = setupDefense(c, offense, front, coverage);
   if (!defense.ok) return defense;

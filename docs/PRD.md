@@ -6,7 +6,7 @@
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
-| **Current phase** | Phase 2: Playable slice. Shell Game playable first (owner, 2026-10-26: "use what we have and create the actual game"); Bubble next. Bible batches 1 and 2 signed off by the owner with defaults |
+| **Current phase** | Phase 2: Playable slice. The pre-snap routine game is playable first (owner, 2026-10-26); Bubble next. Bible batches 1, 2 and 3 signed off by the owner with defaults |
 
 ---
 
@@ -1003,6 +1003,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Jersey | #4 |
 | Speech recognition | None. Taps and swipes only; say-it-aloud is an unscored habit |
 | Build order | Wireframes → Football Bible → playable slice (Shell Game first, on the content we have; then Bubble) → backend → remaining drills. Changed 2026-10-26 at the owner's request |
+| Routine game | One rep per play: the play call (huddle, top-down; not shown again after he breaks the huddle) → pre-snap routine at the line on a clock, no play checks, up to 2 route changes → snap → freeze 1 s after the snap: name the coverage, then throw to a receiver, keep it and run, or throw it away → Breakdown. Replaces the first Shell Game slice. Owner, 2026-10-26 |
 | Handedness | Left-handed; rules expressed by throwing-hand side |
 | Rule set | NFHS (California CIF) |
 | Offense | Offense-agnostic standard menu; team aliases later |

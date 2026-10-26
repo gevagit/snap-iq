@@ -104,7 +104,8 @@ motion_response: { man: travel, zone: bump }
 # safety-field / safety-boundary: the safety on that side at the snap (with the ball in the middle, field means
 #   the strong side). Use them where a job depends on field and boundary rather than strength.
 # counts: deep and under zone defenders the coverage must have; rush where it is fixed.
-# tells: before-snap movement { role, start (s before the snap), to: { depth } or { end_man_plus, depth } }.
+# tells: before-snap movement { role, start (s before the snap), to: { depth } or { end_man_plus, depth }, kind }.
+#   kind (batch 3, not yet reviewed): blitz-tell or rotation-tell, what the tell gives away.
 coverages:
   - id: cover-0
     name: Cover 0
@@ -114,8 +115,8 @@ coverages:
     family: man
     shell: { pre: zero-high, post: zero-high }
     tells:
-      - { role: mike, start: 1.0, to: { depth: 3.0 }, honest: true }
-      - { role: will, start: 1.0, to: { depth: 3.0 }, honest: true }
+      - { role: mike, start: 1.0, to: { depth: 3.0 }, kind: blitz-tell, honest: true }
+      - { role: will, start: 1.0, to: { depth: 3.0 }, kind: blitz-tell, honest: true }
     fronts:
       four-two-five-even:
         cb-strong: { align: press, job: { man: [strong-1] } }
@@ -278,7 +279,7 @@ coverages:
     rotation: sky-rotation
     counts: { deep: 3, under: 4, rush: 4 }
     tells:
-      - { role: ss, start: 1.0, to: { depth: 10 }, honest: true }
+      - { role: ss, start: 1.0, to: { depth: 10 }, kind: rotation-tell, honest: true }
     fronts:
       four-three-over:
         cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
@@ -358,7 +359,7 @@ coverages:
     shell: { pre: one-high, post: one-high }
     counts: { deep: 3, under: 3, rush: 5 }
     tells:
-      - { role: oh-weak, start: 1.2, to: { end_man_plus: 1.5, depth: 2.5 }, honest: true }
+      - { role: oh-weak, start: 1.2, to: { end_man_plus: 1.5, depth: 2.5 }, kind: blitz-tell, honest: true }
     fronts:
       three-three-stack:
         cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }

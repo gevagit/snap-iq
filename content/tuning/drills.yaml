@@ -1,4 +1,5 @@
-# Drill tuning (PRD §8, §10). Signed off by the owner with defaults (2026-10-26); every number is a feel constant to tune in playtests.
+# Drill tuning (PRD §8, §10). Every number is a feel constant to tune in playtests. Rewritten for the routine
+# game (batch 3), signed off by the owner with defaults (2026-10-26).
 version: 1
 batch: 2
 
@@ -10,31 +11,46 @@ ball: { speed: 17, release_delay: 0.15, release_height: 1.95 }
 # when no one is open, the receiver with the most room. Any other open receiver earns part credit.
 reads: { open_separation: 2.5 }
 
-# Shell Game (PRD §8.3): the look shows for `look` seconds (longer when a motion needs it), the snap, then
-# everyone moves at real speed until `decision` seconds after the snap, when the play freezes for his answers.
-shell_game:
-  reps: 8
+# The rep (PRD §8.2 Cadence + §8.3 reads, one game): at the line he runs his pre-snap routine against the clock,
+# then the snap; the play runs at real speed and freezes `decision` seconds after the snap for his post-snap
+# answers. Batch 3 settings, not yet reviewed.
+routine:
+  reps: 6
+  decision: 1.0
+  # the steps of his routine, in order, by chunk (glossary pre-snap-routine)
+  chunks:
+    know: [alignment]
+    see: [shell, box, corners, tells]
+    threats: [threats]
+    plan: [adjust, key, drop, escape]
   tiers:
     youth:
-      look: 2.0
-      decision: 1.2
+      clock: 25
       coverages: [cover-0, cover-1, cover-2, cover-3]
       fronts: [four-two-five-even, three-three-stack, four-three-over]
-      motions: [none, short-motion, return-motion]
+      motions: [none]
       answers: { shell: [zero-high, one-high, two-high], coverage: [cover-0, cover-1, cover-2, cover-3] }
     jv:
-      look: 1.2
-      decision: 1.2
+      clock: 15
       coverages: [cover-0, cover-1, cover-2, cover-3, cover-4, cover-3-sky, cover-1-robber, two-man, fire-zone]
       fronts: [four-two-five-even, three-three-stack, four-three-over, four-two-five-over]
-      motions: [none, short-motion, return-motion, jet-motion, orbit-motion, back-motion]
+      motions: [none]
       answers: { shell: [zero-high, one-high, two-high], coverage: [cover-0, cover-1, cover-2, cover-3, cover-4, two-man, fire-zone] }
+  # Corners: press when within press_within yards of #1 at the snap; leverage inside/outside by more than
+  # head_up_within yards, else head-up (glossary press, off-coverage, leverage).
+  corners: { press_within: 2.5, head_up_within: 0.5 }
+  box_choices: [4, 5, 6, 7, 8, 9]
+  # Alignment faults he must catch in the Know step: on `rate` of reps one receiver lines up wrong by `step` yards.
+  #   off-the-line: the split end steps back off the line, leaving 6 on it (legal-formation)
+  #   covered: a slot steps up onto the line inside the split end and is covered (covered-receiver)
+  faults: { rate: 0.3, step: 0.6 }
+  # The post-snap decision at the freeze: the first open receiver in his progression; when no one is open, a
+  # quarterback run if no defender is within run_room yards of him in front, otherwise escape and throw it away.
+  decide: { run_room: 5.0 }
+  points: { alignment: 10, shell: 10, box: 5, corners: 5, tells: 5, threats: 10, adjust: 10, key: 10, drop: 5, escape: 5, coverage: 10, decision: 20, beat_the_clock: 10 }
 
 # Points and progress (PRD §11): XP per correct answer, the rank ladder by total XP.
 scoring:
-  shell: 10
-  coverage: 10
-  throw: 20
   open_not_read: 10
   workout_bonus: 25
 ranks: [[0, Rookie], [150, Scout Team], [400, Backup], [800, Starter], [1500, Captain], [2500, All-League]]

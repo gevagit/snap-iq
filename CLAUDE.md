@@ -1,6 +1,6 @@
 # SNAP IQ — instructions for Claude Code
 
-SNAP IQ is an iPad web game (PWA) that trains a left-handed youth QB's pre-snap routine, defensive reads and pocket movement. The full spec is `docs/PRD.md`. Read it before any work. Build phases in order (PRD §16); the current phase is **Phase 2: Playable slice**. The first drill is Shell Game (PRD §8.3), in `src/game`. Bubble comes next. Football Bible batches 1 and 2 (offense, defense, speed profiles, play engine in `src/play`) are signed off by the owner with defaults; content changed later goes back to `reviewed: false` and reaches drills only through the playtest setting.
+SNAP IQ is an iPad web game (PWA) that trains a left-handed youth QB's pre-snap routine, defensive reads and pocket movement. The full spec is `docs/PRD.md`. Read it before any work. Build phases in order (PRD §16); the current phase is **Phase 2: Playable slice**. The game (`src/game`) is one rep per play: the play call (huddle), his pre-snap routine at the line with up to 2 route changes, the snap, a freeze 1 s after it for the coverage and his decision, then the Breakdown. Bubble comes next. Football Bible batches 1, 2 and 3 (offense, defense, speed profiles, play engine in `src/play`, quarterback play and the routine) are signed off by the owner with defaults; content changed later goes back to `reviewed: false` and reaches drills only through the playtest setting.
 
 ## Football accuracy (most important)
 - Never invent football content in code: terms, alignments, rules, tells or explanations. All of it lives in `/content`.

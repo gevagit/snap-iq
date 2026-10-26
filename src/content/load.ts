@@ -20,6 +20,8 @@ export const CONTENT_FILES = {
   coverages: 'content/defense/coverages.yaml',
   speeds: 'content/tuning/speeds.yaml',
   drills: 'content/tuning/drills.yaml',
+  adjustments: 'content/offense/adjustments.yaml',
+  quarterback: 'content/offense/quarterback.yaml',
 } as const;
 export type ContentKey = keyof typeof CONTENT_FILES;
 

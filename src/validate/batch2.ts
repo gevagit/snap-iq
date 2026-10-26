@@ -7,7 +7,7 @@ export interface Batch2Counts { formations: number; motions: number; routes: num
 
 const FILES: Partial<Record<ContentKey, string>> = {
   personnel: 'offense/personnel.yaml', formations: 'offense/formations.yaml', motions: 'offense/motions.yaml', routes: 'offense/routes.yaml',
-  concepts: 'offense/concepts.yaml', protections: 'offense/protections.yaml', fronts: 'defense/fronts.yaml', coverages: 'defense/coverages.yaml', speeds: 'tuning/speeds.yaml', drills: 'tuning/drills.yaml',
+  concepts: 'offense/concepts.yaml', protections: 'offense/protections.yaml', fronts: 'defense/fronts.yaml', coverages: 'defense/coverages.yaml', speeds: 'tuning/speeds.yaml', drills: 'tuning/drills.yaml', adjustments: 'offense/adjustments.yaml', quarterback: 'offense/quarterback.yaml',
 };
 
 function parse<T>(schema: ZodType<T>, data: unknown, key: ContentKey, errors: string[]): T | null {
@@ -33,6 +33,8 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
   const coverages = parse(S.Coverages, raw.coverages, 'coverages', errors);
   const speeds = parse(S.Speeds, raw.speeds, 'speeds', errors);
   const drills = parse(S.Drills, raw.drills, 'drills', errors);
+  const adjustments = parse(S.Adjustments, raw.adjustments, 'adjustments', errors);
+  const quarterback = parse(S.Quarterback, raw.quarterback, 'quarterback', errors);
 
   const term = (file: string, owner: string, id: string) => {
     if (glossary.success && !terms.has(id)) errors.push(`${file}: ${owner} uses term ${id}, which is not in the glossary`);
@@ -159,7 +161,10 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
   }
   if (drills && coverages && fronts && motions) {
     const file = 'tuning/drills.yaml';
-    for (const [name, tier] of Object.entries(drills.shell_game.tiers)) {
+    const r = drills.routine;
+    const order = [...r.chunks.know, ...r.chunks.see, ...r.chunks.threats, ...r.chunks.plan];
+    for (const st of S.STEPS) if (order.filter((x) => x === st).length !== 1) errors.push(`${file}: routine step ${st} must appear in exactly one chunk`);
+    for (const [name, tier] of Object.entries(r.tiers)) {
       for (const id of tier.coverages) if (!coverages.coverages.some((c) => c.id === id)) errors.push(`${file}: ${name} uses unknown coverage ${id}`);
       for (const id of tier.fronts) if (!fronts.fronts.some((f) => f.id === id)) errors.push(`${file}: ${name} uses unknown front ${id}`);
       for (const id of tier.motions) if (!motions.motions.some((m) => m.id === id)) errors.push(`${file}: ${name} uses unknown motion ${id}`);
@@ -171,6 +176,16 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
       }
     }
   }
+  if (adjustments) {
+    for (const [kind, list] of Object.entries(adjustments.menus))
+      for (const id of list) if (!routeIds.has(id)) errors.push(`offense/adjustments.yaml: ${kind} menu uses unknown route ${id}`);
+  }
+  if (quarterback && concepts) {
+    for (const cn of concepts.concepts) if (!quarterback.drops[cn.id]) errors.push(`offense/quarterback.yaml: no drop for ${cn.id}`);
+    for (const [cid, d] of Object.entries(quarterback.drops)) for (const id of Object.values(d)) term('offense/quarterback.yaml', cid, id);
+    term('offense/quarterback.yaml', 'escape', 'escape-lane');
+  }
+  if (coverages) for (const cv of coverages.coverages) for (const tl of cv.tells ?? []) if (tl.kind) term('defense/coverages.yaml', `${cv.id} tell`, tl.kind);
   if (coverages) for (const cv of coverages.coverages) term('defense/coverages.yaml', `${cv.id} answer`, cv.answer);
   if (speeds) for (const [job, prof] of Object.entries(speeds.jobs)) if (!speeds.profiles[prof]) errors.push(`tuning/speeds.yaml: job ${job} uses unknown profile ${prof}`);
 
@@ -185,6 +200,8 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     ...(coverages ? [coverages.shells, coverages.alignments, coverages.man, ...coverages.coverages] : []),
     ...(speeds ? [speeds] : []),
     ...(drills ? [drills] : []),
+    ...(adjustments ? [adjustments] : []),
+    ...(quarterback ? [quarterback] : []),
   ];
   return {
     formations: formations?.formations.length ?? 0,

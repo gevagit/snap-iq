@@ -10,6 +10,7 @@ categories:
   situation: Game situation (down, distance, field zone, clock, score)
   offense: Offense (batch 2) - personnel, formations, motion, routes, concepts, protections
   defense: Defense (batch 2) - fronts, positions, shells, coverages, rotations, pressures
+  quarterback: Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions
 
 terms:
   # ---------------------------------------------------------------- field
@@ -1666,6 +1667,240 @@ terms:
     batch: 2
     definition: Defenders sliding over a gap or two as a motioning player passes, without following him - a zone coverage tell.
     aliases: [bumps, slide over]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  # ================================================================ batch 3: quarterback play
+
+  - id: pre-snap-routine
+    term: Pre-snap routine
+    category: quarterback
+    batch: 3
+    definition: "The checks a quarterback makes at the line before the snap, in order: Know (his own alignment), See (the shell, the box, the corners and any tells), Threats (rushers against blockers and his hot route), Plan (route changes, his read, his drop and his escape lane)."
+    aliases: [routine, pre-snap checks]
+    see: [shell, box, hot-route]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: covered-receiver
+    term: Covered receiver
+    category: quarterback
+    batch: 3
+    definition: A player on the line of scrimmage with a teammate on the line outside him. He is not an end, so he may not catch a forward pass.
+    aliases: [covered, covered up]
+    see: [eligible-receiver, legal-formation]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: tell
+    term: Tell
+    category: quarterback
+    batch: 3
+    definition: "A clue in a defender's alignment, stance or movement before the snap that gives away his job."
+    aliases: [tells, give-away]
+    see: [creep, disguise]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: blitz-tell
+    term: Blitz tell
+    category: quarterback
+    batch: 3
+    definition: A tell that a defender will rush the quarterback, such as a linebacker or defensive back creeping toward the line or an edge before the snap.
+    aliases: [blitz look]
+    see: [tell, blitz, creep]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: rotation-tell
+    term: Rotation tell
+    category: quarterback
+    batch: 3
+    definition: A tell that the shell will change at the snap, such as one safety creeping down while the other stays deep.
+    aliases: [spin tell, roll tell]
+    see: [tell, rotation]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: catch-and-throw
+    term: Catch and throw
+    category: quarterback
+    batch: 3
+    definition: Gun footwork with no drop - he catches the snap and throws.
+    aliases: [no-step]
+    see: [shotgun]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: one-step-drop
+    term: One-step drop
+    category: quarterback
+    batch: 3
+    definition: Gun footwork - one step back after the catch, then throw. Used on quick routes.
+    aliases: [one-step, 1-step]
+    see: [shotgun]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: three-step-drop
+    term: Three-step drop
+    category: quarterback
+    batch: 3
+    definition: Three steps back after the snap (in the gun, after the catch), then throw on time. In the gun it fits routes about 8 to 12 yards deep; under center it is the quick game.
+    aliases: [three-step, 3-step]
+    see: [under-center]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: five-step-drop
+    term: Five-step drop
+    category: quarterback
+    batch: 3
+    definition: Five steps back after the snap, then throw. Under center it fits routes about 10 to 15 yards deep.
+    aliases: [five-step, 5-step]
+    see: [under-center]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: escape-lane
+    term: Escape lane
+    category: quarterback
+    batch: 3
+    definition: "The way out of a breaking pocket. For a left-handed quarterback usually to his left (his throwing hand), unless the rush threat is greater on that side."
+    aliases: [escape route]
+    see: [throwaway]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: quarterback-run
+    term: Quarterback run
+    category: quarterback
+    batch: 3
+    definition: The quarterback keeps the ball and runs when no receiver is open and there is room in front of him.
+    aliases: [keep, scramble, QB run]
+    see: [runner]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: route-adjustment
+    term: Route adjustment
+    category: quarterback
+    batch: 3
+    definition: Changing a receiver's route at the line before the snap. In SNAP IQ he may change up to two routes per play.
+    aliases: [route change, route tag]
+    see: [progression]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  # ---------------------------------------------------------------- the play call (batch 3)
+  - id: play-call
+    term: Play call
+    category: quarterback
+    batch: 3
+    definition: "The play the quarterback calls in the huddle: the formation, the pass concept and the protection. Every player's job comes from it."
+    aliases: [call, the call]
+    see: [offensive-formation, pass-concept, pass-protection]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: offensive-formation
+    term: Offensive formation
+    category: offense
+    batch: 3
+    definition: Where each offensive player lines up before the snap, named in the play call (for example Gun Trips or I-formation).
+    aliases: [set]
+    see: [formation-strength, legal-formation]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: pass-concept
+    term: Pass concept
+    category: offense
+    batch: 3
+    definition: The set of routes the receivers run together on a pass play, with the quarterback's read and progression.
+    aliases: [concept, pass play]
+    see: [progression]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: pass-protection
+    term: Pass protection
+    category: offense
+    batch: 3
+    definition: Which players stay in to block on a pass play and whom each one blocks.
+    aliases: [protection, pass pro]
+    see: [five-man-protection, slide-protection, check-release]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: offensive-line
+    term: Offensive line
+    category: offense
+    batch: 3
+    definition: The five linemen on the line of scrimmage (left tackle, left guard, center, right guard, right tackle). They block and are ineligible receivers.
+    aliases: [OL, line, linemen, O-line]
+    see: [ineligible-receiver]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: center
+    term: Center
+    category: offense
+    batch: 3
+    definition: The lineman in the middle who snaps the ball to the quarterback, then blocks.
+    aliases: [C]
+    see: [offensive-line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: guard
+    term: Guard
+    category: offense
+    batch: 3
+    definition: The linemen on each side of the center, the left guard and the right guard.
+    aliases: [LG, RG, left guard, right guard]
+    see: [offensive-line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: offensive-tackle
+    term: Tackle
+    category: offense
+    batch: 3
+    definition: The linemen outside each guard, the left tackle and the right tackle; the end men of the offensive line.
+    aliases: [LT, RT, left tackle, right tackle, OT]
+    see: [offensive-line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: quarterback
+    term: Quarterback
+    category: offense
+    batch: 3
+    definition: The player who takes the snap, calls the play in the huddle, and passes, hands off or runs.
+    aliases: [QB]
+    see: [play-call, pre-snap-routine]
     reviewed: true
     reviewer: owner
     reviewed_at: "2026-10-26"
