@@ -52,7 +52,7 @@ landmarks:
     rule: "Laterally from 1 yd outside the end man on the line on each side; deep from the defense's line to the box depth."
     outside_end_man: 1
     depth: 6
-    confirm: "Edge (1 yd outside the end man?) and depth (5 or 6 yd?) vary by coach."
+    notes: "Owner 2026-10-26: Sahar's coach does not count the box, but Sahar should; the game uses 1 yd outside the end man, 6 yd deep."
     reviewed: false
   - id: apex
     rule: "Midpoint between the end man on the line and #2 on that side, at linebacker depth."

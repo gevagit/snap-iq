@@ -22,6 +22,8 @@ export const GlossaryTerm = z
     aliases: z.array(z.string().min(1)),
     see: z.array(Id).optional(),
     confirm: z.string().optional(),
+    /** owner or coach decisions recorded during review */
+    notes: z.string().optional(),
     ...Review,
   })
   .strict()
@@ -87,6 +89,7 @@ const Landmark = z
     outside_end_man: z.number().optional(),
     depth: z.number().optional(),
     confirm: z.string().optional(),
+    notes: z.string().optional(),
     ...Review,
   })
   .strict();

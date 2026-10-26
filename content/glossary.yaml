@@ -161,9 +161,9 @@ terms:
   - id: box
     term: Box
     category: field
-    definition: The area in front of the offensive line where defenders can stop the run - from just outside the end man on the line on each side, about 5 to 6 yards deep. "Count the box" means count the defenders standing in it.
+    definition: The area in front of the offensive line where defenders can stop the run - from 1 yard outside the end man on the line on each side, 6 yards deep. "Count the box" means count the defenders standing in it.
     aliases: [the box, run box]
-    confirm: Coaches draw the box edges and depth a little differently; confirm the edges (1 yard outside the end man?) and the depth (5 or 6 yards?).
+    notes: Owner 2026-10-26 - Sahar's coach does not count the box, but Sahar should; the game uses this definition.
     reviewed: false
 
   - id: apex
