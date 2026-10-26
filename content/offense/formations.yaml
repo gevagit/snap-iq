@@ -1,5 +1,5 @@
 # Formations, written with the strength to the offense's right; the game mirrors each one to the left.
-# Batch 2, not yet reviewed. Coordinates as in content/field/geometry.yaml (x across from the ball, + = right;
+# Batch 2, signed off by the owner with defaults (2026-10-26). Coordinates as in content/field/geometry.yaml (x across from the ball, + = right;
 # y downfield, + = defense side). Every number the engine uses to place the offense is in this file.
 version: 1
 batch: 2
@@ -18,15 +18,17 @@ alignment:
     pistol-back: { x: 0, depth: 7 }
     i-back: { x: 0, depth: 7 }
     fullback: { x: 0, depth: 4.5 }
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Quarterback drops (PRD §6.13): depth behind the ball over time after the snap.
 drops:
   gun: { catch: 0.35, path: [[0.35, 5], [1.05, 6.5], [1.4, 6.0]] }
   pistol: { catch: 0.3, path: [[0.3, 4], [0.95, 5.6], [1.3, 5.2]] }
   under: { catch: 0, path: [[0, 1.1], [1.3, 7.0], [1.6, 6.5]] }
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Alignment words: wide, slot, inside-slot, attached, bunch-point (on the line), bunch-inside, bunch-outside,
 # gun-offset, pistol-back, i-back, fullback. on_line: true puts the player on the line of scrimmage; everyone
 # else is a back. side: strong or weak (the side the formation is written to, before mirroring).
@@ -42,8 +44,9 @@ formations:
       Y: { side: strong, align: slot }
       Z: { side: strong, align: wide, on_line: true }
       R: { side: weak, align: gun-offset }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: gun-trips-te
     name: Gun Trips TE
     terms: [shotgun, three-by-one, tight-end, attached]
@@ -55,8 +58,9 @@ formations:
       H: { side: strong, align: slot }
       Z: { side: strong, align: wide }
       R: { side: weak, align: gun-offset }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: gun-trips
     name: Gun Trips
     terms: [shotgun, three-by-one]
@@ -68,8 +72,9 @@ formations:
       H: { side: strong, align: slot }
       Z: { side: strong, align: wide, on_line: true }
       R: { side: weak, align: gun-offset }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: gun-empty
     name: Gun Empty
     terms: [shotgun, empty]
@@ -81,8 +86,9 @@ formations:
       R: { side: strong, align: inside-slot }
       Y: { side: strong, align: slot }
       Z: { side: strong, align: wide, on_line: true }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: gun-bunch
     name: Gun Bunch
     terms: [shotgun, bunch, three-by-one]
@@ -94,8 +100,9 @@ formations:
       H: { side: strong, align: bunch-inside }
       Y: { side: strong, align: bunch-outside }
       R: { side: weak, align: gun-offset }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: gun-doubles-te
     name: Gun Doubles TE
     terms: [shotgun, two-by-two, tight-end, attached]
@@ -107,8 +114,9 @@ formations:
       Y: { side: strong, align: attached, on_line: true }
       Z: { side: strong, align: wide }
       R: { side: strong, align: gun-offset }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: pistol-doubles-te
     name: Pistol Doubles TE
     terms: [pistol, two-by-two, tight-end, attached]
@@ -120,8 +128,9 @@ formations:
       Y: { side: strong, align: attached, on_line: true }
       Z: { side: strong, align: wide }
       R: { side: strong, align: pistol-back }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: i-formation
     name: I-formation
     terms: [under-center, i-formation, tight-end, attached, fullback]
@@ -133,4 +142,6 @@ formations:
       Z: { side: strong, align: wide }
       F: { side: strong, align: fullback }
       R: { side: strong, align: i-back }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

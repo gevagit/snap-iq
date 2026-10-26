@@ -4,7 +4,7 @@ A quarterback cognition training game for iPad: pre-snap routine, defensive read
 
 - Spec: [`docs/PRD.md`](docs/PRD.md)
 - Instructions for Claude Code: [`CLAUDE.md`](CLAUDE.md)
-- Status: Phase 1 (Football Bible). Batch 1 (glossary, NFHS rules, field geometry) signed off with defaults; batch 2 (offense, defense, speed profiles and the play engine that turns them into plays) in owner review through the Play Lab.
+- Status: Phase 1 (Football Bible). Batches 1 (glossary, NFHS rules, field geometry) and 2 (offense, defense, speed profiles and the play engine that turns them into plays) signed off by the owner with defaults on 2026-10-26.
 
 ## Commands
 

@@ -22,6 +22,12 @@ describe('Football Bible content (batch 1)', () => {
     expect(r.counts.toConfirm).toBe(0);
   });
 
+  it('records the owner sign-off on batch 2 (defaults accepted)', () => {
+    const r = validateContent(raw);
+    expect(r.counts.batch2.needsReview).toBe(0);
+    expect(r.counts.needsReview).toBe(0);
+  });
+
   it('rejects a duplicate glossary id', () => {
     const bad = clone(raw);
     const g = bad.glossary as { terms: { id: string }[] };

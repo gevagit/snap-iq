@@ -3,7 +3,7 @@
 # number; back is the running back's route when the protection frees him. A formation whose counts are not listed
 # does not fit the concept. A route can be shifted deeper: { route: shallow-route, deeper: 1 }.
 # read.key is the defender the quarterback reads (a glossary term); read.progression lists routes in the order he
-# looks at them. Batch 2, not yet reviewed.
+# looks at them. Batch 2, signed off by the owner with defaults (2026-10-26).
 version: 1
 batch: 2
 concepts:
@@ -16,8 +16,9 @@ concepts:
     weak: { "1": hitch-route, "2": slant-route }
     back: flat-route
     read: { key: flat-defender, side: strong, progression: [flat-route, stick-route, hitch-route] }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: slant-flat
     name: Slant-flat
     terms: [slant-flat, slant-route, flat-route]
@@ -27,8 +28,9 @@ concepts:
     weak: { "1": slant-route, "2": flat-route }
     back: check-release
     read: { key: flat-defender, side: strong, progression: [slant-route, flat-route, check-release] }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: smash
     name: Smash
     terms: [smash, hitch-route, corner-route]
@@ -38,8 +40,9 @@ concepts:
     weak: { "1": hitch-route, "2": corner-route }
     back: check-release
     read: { key: cornerback, side: strong, progression: [corner-route, hitch-route, check-release] }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: flood
     name: Flood
     terms: [flood, go-route, sail-route, flat-route, dig-route]
@@ -49,8 +52,9 @@ concepts:
     weak: { "1": dig-route, "2": seam-route }
     back: flat-route
     read: { key: flat-defender, side: strong, progression: [sail-route, flat-route, dig-route] }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-verticals
     name: Four verticals
     terms: [four-verticals, go-route, seam-route]
@@ -60,8 +64,9 @@ concepts:
     weak: { "1": go-route, "2": seam-route }
     back: check-release
     read: { key: free-safety, side: middle, progression: [seam-route, go-route, check-release] }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: mesh
     name: Mesh
     terms: [mesh, shallow-route, corner-route]
@@ -71,8 +76,9 @@ concepts:
     weak: { "1": shallow-route, "2": shallow-route }
     back: swing-route
     read: { key: linebacker, side: middle, progression: [shallow-route, corner-route, swing-route] }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: curl-flat
     name: Curl-flat
     terms: [curl-flat, curl-route, flat-route]
@@ -82,4 +88,6 @@ concepts:
     weak: { "1": curl-route, "2": flat-route }
     back: check-release
     read: { key: flat-defender, side: strong, progression: [curl-route, flat-route, check-release] }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

@@ -1,4 +1,4 @@
-# Speed profiles (PRD §6.13), set for the high-school level. Starting values for owner and coach review.
+# Speed profiles (PRD §6.13), set for the high-school level. Starting values signed off by the owner with defaults (2026-10-26).
 # top: top speed (yd/s); tau: how fast he reaches it - distance after t seconds is top*(t - tau*(1 - e^(-t/tau)));
 # delay: reaction time after the snap before he moves. A player already moving keeps his speed and builds from it.
 version: 1
@@ -40,4 +40,6 @@ jobs:
 # runs at up to `travel`; both re-read the offense `lag` seconds late. motion_tau is the motion man's tau.
 # A defender steps aside when a teammate passes within make_room yards.
 presnap: { walk: 2.5, travel: 7.0, lag: 0.4, accel: 6.0, motion_tau: 0.5, man_tight_within: 3.0, make_room: 1.3 }
-reviewed: false
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-26"

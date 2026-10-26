@@ -1,4 +1,4 @@
-# Defensive fronts: how the linemen and linebackers line up. Batch 2, not yet reviewed.
+# Defensive fronts: how the linemen and linebackers line up. Batch 2, signed off by the owner with defaults (2026-10-26).
 # Fronts are written to the defense's strength call; the engine mirrors them. Defensive backs (and any player
 # whose coverage job moves him) are aligned by content/defense/coverages.yaml.
 version: 1
@@ -15,8 +15,9 @@ alignment:
   lb_depth: 4.5            # linebacker depth (the apex depth in content/field/geometry.yaml)
   c_gap_without_te: 0.8    # with no tight end, the C gap is this far outside the tackle
   apex_without_slot: { outside_end_man: 3.0 }   # an overhang with no detached #2 on his side
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Glossary "technique": which blocker and which shoulder. "1" is the center's shoulder to the lineman's side.
 techniques:
   "0": { of: center, shoulder: head-up }
@@ -44,8 +45,9 @@ rush:
   meet_back: 2.2
   stop_short: 1.0
   edge_outside_end_man: 1.5
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # players: role (used by coverages), label shown on the field, jersey number, group (dl | lb | db), side, and
 #   tech for linemen - one technique, or { tight-end: , none: } by whether a tight end is attached on his side;
 #   align for linebackers and overhangs - { gap: a | b | c }, { stack: <lineman role> } or { at: apex },
@@ -67,8 +69,9 @@ fronts:
       - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
       - { role: fs, label: FS, number: 31, group: db, side: weak }
       - { role: ss, label: SS, number: 6, group: db, side: strong }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-two-five-over
     name: 4-2-5 Over
     terms: [four-two-five, over-front, nickel]
@@ -85,8 +88,9 @@ fronts:
       - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
       - { role: fs, label: FS, number: 31, group: db, side: weak }
       - { role: ss, label: SS, number: 6, group: db, side: strong }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-two-five-even
     name: 4-2-5 Even
     terms: [four-two-five, nickel]
@@ -103,8 +107,9 @@ fronts:
       - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
       - { role: fs, label: FS, number: 31, group: db, side: weak }
       - { role: ss, label: SS, number: 6, group: db, side: strong }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: three-three-stack
     name: 3-3 Stack
     terms: [three-three-stack, overhang]
@@ -121,4 +126,6 @@ fronts:
       - { role: cb-weak, label: CB, number: 3, group: db, side: weak }
       - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
       - { role: fs, label: FS, number: 31, group: db, side: weak }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
