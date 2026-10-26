@@ -38,8 +38,11 @@ function poseRole(play, t) {
   return 'LB';
 }
 
-/** Build the renderer's scene for a rep. throwInfo is added once he throws. */
-export function sceneFor(rep) {
+/**
+ * Build the renderer's scene for a rep. opts.fault: a receiver lined up wrong until the snap (shown where he stands,
+ * then he resets); opts.readId: the defender (or receiver) his pre-snap read sends his eyes to at the snap.
+ */
+export function sceneFor(rep, opts = {}) {
   const play = rep.play, sim = play.sim, fr = play.offense.frame;
   const track = (id) => sim.tracks.find((t) => t.id === id);
   const posFn = (tr) => (t) => {
@@ -47,8 +50,10 @@ export function sceneFor(rep) {
     return [tr.xs[k] + (tr.xs[k2] - tr.xs[k]) * u, tr.ys[k] + (tr.ys[k2] - tr.ys[k]) * u];
   };
   const qb = posFn(track('QB'));
+  const fault = opts.fault || null;
+  const withFault = (t, f) => (fault && t.id === fault.id ? (tt) => { const q = f(tt); return tt < 0 ? [q[0], fault.y] : q; } : f);
   const players = sim.tracks.filter((t) => t.id !== 'QB').map((t) => ({
-    id: t.id, side: t.team, role: poseRole(play, t), num: t.number, label: t.team === 'O' ? (SHAPES[t.id] ? SHAPES[t.id] + ' ' + t.id : '') : String(t.number), pos: posFn(t),
+    id: t.id, side: t.team, role: poseRole(play, t), num: t.number, label: t.team === 'O' ? (SHAPES[t.id] ? SHAPES[t.id] + ' ' + t.id : '') : String(t.number), pos: withFault(t, posFn(t)),
     lookT: 0.9, engT: null, mate: null,
   }));
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
@@ -63,26 +68,39 @@ export function sceneFor(rep) {
   const S = {
     rep, players, byId,
     field: { xl: fr.leftSideline, xr: fr.rightSideline, hashes: [fr.leftHash, fr.rightHash], los: 35 },
-    T0: rep.start, T1: Math.min(sim.steps * sim.dt + sim.tStart, rep.decision + 1.9),
-    cam: (t) => { const q = qb(t); return { x: q[0], y: q[1], eye: 1.64 }; },
-    Tt: Infinity, Tc: Infinity, target: null, catchPt: null, release: null,
+    // the frozen look at the line is the moment before the snap; the play runs from the cadence to the freeze
+    T0: -1.2, T1: Math.min(sim.steps * sim.dt + sim.tStart, rep.decision + 1.9),
+    cam: (t) => {
+      if (S.runFrom != null && t > S.runFrom) { const q = qb(S.runFrom), d = Math.min(9, 6 * (t - S.runFrom)); return { x: q[0], y: q[1] + d, eye: 1.64 }; }
+      const q = qb(t); return { x: q[0], y: q[1], eye: 1.64 };
+    },
+    Tt: Infinity, Tc: Infinity, target: null, catchPt: null, release: null, runFrom: null, yawOverride: null,
   };
   // his read sets his eyes at the snap (PRD §7.5): toward the read defender, or the side his progression starts on
-  const readId = rep.key.readDefender;
-  const firstRead = rep.key.options[0] ? rep.key.options[0].id : null;
-  S.readId = readId && byId[readId] ? readId : firstRead;
+  S.readId = opts.readId && byId[opts.readId] ? opts.readId : null;
   const rd = byId[S.readId];
   S.readText = rd ? (rd.side === 'D' ? 'Eyes → #' + rd.num + ', your read' : 'Eyes → ' + rd.label) : '';
   const rp = rd ? rd.pos(0.5) : [0, 10], rc = S.cam(0.5);
   S.yawPost = 0.75 * Math.atan2(rp[0] - rc.x, rp[1] - rc.y);
   const scan = [[-2.0, 0], [-1.75, 0], [-1.4, -0.6], [-1.1, -0.6], [-0.65, 0.6], [-0.35, 0.6], [-0.05, 0]];
   S.scanYaw = (t) => { for (let i = 1; i < scan.length; i++) if (t <= scan[i][0]) return ease(scan[i - 1][1], scan[i][1], t, scan[i - 1][0], scan[i][0]); return 0; };
-  S.yaw = (t) => t < 0 ? S.scanYaw(t) : t < S.Tt ? ease(0, S.yawPost, t, 0.2, 0.65) : ease(S.yawPost, S.yawThrow, t, S.Tt, S.Tt + 0.45);
+  if (!rd) S.yawPost = 0;
+  S.yaw = (t) => {
+    if (S.runFrom != null && t > S.runFrom) return ease(S.yawPost, 0, t, S.runFrom, S.runFrom + 0.4);
+    return t < 0 ? (S.yawPre || 0) : t < S.Tt ? ease(S.yawPre || 0, S.yawPost, t, 0.2, 0.65) : ease(S.yawPost, S.yawThrow, t, S.Tt, S.Tt + 0.45);
+  };
   precompute(S);
   return S;
 }
 
-/** He throws: to `id`, the ball leaving his hand at `release` seconds and arriving at `catchT` at `catchAt`. */
+/** He keeps it and runs from time t. */
+export function setRun(S, t) {
+  S.runFrom = t;
+  S.T1 = Math.min(t + 1.6, S.rep.play.sim.steps * S.rep.play.sim.dt + S.rep.play.sim.tStart);
+  precompute(S);
+}
+
+/** He throws: to `id` (null for a throwaway), the ball leaving his hand at `release` and arriving at `catchT` at `catchAt`. */
 export function setThrow(S, id, release, catchT, catchAt) {
   const c = S.cam(release);
   S.Tt = release; S.Tc = catchT; S.target = id; S.catchPt = [catchAt.x, catchAt.y];
@@ -103,7 +121,7 @@ function ballAt(S, t) {
     const u = (t - S.Tt) / (S.Tc - S.Tt), a = S.release, cp = S.catchPt, D = Math.hypot(cp[0] - a[0], cp[1] - a[1]);
     return { mode: 'air', p: [a[0] + (cp[0] - a[0]) * u, a[1] + (cp[1] - a[1]) * u, a[2] + (1.3 - a[2]) * u + 4 * 0.07 * D * u * (1 - u)] };
   }
-  return { mode: 'caught' };
+  return S.target ? { mode: 'caught' } : { mode: 'ground', p: [S.catchPt[0], S.catchPt[1], 0.12] };
 }
 
 // ---------------------------------------------------------------- pose model (fixed step, deterministic)
@@ -468,22 +486,21 @@ export function createEyes(canvas) {
     const a = toX(cam.yaw - half), b = toX(cam.yaw + half);
     ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(a, y0, b - a, h);
     ctx.fillStyle = '#1C2430'; ctx.beginPath(); ctx.arc(toX(cam.yaw), y0 + h / 2, 3, 0, Math.PI * 2); ctx.fill();
-    const i = S.players.indexOf(S.byId[S.readId]);
+    const i = S.readId ? S.players.indexOf(S.byId[S.readId]) : -1;
     if (i >= 0 && t > -0.2) {
       const s = states[i], rx = toX(Math.atan2(s[F_X] - cam.x, s[F_Y] - cam.y));
       ctx.fillStyle = '#E2602A'; ctx.beginPath(); ctx.moveTo(rx, y0 + h + 1); ctx.lineTo(rx - 5, y0 + h + 8); ctx.lineTo(rx + 5, y0 + h + 8); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
     let msg = null;
-    if (t < 0 && Math.abs(cam.yaw) > 0.15) msg = cam.yaw < 0 ? 'Pre-snap scan: look left' : 'Pre-snap scan: look right';
-    else if (t >= 0 && t < 1.0 && S.readText) msg = S.readText;
+    if (t >= 0 && t < 1.0 && S.readText) msg = S.readText;
     if (msg) chip(msg, W / 2, y0 + h + 36, 'rgba(16,20,26,0.82)', '#FFFFFF', null);
   }
 
   function draw(t) {
     if (!S) return;
     const st = STYLE;
-    cam = S.cam(t); cam.yaw = S.yaw(t); cam.sv = Math.sin(cam.yaw); cam.cv = Math.cos(cam.yaw);
+    cam = S.cam(t); cam.yaw = S.yawOverride != null ? S.yawOverride : S.yaw(t); cam.sv = Math.sin(cam.yaw); cam.cv = Math.cos(cam.yaw);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     drawField(st);
     const states = S.players.map((p, i) => stateAt(S, i, t));
@@ -519,6 +536,7 @@ export function createEyes(canvas) {
 
   return {
     resize,
+    get width() { return W; },
     setScene(scene) { S = scene; },
     draw,
     view,

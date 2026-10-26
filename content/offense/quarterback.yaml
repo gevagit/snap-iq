@@ -1,0 +1,19 @@
+# Sahar as a quarterback, and his pocket rules for the routine's Plan step. Batch 3, not yet reviewed.
+version: 1
+batch: 3
+throwing_hand: left
+# Drop by concept and quarterback alignment (glossary drop terms).
+drops:
+  stick-concept: { gun: one-step-drop, pistol: one-step-drop, under: three-step-drop }
+  slant-flat: { gun: one-step-drop, pistol: one-step-drop, under: three-step-drop }
+  smash: { gun: three-step-drop, pistol: three-step-drop, under: five-step-drop }
+  flood: { gun: three-step-drop, pistol: three-step-drop, under: five-step-drop }
+  four-verticals: { gun: three-step-drop, pistol: three-step-drop, under: five-step-drop }
+  mesh: { gun: three-step-drop, pistol: three-step-drop, under: five-step-drop }
+  curl-flat: { gun: three-step-drop, pistol: three-step-drop, under: five-step-drop }
+# Escape lane: toward his throwing hand, unless more edge threats show on that side. An edge threat is a defender
+# lined up outside his tackle within within_depth yards of the line (an end or a creeping blitzer).
+escape:
+  prefer: throwing-hand
+  edge_threat: { outside_tackle: 0.5, within_depth: 3.0 }
+reviewed: false

@@ -47,20 +47,20 @@ export function drawBoard(canvas, rep, t, opts) {
   sim.man.forEach((m) => { const d = at(m.role, t), o = at(m.target, t); ctx.strokeStyle = B.man; ctx.setLineDash([s * 0.15, s * 0.25]); ctx.lineWidth = Math.max(1, s * 0.08); ctx.beginPath(); ctx.moveTo(X(d.x), Y(d.y)); ctx.lineTo(X(o.x), Y(o.y)); ctx.stroke(); ctx.setLineDash([]); });
   // the throws: the answer (green) and his (dark), from the release to the catch
   const throwLine = (id, color, dash) => {
-    const o = rep.key.options.find((q) => q.id === id); if (!o) return;
+    const o = rep.post.options.find((q) => q.id === id); if (!o) return;
     const qb = at('QB', rep.decision), c = at(id, o.catchT);
     ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, s * 0.2); ctx.setLineDash(dash ? [s * 0.5, s * 0.35] : []);
     ctx.beginPath(); ctx.moveTo(X(qb.x), Y(qb.y)); ctx.lineTo(X(c.x), Y(c.y)); ctx.stroke(); ctx.setLineDash([]);
     ctx.beginPath(); ctx.arc(X(c.x), Y(c.y), s * 1.0, 0, Math.PI * 2); ctx.stroke();
   };
-  if (opts.showThrows) { throwLine(rep.key.throwTo, B.best, false); if (opts.mine && opts.mine !== rep.key.throwTo) throwLine(opts.mine, B.mine, true); }
+  if (opts.showThrows) { throwLine(rep.post.decision, B.best, false); if (opts.mine && opts.mine !== rep.post.decision) throwLine(opts.mine, B.mine, true); }
   // players
   const r = s * 0.62;
   sim.tracks.forEach((p) => {
     const q = at(p.id, t), o = p.team === 'O';
     ctx.fillStyle = o ? B.oFill : B.dFill; ctx.strokeStyle = o ? B.oEdge : B.dEdge; ctx.lineWidth = Math.max(1.2, s * 0.14);
     ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    if (p.id === rep.key.readDefender) { ctx.strokeStyle = B.los; ctx.setLineDash([s * 0.3, s * 0.2]); ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), r * 1.8, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    if (p.id === rep.routine.key) { ctx.strokeStyle = B.los; ctx.setLineDash([s * 0.3, s * 0.2]); ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), r * 1.8, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
     if (p.label) { ctx.fillStyle = o ? B.oText : B.dText; ctx.font = '700 ' + Math.max(8, Math.round(s * (p.label.length > 2 ? 0.62 : 0.78))) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.label, X(q.x), Y(q.y) + 0.5); }
   });
 }

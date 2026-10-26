@@ -10,6 +10,7 @@ categories:
   situation: Game situation (down, distance, field zone, clock, score)
   offense: Offense (batch 2) - personnel, formations, motion, routes, concepts, protections
   defense: Defense (batch 2) - fronts, positions, shells, coverages, rotations, pressures
+  quarterback: Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions
 
 terms:
   # ---------------------------------------------------------------- field
@@ -1669,3 +1670,113 @@ terms:
     reviewed: true
     reviewer: owner
     reviewed_at: "2026-10-26"
+
+  # ================================================================ batch 3: quarterback play
+
+  - id: pre-snap-routine
+    term: Pre-snap routine
+    category: quarterback
+    batch: 3
+    definition: "The checks a quarterback makes at the line before the snap, in order: Know (his own alignment), See (the shell, the box, the corners and any tells), Threats (rushers against blockers and his hot route), Plan (route changes, his read, his drop and his escape lane)."
+    aliases: [routine, pre-snap checks]
+    see: [shell, box, hot-route]
+    reviewed: false
+
+  - id: covered-receiver
+    term: Covered receiver
+    category: quarterback
+    batch: 3
+    definition: A player on the line of scrimmage with a teammate on the line outside him. He is not an end, so he may not catch a forward pass.
+    aliases: [covered, covered up]
+    see: [eligible-receiver, legal-formation]
+    reviewed: false
+
+  - id: tell
+    term: Tell
+    category: quarterback
+    batch: 3
+    definition: "A clue in a defender's alignment, stance or movement before the snap that gives away his job."
+    aliases: [tells, give-away]
+    see: [creep, disguise]
+    reviewed: false
+
+  - id: blitz-tell
+    term: Blitz tell
+    category: quarterback
+    batch: 3
+    definition: A tell that a defender will rush the quarterback, such as a linebacker or defensive back creeping toward the line or an edge before the snap.
+    aliases: [blitz look]
+    see: [tell, blitz, creep]
+    reviewed: false
+
+  - id: rotation-tell
+    term: Rotation tell
+    category: quarterback
+    batch: 3
+    definition: A tell that the shell will change at the snap, such as one safety creeping down while the other stays deep.
+    aliases: [spin tell, roll tell]
+    see: [tell, rotation]
+    reviewed: false
+
+  - id: catch-and-throw
+    term: Catch and throw
+    category: quarterback
+    batch: 3
+    definition: Gun footwork with no drop - he catches the snap and throws.
+    aliases: [no-step]
+    see: [shotgun]
+    reviewed: false
+
+  - id: one-step-drop
+    term: One-step drop
+    category: quarterback
+    batch: 3
+    definition: Gun footwork - one step back after the catch, then throw. Used on quick routes.
+    aliases: [one-step, 1-step]
+    see: [shotgun]
+    reviewed: false
+
+  - id: three-step-drop
+    term: Three-step drop
+    category: quarterback
+    batch: 3
+    definition: Three steps back after the snap (in the gun, after the catch), then throw on time. In the gun it fits routes about 8 to 12 yards deep; under center it is the quick game.
+    aliases: [three-step, 3-step]
+    see: [under-center]
+    reviewed: false
+
+  - id: five-step-drop
+    term: Five-step drop
+    category: quarterback
+    batch: 3
+    definition: Five steps back after the snap, then throw. Under center it fits routes about 10 to 15 yards deep.
+    aliases: [five-step, 5-step]
+    see: [under-center]
+    reviewed: false
+
+  - id: escape-lane
+    term: Escape lane
+    category: quarterback
+    batch: 3
+    definition: "The way out of a breaking pocket. For a left-handed quarterback usually to his left (his throwing hand), unless the rush threat is greater on that side."
+    aliases: [escape route]
+    see: [throwaway]
+    reviewed: false
+
+  - id: quarterback-run
+    term: Quarterback run
+    category: quarterback
+    batch: 3
+    definition: The quarterback keeps the ball and runs when no receiver is open and there is room in front of him.
+    aliases: [keep, scramble, QB run]
+    see: [runner]
+    reviewed: false
+
+  - id: route-adjustment
+    term: Route adjustment
+    category: quarterback
+    batch: 3
+    definition: Changing a receiver's route at the line before the snap. In SNAP IQ he may change up to two routes per play.
+    aliases: [route change, route tag]
+    see: [progression]
+    reviewed: false

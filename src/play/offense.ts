@@ -261,7 +261,8 @@ export function snapPositions(off: Offense, plan: MotionPlan | null): Map<string
   return m;
 }
 
-export function assignRoutes(c: PlayContent, off: Offense, plan: MotionPlan | null, concept: Concept, protection: Protection): Fit<OffenseJobs> {
+/** overrides: route changes he made at the line (receiver letter -> route id), at most adjustments.max_changes */
+export function assignRoutes(c: PlayContent, off: Offense, plan: MotionPlan | null, concept: Concept, protection: Protection, overrides: Partial<Record<string, string>> = {}): Fit<OffenseJobs> {
   const snap = snapPositions(off, plan);
   const room = c.routeFile.sideline_room;
   const clampX = (x: number) => Math.min(off.frame.rightSideline - room, Math.max(off.frame.leftSideline + room, x));
@@ -279,7 +280,8 @@ export function assignRoutes(c: PlayContent, off: Offense, plan: MotionPlan | nu
   const routes: RouteJob[] = [];
   const numbers = new Map<string, { side: Sign; number: number }>();
   const build = (pid: string, ref: RouteRef, from: Vec, side: Sign, v0: number) => {
-    const { route: rid, deeper } = refRoute(ref);
+    const changed = overrides[pid];
+    const { route: rid, deeper } = changed ? { route: changed, deeper: 0 } : refRoute(ref);
     const route = c.routes.get(rid);
     if (!route) throw new Error(`${concept.id}: unknown route ${rid}`);
     const pts = [from, ...route.waypoints.map(([dx, dy]) => vec(clampX(from.x + side * dx), from.y + dy + deeper))];

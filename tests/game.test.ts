@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
 import { parsePlayContent } from '../src/play/content';
-import { answerKey, callReviewed, finishWorkout, grade, makeRep, newProgress, rank, recordRep, rng } from '../src/game/drill';
+import { callReviewed, emptyAnswers, finishWorkout, grade, makeRep, newProgress, progression, rank, recordRep, rng, routeMenu, withChanges, type Answers, type Rep } from '../src/game/drill';
+import { buildPlay } from '../src/play';
 import { explain } from '../src/game/explain';
 
 const raw = loadRawContent();
@@ -26,7 +27,19 @@ function withReview(reviewed: boolean) {
   return parsePlayContent(r as never);
 }
 
-describe('Shell Game drill', () => {
+/** His answers when every step of the routine and the decision are right. */
+function perfect(rep: Rep): Answers {
+  const k = rep.routine;
+  return {
+    ...emptyAnswers(),
+    alignment: k.alignment, shell: k.shell, box: k.box, corners: k.corners.map((cn) => cn.look), tells: k.tells,
+    threats: { more: k.threats.more, hot: k.threats.more ? k.threats.hot[0] ?? null : null },
+    key: k.key, keyAnswered: true, firstLook: k.firstLook, drop: k.drop, escape: k.escape, routineTime: 10,
+    coverage: rep.post.coverage, decision: rep.post.decision,
+  };
+}
+
+describe('Pre-snap routine game', () => {
   it('uses only signed-off content unless playtest is on (CLAUDE.md review gate)', () => {
     const unsigned = withReview(false);
     expect(makeRep(unsigned, 'youth', 1, 0, false)).toBeNull();
@@ -36,72 +49,101 @@ describe('Shell Game drill', () => {
     expect(callReviewed(withReview(true), ok.call)).toBe(true);
   });
 
-  it('runs on the signed-off Football Bible without playtest', () => {
-    const rep = makeRep(c, 'youth', 1, 0, false)!;
-    expect(rep.reviewed).toBe(true);
+  it('waits for batch 3 sign-off: no drill reps without playtest yet', () => {
+    expect(makeRep(c, 'youth', 1, 0, false)).toBeNull();
+    expect(makeRep(c, 'youth', 1, 0, true)).not.toBeNull();
   });
 
   it('is deterministic: the same seed gives the same workout', () => {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 6; i++) {
       const a = makeRep(c, 'jv', 42, i, true)!;
       const b = makeRep(c, 'jv', 42, i, true)!;
       expect(a.call).toEqual(b.call);
-      expect(a.key).toEqual(b.key);
+      expect(a.fault).toEqual(b.fault);
+      expect(a.routine).toEqual(b.routine);
+      expect(a.post).toEqual(b.post);
     }
     expect(rng(7)()).toBe(rng(7)());
   });
 
-  it('builds youth reps from youth content only, every one a legitimate play with an answer', () => {
-    const tier = c.drills.shell_game.tiers.youth;
-    for (let i = 0; i < 24; i++) {
+  it('builds tier reps from tier content, each a legitimate play with a full answer key', () => {
+    const tier = c.drills.routine.tiers.youth;
+    let faults = 0;
+    for (let i = 0; i < 20; i++) {
       const rep = makeRep(c, 'youth', 2026, i, true)!;
       expect(tier.coverages).toContain(rep.call.coverage);
       expect(tier.fronts).toContain(rep.call.front);
       expect(rep.play.checks.every((ch) => ch.ok)).toBe(true);
-      expect(tier.answers.shell).toContain(rep.key.shell);
-      expect(tier.answers.coverage).toContain(rep.key.coverage);
-      expect(rep.key.options.map((o) => o.id)).toContain(rep.key.throwTo);
-      expect(rep.start).toBeLessThan(0);
+      expect(rep.clock).toBe(tier.clock);
+      const k = rep.routine;
+      expect(k.alignment).toBe(rep.fault ? rep.fault.id : 'ok');
+      if (rep.fault) faults++;
+      expect(k.corners.length).toBeGreaterThan(0);
+      expect(['none', 'blitz-tell', 'rotation-tell']).toContain(k.tells);
+      expect(rep.play.sim.routes.map((r) => r.id)).toContain(k.firstLook);
+      expect(k.drop).toBe(c.quarterback.drops[rep.call.concept]![rep.play.offense.formation.qb]);
+      expect(['left', 'right']).toContain(k.escape);
     }
+    expect(faults).toBeGreaterThan(0);
   });
 
-  it('the answer is the first open receiver in his progression', () => {
-    let checked = 0;
-    for (let i = 0; i < 30; i++) {
+  it('the decision is the first open receiver in his progression, otherwise run or throw it away', () => {
+    let open = 0;
+    for (let i = 0; i < 24; i++) {
       const rep = makeRep(c, 'jv', 99, i, true)!;
-      const k = answerKey(c, rep.play, rep.decision);
-      const first = k.options.find((o) => o.open);
-      if (first) { expect(k.throwTo).toBe(first.id); checked++; }
-      else expect(k.options.find((o) => o.id === k.throwTo)!.separation).toBe(Math.max(...k.options.map((o) => o.separation)));
+      const order = progression(c, rep.play);
+      expect(rep.post.options.map((o) => o.id)).toEqual(order);
+      const first = rep.post.options.find((o) => o.open);
+      if (first) { expect(rep.post.decision).toBe(first.id); open++; }
+      else expect(['run', 'throw-away']).toContain(rep.post.decision);
+      expect(rep.post.coverage).toBe(rep.play.defense.coverage.answer);
     }
-    expect(checked).toBeGreaterThan(20);
+    expect(open).toBeGreaterThan(0);
   });
 
-  it('grades shell, coverage and throw, with part credit for another open receiver', () => {
+  it('lets him change up to two routes, from the menu for each receiver', () => {
     const rep = makeRep(c, 'youth', 5, 0, true)!;
-    const s = c.drills.scoring;
-    const perfect = grade(c, rep.key, { shell: rep.key.shell, coverage: rep.key.coverage, throwTo: rep.key.throwTo });
-    expect(perfect).toEqual({ shell: true, coverage: true, throw: 'read', xp: s.shell + s.coverage + s.throw });
-    const other = rep.key.options.find((o) => o.id !== rep.key.throwTo && o.open);
-    if (other) expect(grade(c, rep.key, { shell: null, coverage: null, throwTo: other.id }).throw).toBe('open');
-    expect(grade(c, rep.key, { shell: 'zero-high', coverage: null, throwTo: null }).xp).toBe(rep.key.shell === 'zero-high' ? s.shell : 0);
+    const [a, b, d] = rep.play.sim.routes.map((r) => r.id);
+    const pickNew = (id: string) => routeMenu(c, rep.play, id).find((r) => r !== rep.play.sim.routes.find((x) => x.id === id)!.route)!;
+    const two = { [a!]: pickNew(a!), [b!]: pickNew(b!) };
+    const changed = withChanges(c, rep, two);
+    expect(changed.play.sim.routes.find((r) => r.id === a)!.route).toBe(two[a!]);
+    expect(changed.call.overrides).toEqual(two);
+    if (d) expect(buildPlay(c, { ...rep.call, overrides: { ...two, [d]: pickNew(d) } }).ok).toBe(false);
+    expect(withChanges(c, rep, {})).toBe(rep);
   });
 
-  it('explains the rep in glossary words', () => {
+  it('grades every step and the decision', () => {
+    const rep = makeRep(c, 'youth', 5, 0, true)!;
+    const p = c.drills.routine.points;
+    const g = grade(c, rep, rep, perfect(rep));
+    expect(Object.values(g.steps).every(Boolean)).toBe(true);
+    expect(g.decision).toBe('read');
+    const steps = ['alignment', 'shell', 'box', 'corners', 'tells', 'threats', 'adjust', 'key', 'drop', 'escape', 'coverage'] as const;
+    expect(g.xp).toBe(steps.reduce((s, k) => s + p[k], 0) + p.decision + p.beat_the_clock);
+    const none = grade(c, rep, rep, emptyAnswers());
+    expect(none.steps.shell).toBe(false);
+    expect(none.steps.adjust).toBe(true);
+    expect(none.decision).toBe('miss');
+  });
+
+  it('explains every step in glossary words', () => {
     const rep = makeRep(c, 'youth', 8, 1, true)!;
-    const a = { shell: rep.key.shell, coverage: 'cover-0', throwTo: rep.key.throwTo };
-    const parts = explain(c, terms, rep, a, grade(c, rep.key, a));
-    expect(parts).toHaveLength(3);
-    expect(parts[0]!.lines[0]).toBe(terms.get(rep.key.shell)!.definition);
-    expect(parts[2]!.lines.join(' ')).toContain(`The ball goes to ${rep.key.throwTo}`);
+    const a = perfect(rep);
+    const parts = explain(c, terms, rep, rep, a, grade(c, rep, rep, a));
+    expect(parts.map((x) => x.title.split(':')[0])).toEqual(['Know', 'See', 'See', 'See', 'See', 'Threats', 'Plan', 'Plan', 'Plan', 'Plan', 'After the snap', 'Decision']);
+    expect(parts.every((x) => x.ok)).toBe(true);
+    expect(parts[1]!.lines[0]).toBe(terms.get(rep.routine.shell)!.definition);
   });
 
   it('keeps XP, rank and the day streak', () => {
     let p = newProgress();
     const rep = makeRep(c, 'youth', 3, 0, true)!;
-    p = recordRep(p, rep.call, { shell: true, coverage: true, throw: 'read', xp: 40 });
-    expect(p.xp).toBe(40);
-    expect(p.concepts[rep.call.concept]).toEqual([1, 1]);
+    const g = grade(c, rep, rep, perfect(rep));
+    p = recordRep(p, rep.call, g);
+    expect(p.xp).toBe(g.xp);
+    expect(p.coverages[rep.call.coverage]).toEqual([1, 1]);
+    expect(p.steps.decision).toEqual([1, 1]);
     p = finishWorkout(c, p, '2026-10-25');
     p = finishWorkout(c, p, '2026-10-26');
     expect(p.streak).toBe(2);

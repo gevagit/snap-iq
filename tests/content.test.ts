@@ -22,10 +22,14 @@ describe('Football Bible content (batch 1)', () => {
     expect(r.counts.toConfirm).toBe(0);
   });
 
-  it('records the owner sign-off on batch 2 (defaults accepted)', () => {
+  it('keeps the batch 2 sign-off; only batch 3 content waits for review', () => {
     const r = validateContent(raw);
-    expect(r.counts.batch2.needsReview).toBe(0);
-    expect(r.counts.needsReview).toBe(0);
+    const g = raw.glossary as { terms: { reviewed: boolean; batch?: number }[] };
+    // batch 3 reopened three coverages (tell kinds) and added drills, adjustments and quarterback: 6 entries
+    expect(r.counts.batch2.needsReview).toBe(6);
+    expect(g.terms.filter((t) => !t.reviewed).every((t) => t.batch === 3)).toBe(true);
+    const cov = raw.coverages as { coverages: { id: string; reviewed: boolean }[] };
+    expect(cov.coverages.filter((x) => !x.reviewed).map((x) => x.id).sort()).toEqual(['cover-0', 'cover-3-sky', 'fire-zone']);
   });
 
   it('rejects a duplicate glossary id', () => {

@@ -277,6 +277,7 @@ export const Coverages = z
                 role: Id,
                 start: z.number().positive(),
                 to: z.object({ depth: z.number(), end_man_plus: z.number().optional() }).strict(),
+                kind: z.enum(['blitz-tell', 'rotation-tell']).optional(),
                 honest: z.boolean(),
               })
               .strict(),
@@ -324,26 +325,67 @@ export type Coverages = z.infer<typeof Coverages>;
 export type Coverage = Coverages['coverages'][number];
 export type Speeds = z.infer<typeof Speeds>;
 
-const DrillTier = z
+const RoutineTier = z
   .object({
-    look: z.number().positive(),
-    decision: z.number().positive(),
+    clock: z.number().positive(),
     coverages: z.array(Id).min(1),
     fronts: z.array(Id).min(1),
     motions: z.array(Id).min(1),
     answers: z.object({ shell: z.array(Id).min(2), coverage: z.array(Id).min(2) }).strict(),
   })
   .strict();
+export const STEPS = ['alignment', 'shell', 'box', 'corners', 'tells', 'threats', 'adjust', 'key', 'drop', 'escape'] as const;
+export type Step = (typeof STEPS)[number];
+const Points = z.object({
+  alignment: z.number(), shell: z.number(), box: z.number(), corners: z.number(), tells: z.number(), threats: z.number(), adjust: z.number(),
+  key: z.number(), drop: z.number(), escape: z.number(), coverage: z.number(), decision: z.number(), beat_the_clock: z.number(),
+}).strict();
 export const Drills = z
   .object({
     ...Header,
     ball: z.object({ speed: z.number().positive(), release_delay: z.number().min(0), release_height: z.number() }).strict(),
     reads: z.object({ open_separation: z.number().positive() }).strict(),
-    shell_game: z.object({ reps: z.number().int().positive(), tiers: z.object({ youth: DrillTier, jv: DrillTier }).strict() }).strict(),
-    scoring: z.object({ shell: z.number(), coverage: z.number(), throw: z.number(), open_not_read: z.number(), workout_bonus: z.number() }).strict(),
+    routine: z
+      .object({
+        reps: z.number().int().positive(),
+        decision: z.number().positive(),
+        chunks: z.object({ know: z.array(z.enum(STEPS)), see: z.array(z.enum(STEPS)), threats: z.array(z.enum(STEPS)), plan: z.array(z.enum(STEPS)) }).strict(),
+        tiers: z.object({ youth: RoutineTier, jv: RoutineTier }).strict(),
+        corners: z.object({ press_within: z.number(), head_up_within: z.number() }).strict(),
+        box_choices: z.array(z.number().int()).min(2),
+        faults: z.object({ rate: z.number().min(0).max(1), step: z.number().positive() }).strict(),
+        decide: z.object({ run_room: z.number().positive() }).strict(),
+        points: Points,
+      })
+      .strict(),
+    scoring: z.object({ open_not_read: z.number(), workout_bonus: z.number() }).strict(),
     ranks: z.array(z.tuple([z.number().int().min(0), z.string().min(1)])).min(1),
     ...Review,
   })
   .strict()
   .refine(reviewComplete, reviewMessage);
 export type Drills = z.infer<typeof Drills>;
+
+export const Adjustments = z
+  .object({
+    ...Header,
+    max_changes: z.number().int().min(0),
+    menus: z.object({ wide: z.array(Id), slot: z.array(Id), 'tight-end': z.array(Id), back: z.array(Id) }).strict(),
+    ...Review,
+  })
+  .strict()
+  .refine(reviewComplete, reviewMessage);
+export type Adjustments = z.infer<typeof Adjustments>;
+
+const DropSet = z.object({ gun: Id, pistol: Id, under: Id }).strict();
+export const Quarterback = z
+  .object({
+    ...Header,
+    throwing_hand: z.enum(['left', 'right']),
+    drops: z.record(Id, DropSet),
+    escape: z.object({ prefer: z.literal('throwing-hand'), edge_threat: z.object({ outside_tackle: z.number(), within_depth: z.number() }).strict() }).strict(),
+    ...Review,
+  })
+  .strict()
+  .refine(reviewComplete, reviewMessage);
+export type Quarterback = z.infer<typeof Quarterback>;

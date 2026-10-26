@@ -10,7 +10,7 @@ export default tseslint.config(
     files: ['src/game/**/*.js', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: Object.fromEntries(
-        ['window', 'document', 'performance', 'localStorage', 'navigator', 'location', 'requestAnimationFrame', 'self', 'caches', 'fetch', 'URL']
+        ['window', 'document', 'performance', 'localStorage', 'navigator', 'location', 'requestAnimationFrame', 'cancelAnimationFrame', 'self', 'caches', 'fetch', 'URL', 'URLSearchParams']
           .map((g) => [g, 'readonly']),
       ),
     },
