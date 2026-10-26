@@ -264,6 +264,8 @@ export const Coverages = z
         name: z.string().min(1),
         tier: z.enum(['youth', 'jv']),
         terms: z.array(Id),
+        /** the coverage he names after the snap (a glossary term) */
+        answer: Id,
         family: z.enum(['man', 'zone']),
         shell: z.object({ pre: Shell, post: Shell }).strict(),
         rotation: Id.optional(),
@@ -321,3 +323,27 @@ export type Front = Fronts['fronts'][number];
 export type Coverages = z.infer<typeof Coverages>;
 export type Coverage = Coverages['coverages'][number];
 export type Speeds = z.infer<typeof Speeds>;
+
+const DrillTier = z
+  .object({
+    look: z.number().positive(),
+    decision: z.number().positive(),
+    coverages: z.array(Id).min(1),
+    fronts: z.array(Id).min(1),
+    motions: z.array(Id).min(1),
+    answers: z.object({ shell: z.array(Id).min(2), coverage: z.array(Id).min(2) }).strict(),
+  })
+  .strict();
+export const Drills = z
+  .object({
+    ...Header,
+    ball: z.object({ speed: z.number().positive(), release_delay: z.number().min(0), release_height: z.number() }).strict(),
+    reads: z.object({ open_separation: z.number().positive() }).strict(),
+    shell_game: z.object({ reps: z.number().int().positive(), tiers: z.object({ youth: DrillTier, jv: DrillTier }).strict() }).strict(),
+    scoring: z.object({ shell: z.number(), coverage: z.number(), throw: z.number(), open_not_read: z.number(), workout_bonus: z.number() }).strict(),
+    ranks: z.array(z.tuple([z.number().int().min(0), z.string().min(1)])).min(1),
+    ...Review,
+  })
+  .strict()
+  .refine(reviewComplete, reviewMessage);
+export type Drills = z.infer<typeof Drills>;

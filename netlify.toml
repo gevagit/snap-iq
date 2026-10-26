@@ -1,0 +1,12 @@
+# Netlify: every PR gets a deploy preview the owner can open on the iPad (CLAUDE.md workflow).
+[build]
+  command = "npm run build:game"
+  publish = "dist/game"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

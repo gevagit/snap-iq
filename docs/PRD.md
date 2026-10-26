@@ -6,7 +6,7 @@
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
-| **Current phase** | Phase 1: Football Bible. Batch 1 signed off with defaults; batch 2 (offense, defense, play engine) in owner review via the Play Lab. Phase 0 wireframes signed off |
+| **Current phase** | Phase 2: Playable slice. Shell Game playable first (owner, 2026-10-26: "use what we have and create the actual game"); Bubble next. Bible batch 2 in owner review, playtest only until signed off |
 
 ---
 
@@ -1002,7 +1002,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Football review | Owner first; a specific coach when the owner wants more input |
 | Jersey | #4 |
 | Speech recognition | None. Taps and swipes only; say-it-aloud is an unscored habit |
-| Build order | Wireframes → Football Bible → playable Bubble slice → backend → remaining drills |
+| Build order | Wireframes → Football Bible → playable slice (Shell Game first, on the content we have; then Bubble) → backend → remaining drills. Changed 2026-10-26 at the owner's request |
 | Handedness | Left-handed; rules expressed by throwing-hand side |
 | Rule set | NFHS (California CIF) |
 | Offense | Offense-agnostic standard menu; team aliases later |
@@ -1013,7 +1013,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Views | His eyes (natural lens, about 100°, true perspective) in every drill at every tier; top-down only in Learn and Breakdown |
 | Eyes | Pre-snap scan by look left / right; at the snap the view turns to his chosen read; swipe to look elsewhere; always shown and taught (§7.5) |
 | Movement | Every post-snap position computed from alignment + path + speed profile + time; routes as waypoints; no hand placement (§6.13) |
-| Renderer | 2D WebGL (PixiJS) with a custom natural-lens projection; true 3D only for a future VR mode |
+| Renderer | 2D WebGL (PixiJS) with a custom natural-lens projection; true 3D only for a future VR mode. The first slice draws with Canvas 2D (the approved style frame's renderer); move to PixiJS if the iPad performance test needs it |
 | Look | B, coaching board: muted field, orange-outlined defenders, see-through blue offense (§15.1) |
 | Players | 3D puppets of about 15 joints drawn as flat shapes; poses stored as content (§14.3) |
 | Information policy | Difficulty never removes information |
