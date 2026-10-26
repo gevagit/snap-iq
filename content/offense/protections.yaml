@@ -1,4 +1,4 @@
-# Pass protections. Batch 2, not yet reviewed.
+# Pass protections. Batch 2, signed off by the owner with defaults (2026-10-26).
 #   back: free          - no back stays in; a back in the backfield runs the concept's back route
 #   back: check-release - he steps to his check point in his gap; he blocks a blitzer who comes there,
 #                         otherwise he runs the check-release route (PRD §6.13)
@@ -10,6 +10,6 @@ back_check_point: { outside_tackle: 0.4, depth: 2.4 }   # about 2 yd behind the 
 pass_set: { in_front_of_rusher: 0.7, help_depth: 1.6 }   # a blocker sets this far from his rusher toward the quarterback; a free lineman sets here
 second_back: block   # a second back (the I-formation fullback) stays in and takes the first rusher on his side
 protections:
-  - { id: five-man, name: Five-man protection, terms: [five-man-protection], back: free, needs_back: false, reviewed: false }
-  - { id: half-slide, name: Half-slide protection, terms: [half-slide, slide-protection, check-release], back: check-release, needs_back: true, slide: away-from-back, reviewed: false }
-  - { id: big-on-big, name: Big-on-big protection, terms: [big-on-big, check-release], back: pick-up, needs_back: true, reviewed: false }
+  - { id: five-man, name: Five-man protection, terms: [five-man-protection], back: free, needs_back: false, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: half-slide, name: Half-slide protection, terms: [half-slide, slide-protection, check-release], back: check-release, needs_back: true, slide: away-from-back, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }
+  - { id: big-on-big, name: Big-on-big protection, terms: [big-on-big, check-release], back: pick-up, needs_back: true, reviewed: true, reviewer: owner, reviewed_at: "2026-10-26" }

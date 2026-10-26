@@ -1,4 +1,4 @@
-# Coverages: the shell before the snap, each defender's job after it, tells and rotations. Batch 2, not reviewed.
+# Coverages: the shell before the snap, each defender's job after it, tells and rotations. Batch 2, signed off by the owner with defaults (2026-10-26).
 # Sides (strong, weak) follow the defense's strength call (content/defense/fronts.yaml), set before any motion.
 version: 1
 batch: 2
@@ -6,8 +6,9 @@ batch: 2
 # Shell (glossary): a defender at least high_depth deep at the snap is a high safety.
 shells:
   high_depth: 9.5
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Pre-snap alignments for defensive backs and anyone whose coverage job sets where he stands.
 #   cb alignments are measured from #1 on his side; leverage outside/inside puts him that many yards to that side.
 #   one-high: the deep safety in the middle of the field. two-high: each safety on the hash on his side.
@@ -29,8 +30,9 @@ alignments:
   over-man: { depth: 5, leverage: inside, offset: 1.0, travel_depth: 7, travel_for: [jet, orbit, out-to-slot] }
   apex: { at: apex }
   blitz: { depth: 6 }
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Zone landmarks after the snap. by: seconds after the snap by which the defender must be there (the speed
 # profiles have to make it reachable, or the play fails validation).
 #   from_sideline: yards in from his sideline, but no more than max_outside_1 yd outside #1's alignment (a corner
@@ -74,8 +76,9 @@ zone_reaction:
     flat:         { half_width: 5, from_depth: -1, to_depth: 9, play: under, cushion: 1.0, min_depth: 2.0, max_depth: 8 }
     hook:         { half_width: 5, from_depth: 0, to_depth: 15, play: under, cushion: 1.5, min_depth: 3.0, max_depth: 11 }
     hole:         { half_width: 6, from_depth: 0, to_depth: 14, play: under, cushion: 1.5, min_depth: 3.0, max_depth: 10 }
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Man coverage after the snap: he plays this far to the inside of his man, closing the cushion at close_rate yd/s
 # down to min_cushion. A man defender whose man stays in to block becomes a green dog and rushes.
 man:
@@ -83,8 +86,9 @@ man:
   min_cushion: 1.0
   close_rate: 2.5
   green_dog: true
-  reviewed: false
-
+  reviewed: true
+  reviewer: owner
+  reviewed_at: "2026-10-26"
 # Reaction to motion (PRD §6.6 tells): in man the defender on the motion man travels with him; in zone the
 # defenders keyed to receivers re-align as the formation changes (bump). Fronts do not move with motion.
 motion_response: { man: travel, zone: bump }
@@ -130,8 +134,9 @@ coverages:
         will: { job: { man: [back], spare: [rush] } }
         fs: { align: blitz, job: { rush: a } }
         mike: { job: { rush: a } }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-1
     name: Cover 1
     tier: youth
@@ -166,8 +171,9 @@ coverages:
         oh-weak: { job: { man: [weak-2], spare: [rush] } }
         will: { job: { man: [back], spare: [hole, rush] } }
         mike: { job: { man: [], spare: [hole, rush] } }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-2
     name: Cover 2
     tier: youth
@@ -194,8 +200,9 @@ coverages:
         mike: { job: { zone: hook, side: middle } }
         will: { job: { zone: hook, side: weak } }
       four-two-five-even: *cover-2-nickel
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-3
     name: Cover 3
     tier: youth
@@ -230,8 +237,9 @@ coverages:
         sam: { job: { zone: hook, side: strong } }
         will: { job: { zone: hook, side: weak } }
         mike: { job: { rush: a } }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-4
     name: Cover 4
     tier: jv
@@ -257,8 +265,9 @@ coverages:
         nickel: { job: { zone: curl-flat, side: strong } }
         mike: { job: { zone: hook, side: middle } }
         will: { align: apex, job: { zone: curl-flat, side: weak } }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-3-sky
     name: Cover 3 Sky
     tier: jv
@@ -287,8 +296,9 @@ coverages:
         nickel: { job: { zone: hook, side: strong } }
         mike: { job: { zone: hook, side: weak } }
         will: { align: apex, job: { zone: curl-flat, side: weak } }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-1-robber
     name: Cover 1 Robber
     tier: jv
@@ -315,8 +325,9 @@ coverages:
         nickel: { job: { man: [strong-2] } }
         mike: { job: { man: [strong-3, back], spare: [rush] } }
         will: { job: { man: [weak-2, back], spare: [rush] } }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: two-man
     name: 2-Man
     tier: jv
@@ -335,8 +346,9 @@ coverages:
         mike: { job: { man: [strong-3, back], spare: [rush] } }
         will: { job: { man: [weak-2, back], spare: [rush] } }
       four-two-five-even: *two-man-nickel
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: fire-zone
     name: Fire zone
     tier: jv
@@ -358,4 +370,6 @@ coverages:
         oh-weak: { job: { rush: edge } }
         mike: { job: { rush: a } }
         sam: { job: { rush: b } }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

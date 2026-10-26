@@ -1,4 +1,4 @@
-# Pre-snap motion. Batch 2, not yet reviewed.
+# Pre-snap motion. Batch 2, signed off by the owner with defaults (2026-10-26).
 # The mover is always a back (off the line) - the glossary's motion is one back moving. The engine runs every
 # motion through the movement model and the validator checks the NFHS motion-and-shift rule at the snap:
 # one player moving, not toward the defense's goal line, everyone else set for 1 second.
@@ -21,8 +21,9 @@ motions:
   - id: none
     name: No motion
     terms: []
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: jet-motion
     name: Jet motion
     terms: [jet-motion]
@@ -33,8 +34,9 @@ motions:
     after: [[4, -2.6], [8, -1.2], [11, 0.4]]
     quick: true
     counts_to: destination
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: orbit-motion
     name: Orbit motion
     terms: [orbit-motion]
@@ -45,8 +47,9 @@ motions:
     after: [[3, -6.8], [7, -5.2], [11, -3.6]]
     quick: true
     counts_to: destination
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: short-motion
     name: Short motion
     terms: [short-motion]
@@ -54,8 +57,9 @@ motions:
     needs: { mover_is_number: 1, clear_of_teammates: 1.5 }
     speed: 3.0
     path: { kind: lateral, inward: 3.0 }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: return-motion
     name: Return motion
     terms: [return-motion]
@@ -63,8 +67,9 @@ motions:
     needs: { clear_of_teammates: 1.5 }
     speed: 3.5
     path: { kind: return, inward: 3.0, turn_radius: 0.5, back: 1.5 }
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: back-motion
     name: Back motion to empty
     terms: [back-motion, empty]
@@ -72,4 +77,6 @@ motions:
     needs: { qb: [gun, pistol], protection_without_back: true, destination_receivers_max: 2, clear_of_teammates: 1.5 }
     speed: 5.0
     path: { kind: out-to-slot, destination: strong, set_before_snap: 1.2 }
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

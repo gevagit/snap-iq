@@ -8,14 +8,17 @@ const raw = loadRawContent();
 const c = parsePlayContent(raw);
 const terms = new Map((raw.glossary as { terms: { id: string; term: string; definition: string }[] }).terms.map((t) => [t.id, t]));
 
-/** Content with every entry signed off, to test the review gate. */
-function signedOff() {
+/** The same content with every entry set to reviewed (or not), to test the review gate. */
+function withReview(reviewed: boolean) {
   const r = structuredClone(raw) as Record<string, unknown>;
   const walk = (v: unknown): void => {
     if (Array.isArray(v)) v.forEach(walk);
     else if (v && typeof v === 'object') {
       const o = v as Record<string, unknown>;
-      if ('reviewed' in o) Object.assign(o, { reviewed: true, reviewer: 'owner', reviewed_at: '2026-10-26' });
+      if ('reviewed' in o) {
+        if (reviewed) Object.assign(o, { reviewed: true, reviewer: 'owner', reviewed_at: '2026-10-26' });
+        else { o.reviewed = false; delete o.reviewer; delete o.reviewed_at; }
+      }
       Object.values(o).forEach(walk);
     }
   };
@@ -25,12 +28,17 @@ function signedOff() {
 
 describe('Shell Game drill', () => {
   it('uses only signed-off content unless playtest is on (CLAUDE.md review gate)', () => {
-    expect(makeRep(c, 'youth', 1, 0, false)).toBeNull();
-    const rep = makeRep(c, 'youth', 1, 0, true)!;
-    expect(rep.reviewed).toBe(false);
-    const ok = makeRep(signedOff(), 'youth', 1, 0, false)!;
+    const unsigned = withReview(false);
+    expect(makeRep(unsigned, 'youth', 1, 0, false)).toBeNull();
+    expect(makeRep(unsigned, 'youth', 1, 0, true)!.reviewed).toBe(false);
+    const ok = makeRep(withReview(true), 'youth', 1, 0, false)!;
     expect(ok.reviewed).toBe(true);
-    expect(callReviewed(signedOff(), ok.call)).toBe(true);
+    expect(callReviewed(withReview(true), ok.call)).toBe(true);
+  });
+
+  it('runs on the signed-off Football Bible without playtest', () => {
+    const rep = makeRep(c, 'youth', 1, 0, false)!;
+    expect(rep.reviewed).toBe(true);
   });
 
   it('is deterministic: the same seed gives the same workout', () => {

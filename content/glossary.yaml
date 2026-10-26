@@ -1,5 +1,5 @@
 # SNAP IQ glossary: the controlled vocabulary for all content, explanations and UI text.
-# Batch 1: field, rules and situation terms (owner-approved). Batch 2: offense and defense terms (not yet reviewed).
+# Batch 1: field, rules and situation terms. Batch 2: offense and defense terms. Both owner-approved with defaults.
 # Owner accepted batch 1 with defaults on 2026-10-26 (reviewed: true). `notes` records the default in use;
 # `confirm` marks a detail still open (none in batch 1). Batch 2 terms carry `batch: 2`.
 version: 1
@@ -686,876 +686,986 @@ terms:
     reviewer: owner
     reviewed_at: "2026-10-26"
 
-  # ================================================================ batch 2: offense (not yet reviewed)
+  # ================================================================ batch 2: offense
   - id: personnel-group
     term: Personnel group
     category: offense
     batch: 2
     definition: The offense's running backs and tight ends named as two digits, backs first. 11 personnel is 1 back, 1 tight end and 3 receivers; 10 is 1 back and 4 receivers.
     aliases: [personnel, 10 personnel, 11 personnel, 12 personnel, 20 personnel, 21 personnel]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: shotgun
     term: Shotgun
     category: offense
     batch: 2
     definition: The quarterback lined up about 5 yards behind the center, taking the snap through the air.
     aliases: [gun]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: pistol
     term: Pistol
     category: offense
     batch: 2
     definition: The quarterback about 4 yards behind the center with the running back directly behind him.
     aliases: []
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: under-center
     term: Under center
     category: offense
     batch: 2
     definition: The quarterback directly behind the center, taking the snap hand to hand.
     aliases: [under]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: formation-strength
     term: Formation strength
     category: offense
     batch: 2
     definition: The side of the formation with the tight end or, without one, with more receivers. Defenses set their front and coverage to it.
     aliases: [strength, strong side, passing strength]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: weak-side
     term: Weak side
     category: offense
     batch: 2
     definition: The side of the formation away from its strength.
     aliases: [weak]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: split-end
     term: Split end
     category: offense
     batch: 2
     definition: The wide receiver on the line of scrimmage, usually on the weak side. Lettered X.
     aliases: [X receiver, X]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: flanker
     term: Flanker
     category: offense
     batch: 2
     definition: The wide receiver set off the line of scrimmage, usually on the strong side. Lettered Z.
     aliases: [Z receiver, Z]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: slot-receiver
     term: Slot receiver
     category: offense
     batch: 2
     definition: A receiver set off the line between the end man on the line and the widest receiver. Lettered H (or Y with no tight end).
     aliases: [slot, H receiver, H, inside receiver]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: tight-end
     term: Tight end
     category: offense
     batch: 2
     definition: A receiver set on the line next to the tackle, able to block or run routes. Lettered Y.
     aliases: [TE, Y]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: running-back
     term: Running back
     category: offense
     batch: 2
     definition: The back behind or beside the quarterback who runs the ball, blocks or runs routes. Lettered R.
     aliases: [RB, R, tailback]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: fullback
     term: Fullback
     category: offense
     batch: 2
     definition: A second back lined up between the quarterback and the running back, usually a blocker. Lettered F.
     aliases: [FB, F]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: attached
     term: Attached
     category: offense
     batch: 2
     definition: A tight end set right next to the tackle on the line, rather than split out.
     aliases: [in-line]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: two-by-two
     term: Two-by-two
     category: offense
     batch: 2
     definition: Two receivers on each side of the ball.
     aliases: [2x2, doubles]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: three-by-one
     term: Three-by-one
     category: offense
     batch: 2
     definition: Three receivers to one side and one to the other. The three-receiver side is the strength.
     aliases: [3x1, trips]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: empty
     term: Empty
     category: offense
     batch: 2
     definition: No back beside or behind the quarterback; all five eligible players are split out.
     aliases: [empty backfield]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: bunch
     term: Bunch
     category: offense
     batch: 2
     definition: Three receivers grouped within about 2 yards of each other, one on the line and two just behind.
     aliases: [bunch set]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: i-formation
     term: I-formation
     category: offense
     batch: 2
     definition: The quarterback under center with the fullback and running back lined up behind him in a line.
     aliases: [I-form, I]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: jet-motion
     term: Jet motion
     category: offense
     batch: 2
     definition: A receiver running full speed across the formation behind the line, timed to pass the ball at the snap.
     aliases: [jet]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: orbit-motion
     term: Orbit motion
     category: offense
     batch: 2
     definition: A receiver running backward around the quarterback to the other side, still moving at the snap.
     aliases: [orbit]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: short-motion
     term: Short motion
     category: offense
     batch: 2
     definition: A receiver taking a few steps toward the ball before the snap, still moving at the snap.
     aliases: [zip motion, zip]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: return-motion
     term: Return motion
     category: offense
     batch: 2
     definition: A receiver starting across, then turning back toward where he started, still moving at the snap.
     aliases: [return]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: back-motion
     term: Back motion
     category: offense
     batch: 2
     definition: The running back moving out of the backfield to split wide before the snap, leaving the formation empty.
     aliases: [motion to empty]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: go-route
     term: Go route
     category: offense
     batch: 2
     definition: A straight sprint down the field.
     aliases: [go, fly, vertical, clear]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: fade-route
     term: Fade route
     category: offense
     batch: 2
     definition: A deep route bending toward the sideline, away from the defender.
     aliases: [fade]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: seam-route
     term: Seam route
     category: offense
     batch: 2
     definition: A slot receiver or tight end running straight up the field between the deep defenders.
     aliases: [seam]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: hitch-route
     term: Hitch route
     category: offense
     batch: 2
     definition: Five or six yards up the field, then a quick turn back to face the quarterback.
     aliases: [hitch]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: stick-route
     term: Stick route
     category: offense
     batch: 2
     definition: Six yards up the field, then settling and turning to the outside to face the quarterback.
     aliases: []
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: quick-out-route
     term: Quick out
     category: offense
     batch: 2
     definition: Five yards up the field, then a sharp cut straight to the sideline.
     aliases: [speed out]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: out-route
     term: Out route
     category: offense
     batch: 2
     definition: Ten yards up the field, then a sharp cut straight to the sideline.
     aliases: [out]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: slant-route
     term: Slant route
     category: offense
     batch: 2
     definition: One or two steps up the field, then a sharp angle toward the middle.
     aliases: [slant]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: flat-route
     term: Flat route
     category: offense
     batch: 2
     definition: An angle toward the sideline about 2 or 3 yards past the line of scrimmage.
     aliases: [arrow, flat]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: curl-route
     term: Curl route
     category: offense
     batch: 2
     definition: Twelve yards up the field, then turning back toward the quarterback and the middle.
     aliases: [curl]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: dig-route
     term: Dig route
     category: offense
     batch: 2
     definition: Twelve yards up the field, then a sharp cut across the middle.
     aliases: [dig, square in]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: corner-route
     term: Corner route
     category: offense
     batch: 2
     definition: Ten yards up the field, then an angle toward the back corner of the end zone.
     aliases: [flag route, flag]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: post-route
     term: Post route
     category: offense
     batch: 2
     definition: Ten yards up the field, then an angle toward the goal posts in the middle.
     aliases: [post]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: shallow-route
     term: Shallow route
     category: offense
     batch: 2
     definition: Crossing the field 2 to 4 yards past the line of scrimmage.
     aliases: [shallow cross, drag]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: sail-route
     term: Sail route
     category: offense
     batch: 2
     definition: A deep out, breaking toward the sideline about 10 to 12 yards past the line.
     aliases: [sail, deep out]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: swing-route
     term: Swing route
     category: offense
     batch: 2
     definition: The running back circling out of the backfield toward the sideline, behind or at the line of scrimmage.
     aliases: [swing]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: check-release
     term: Check-release
     category: offense
     batch: 2
     definition: The running back checks for a blitzer in his gap first; if none comes, he runs a short route as the checkdown.
     aliases: [check release, checkdown]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: stick-concept
     term: Stick concept
     category: offense
     batch: 2
     definition: A quick passing play to one side - the widest receiver runs deep to clear space, one receiver runs a flat route and one runs a stick route. The read is the flat defender.
     aliases: [stick]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: slant-flat
     term: Slant-flat
     category: offense
     batch: 2
     definition: A quick passing play - the outside receiver runs a slant and the inside receiver runs a flat route. The read is the flat defender.
     aliases: [slant flat, slant/flat]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: smash
     term: Smash
     category: offense
     batch: 2
     definition: A two-level passing play - the outside receiver runs a hitch and the inside receiver runs a corner route. The read is the cornerback.
     aliases: [smash concept]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: flood
     term: Flood
     category: offense
     batch: 2
     definition: A three-level passing play to one side - a deep route, a sail route at 10 to 12 yards and a flat route. The read is the flat defender.
     aliases: [flood concept, three-level, sail concept]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-verticals
     term: Four verticals
     category: offense
     batch: 2
     definition: Four receivers running straight up the field to stretch the deep defenders. The read is the deep middle safety.
     aliases: [4 verts, verticals]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: mesh
     term: Mesh
     category: offense
     batch: 2
     definition: Two shallow routes crossing each other from opposite sides, about a yard apart. Hard to cover in man; against zone the crossers settle in the open spaces.
     aliases: [mesh concept]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: curl-flat
     term: Curl-flat
     category: offense
     batch: 2
     definition: A passing play - the outside receiver runs a curl and the inside receiver runs a flat route. The read is the flat defender.
     aliases: [curl flat, curl/flat concept]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: progression
     term: Progression
     category: offense
     batch: 2
     definition: The order in which the quarterback looks at his receivers on a passing play.
     aliases: [read progression]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: read-defender
     term: Read defender
     category: offense
     batch: 2
     definition: The defender whose movement after the snap tells the quarterback where to throw.
     aliases: [key defender, read key]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: slide-protection
     term: Slide protection
     category: offense
     batch: 2
     definition: Pass protection where the offensive linemen block the gaps to one side instead of a man each.
     aliases: [slide]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: half-slide
     term: Half-slide protection
     category: offense
     batch: 2
     definition: Six-man protection - the center and the linemen on one side slide that way, the other two linemen block the man in front of them, and the back takes the next defender on that side.
     aliases: [half slide]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: big-on-big
     term: Big-on-big protection
     category: offense
     batch: 2
     definition: Six-man protection - the five linemen block the five most dangerous linemen and linebackers, and the back takes the first linebacker or defensive back to blitz on his side.
     aliases: [BOB, man protection]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: five-man-protection
     term: Five-man protection
     category: offense
     batch: 2
     definition: Only the five linemen block, so every eligible player runs a route. A sixth rusher must be beaten by a hot route.
     aliases: [empty protection, five-man]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: hot-route
     term: Hot route
     category: offense
     batch: 2
     definition: A quick throw, usually a slant, flat or hitch, used when there are more rushers than blockers and one comes free.
     aliases: [hot, sight adjust]
-    reviewed: false
-
-  # ================================================================ batch 2: defense (not yet reviewed)
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+  # ================================================================ batch 2: defense
   - id: defensive-front
     term: Front
     category: defense
     batch: 2
     definition: How the defensive linemen and linebackers line up.
     aliases: [defensive front]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: technique
     term: Technique
     category: defense
     batch: 2
     definition: "A defensive lineman's alignment as a number counted out from the center: 0 head-up on the center, 1 the center's shoulder, 2 head-up on the guard, 3 the guard's outside shoulder, 4 head-up on the tackle, 5 the tackle's outside shoulder, 6 head-up on the tight end, 7 the tight end's inside shoulder, 9 outside the tight end. An i (2i, 4i) means the inside shoulder."
     aliases: [tech, 1-technique, 3-technique, 5-technique, 9-technique]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: shade
     term: Shade
     category: defense
     batch: 2
     definition: Lined up on one shoulder of an opponent rather than straight across from him.
     aliases: [shaded]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: defensive-line
     term: Defensive line
     category: defense
     batch: 2
     definition: The defenders lined up on the ball in a 3- or 4-point stance - ends, tackles and the nose.
     aliases: [DL, D-line]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: defensive-end
     term: Defensive end
     category: defense
     batch: 2
     definition: The defensive lineman at each end of the line, usually rushing from outside the tackle.
     aliases: [DE, end]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: defensive-tackle
     term: Defensive tackle
     category: defense
     batch: 2
     definition: An interior defensive lineman, usually across from a guard.
     aliases: [DT]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: nose-tackle
     term: Nose tackle
     category: defense
     batch: 2
     definition: The defensive tackle lined up on or near the center.
     aliases: [nose, NT]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: linebacker
     term: Linebacker
     category: defense
     batch: 2
     definition: A defender lined up about 4 to 5 yards behind the defensive line, playing the run, covering or blitzing.
     aliases: [LB, backer]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: mike
     term: Mike
     category: defense
     batch: 2
     definition: The middle linebacker, usually the defense's signal caller. Naming him is part of the quarterback's pre-snap routine.
     aliases: [middle linebacker, MLB]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: will
     term: Will
     category: defense
     batch: 2
     definition: The weak-side linebacker.
     aliases: [weak-side linebacker]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: sam
     term: Sam
     category: defense
     batch: 2
     definition: The strong-side linebacker, often across from the tight end.
     aliases: [strong-side linebacker]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: defensive-back
     term: Defensive back
     category: defense
     batch: 2
     definition: A cornerback or safety - the defenders mainly responsible for pass coverage.
     aliases: [DB, secondary]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cornerback
     term: Cornerback
     category: defense
     batch: 2
     definition: The defensive back lined up across from the widest receiver on each side.
     aliases: [corner, CB]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: nickel
     term: Nickel
     category: defense
     batch: 2
     definition: A fifth defensive back who replaces a linebacker and usually covers the slot.
     aliases: [nickel back, nickelback]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: overhang
     term: Overhang
     category: defense
     batch: 2
     definition: A defender lined up outside the box over the slot area, usually at the apex - a nickel, spur or outside linebacker.
     aliases: [spur, overhang defender]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: free-safety
     term: Free safety
     category: defense
     batch: 2
     definition: The deepest safety, usually responsible for the middle of the field.
     aliases: [FS]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: strong-safety
     term: Strong safety
     category: defense
     batch: 2
     definition: The safety to the formation strength, often rolling down to help against the run or to cover a flat.
     aliases: [SS]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: over-front
     term: Over front
     category: defense
     batch: 2
     definition: A four-man front with the 3-technique tackle and the outside end to the formation strength, and a 1-technique and 5-technique to the weak side.
     aliases: [Over]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-three
     term: 4-3 defense
     category: defense
     batch: 2
     definition: Four defensive linemen, three linebackers (Sam, Mike, Will) and four defensive backs.
     aliases: [4-3, base defense]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-two-five
     term: 4-2-5 defense
     category: defense
     batch: 2
     definition: Four defensive linemen, two linebackers (Mike, Will) and five defensive backs, including a nickel.
     aliases: [4-2-5, nickel defense]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: three-three-stack
     term: 3-3 stack
     category: defense
     batch: 2
     definition: Three defensive linemen with a linebacker stacked behind each one, two overhangs and three deep defensive backs.
     aliases: [3-3-5, 3-3]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: four-four
     term: 4-4 defense
     category: defense
     batch: 2
     definition: Four defensive linemen, four linebackers and three defensive backs - common in youth football.
     aliases: [4-4, 4-4 split]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: shell
     term: Shell
     category: defense
     batch: 2
     definition: The picture the safeties show before the snap - one deep safety, two deep safeties, or none.
     aliases: [coverage shell, safety look]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: one-high
     term: One-high
     category: defense
     batch: 2
     definition: A shell with one safety deep in the middle of the field, so the middle is closed. Usually Cover 1 or Cover 3.
     aliases: [single-high, MOFC, middle of the field closed]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: two-high
     term: Two-high
     category: defense
     batch: 2
     definition: A shell with two safeties deep, one on each side, so the middle is open. Usually Cover 2, Cover 4 or 2-Man - or a rotation.
     aliases: [split safeties, MOFO, middle of the field open]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: zero-high
     term: Zero-high
     category: defense
     batch: 2
     definition: No safety deep before the snap. Usually Cover 0 and a blitz.
     aliases: [no deep safety]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: man-coverage
     term: Man coverage
     category: defense
     batch: 2
     definition: Each pass defender covers one offensive player wherever he goes.
     aliases: [man, man-to-man]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: zone-coverage
     term: Zone coverage
     category: defense
     batch: 2
     definition: Each pass defender covers an area of the field and the receivers who enter it.
     aliases: [zone]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-0
     term: Cover 0
     category: defense
     batch: 2
     definition: Man coverage on every eligible receiver with no deep safety, so the rest of the defense blitzes.
     aliases: [zero coverage, Cover zero]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-1
     term: Cover 1
     category: defense
     batch: 2
     definition: Man coverage with one free safety deep in the middle; a spare defender rushes or plays the middle short.
     aliases: [man free, Cover one]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-2
     term: Cover 2
     category: defense
     batch: 2
     definition: Zone coverage with two safeties splitting the deep field in halves, corners in the flats, and three short zones in the middle.
     aliases: [Cover two]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-3
     term: Cover 3
     category: defense
     batch: 2
     definition: Zone coverage with three deep defenders (two corners and a safety) splitting the deep field in thirds, and four short zones.
     aliases: [Cover three]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-4
     term: Cover 4
     category: defense
     batch: 2
     definition: Zone coverage with four deep defenders (two corners and two safeties) splitting the deep field in quarters, and three short zones.
     aliases: [Quarters, Cover four]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: two-man
     term: 2-Man
     category: defense
     batch: 2
     definition: Two safeties deep in halves with man coverage underneath on every other eligible receiver.
     aliases: [2-Man, two man, Cover 5]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: fire-zone
     term: Fire zone
     category: defense
     batch: 2
     definition: A five-man zone blitz - three deep zones and three short zones, often with a lineman dropping into coverage.
     aliases: [zone blitz, 3-under 3-deep]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: deep-third
     term: Deep third
     category: defense
     batch: 2
     definition: One of three deep zones in Cover 3 - left, middle or right.
     aliases: [third]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: deep-half
     term: Deep half
     category: defense
     batch: 2
     definition: One of two deep zones in Cover 2 and 2-Man, each a safety's side of the field.
     aliases: [half]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: deep-quarter
     term: Deep quarter
     category: defense
     batch: 2
     definition: One of four deep zones in Cover 4.
     aliases: [quarter]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: curl-flat-zone
     term: Curl-flat zone
     category: defense
     batch: 2
     definition: A short zone from the curl area out to the sideline, about 6 to 10 yards deep.
     aliases: [curl/flat, curl-flat defender]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: hook-zone
     term: Hook zone
     category: defense
     batch: 2
     definition: A short zone in the middle of the field, about 8 to 10 yards deep, between the box and the curl area.
     aliases: [hook, hook/curl, hook-curl]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: flat-defender
     term: Flat defender
     category: defense
     batch: 2
     definition: The short defender responsible for the flat on his side - the curl-flat player in Cover 3, the corner in Cover 2. Quick-game reads key him.
     aliases: [flat player]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: robber
     term: Robber
     category: defense
     batch: 2
     definition: A defender in the short middle who reads the quarterback and jumps crossing routes.
     aliases: [rat, hole player, lurk]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: rotation
     term: Rotation
     category: defense
     batch: 2
     definition: The defense changing its shell at the snap, such as two-high to one-high.
     aliases: [spin, roll]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: sky-rotation
     term: Sky rotation
     category: defense
     batch: 2
     definition: From two-high, the safety to one side drops down to the curl-flat zone and the other runs to the deep middle - Cover 3 after the snap.
     aliases: [Sky, Cover 3 Sky]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: robber-rotation
     term: Robber rotation
     category: defense
     batch: 2
     definition: From two-high, one safety runs to the deep middle and the other drops into the short middle as a robber - Cover 1 after the snap.
     aliases: [Cover 1 Robber]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: disguise
     term: Disguise
     category: defense
     batch: 2
     definition: Showing one shell or front before the snap and playing another after it.
     aliases: [disguised coverage]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: blitz
     term: Blitz
     category: defense
     batch: 2
     definition: A linebacker or defensive back rushing the quarterback instead of covering.
     aliases: [pressure]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: green-dog
     term: Green dog
     category: defense
     batch: 2
     definition: A defender covering the running back who rushes the quarterback once the back stays in to block.
     aliases: [hug, add-on rush]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: creep
     term: Creep
     category: defense
     batch: 2
     definition: A defender inching toward the line or toward his landmark before the snap - often a blitz or rotation tell.
     aliases: [creeping, cheat]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: leverage
     term: Leverage
     category: defense
     batch: 2
     definition: The side of a receiver a defender plays - inside leverage takes away routes to the middle, outside leverage routes to the sideline.
     aliases: [inside leverage, outside leverage]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: press
     term: Press
     category: defense
     batch: 2
     definition: A cornerback lined up within about a yard of the receiver to jam him at the snap.
     aliases: [press coverage, press-man]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: off-coverage
     term: Off coverage
     category: defense
     batch: 2
     definition: A cornerback lined up 5 to 8 yards off the receiver.
     aliases: [off]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: bail
     term: Bail
     category: defense
     batch: 2
     definition: A cornerback turning at the snap to run to his deep zone.
     aliases: [bail technique]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: travel
     term: Travel
     category: defense
     batch: 2
     definition: A defender following a motioning player across the formation - a man coverage tell.
     aliases: [travels]
-    reviewed: false
-
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: bump
     term: Bump
     category: defense
     batch: 2
     definition: Defenders sliding over a gap or two as a motioning player passes, without following him - a zone coverage tell.
     aliases: [bumps, slide over]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

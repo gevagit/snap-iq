@@ -4,7 +4,7 @@ A quarterback cognition training game for iPad: pre-snap routine, defensive read
 
 - Spec: [`docs/PRD.md`](docs/PRD.md)
 - Instructions for Claude Code: [`CLAUDE.md`](CLAUDE.md)
-- Status: Phase 2, playable slice. The game runs the Shell Game workout from Sahar's eyes (`src/game`). Football Bible batch 1 is signed off with defaults; batch 2 (offense, defense, speed profiles, play engine) is in owner review, so the game uses it only in playtest mode (a parent setting).
+- Status: Phase 2, playable slice. The game runs the Shell Game workout from Sahar's eyes (`src/game`). Football Bible batches 1 and 2 are signed off by the owner with defaults, so every drill uses reviewed content.
 
 ## Commands
 
