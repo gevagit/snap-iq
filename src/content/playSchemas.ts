@@ -334,11 +334,13 @@ const RoutineTier = z
     answers: z.object({ shell: z.array(Id).min(2), coverage: z.array(Id).min(2) }).strict(),
   })
   .strict();
-export const STEPS = ['alignment', 'shell', 'box', 'corners', 'tells', 'threats', 'adjust', 'key', 'drop', 'escape'] as const;
+/** his pre-snap routine steps, each asked in one chunk; then the questions at the first stop after the snap */
+export const STEPS = ['alignment', 'shell', 'box', 'corners', 'tells', 'threats', 'adjust', 'key', 'escape', 'reads'] as const;
+export const POST_STEPS = ['drop', 'coverage', 'blitz', 'look-off'] as const;
 export type Step = (typeof STEPS)[number];
 const Points = z.object({
   alignment: z.number(), shell: z.number(), box: z.number(), corners: z.number(), tells: z.number(), threats: z.number(), adjust: z.number(),
-  key: z.number(), drop: z.number(), escape: z.number(), coverage: z.number(), decision: z.number(), beat_the_clock: z.number(),
+  key: z.number(), escape: z.number(), drop: z.number(), coverage: z.number(), blitz: z.number(), decision: z.number(), beat_the_clock: z.number(),
 }).strict();
 export const Drills = z
   .object({
@@ -348,13 +350,14 @@ export const Drills = z
     routine: z
       .object({
         reps: z.number().int().positive(),
-        decision: z.number().positive(),
         chunks: z.object({ know: z.array(z.enum(STEPS)), see: z.array(z.enum(STEPS)), threats: z.array(z.enum(STEPS)), plan: z.array(z.enum(STEPS)) }).strict(),
+        max_reads: z.number().int().positive(),
+        post: z.object({ snap_freeze: z.number().min(0), decision_after: z.number().positive(), questions: z.array(z.enum(POST_STEPS)) }).strict(),
         tiers: z.object({ youth: RoutineTier, jv: RoutineTier }).strict(),
         corners: z.object({ press_within: z.number(), head_up_within: z.number() }).strict(),
         box_choices: z.array(z.number().int()).min(2),
         faults: z.object({ rate: z.number().min(0).max(1), step: z.number().positive() }).strict(),
-        decide: z.object({ run_room: z.number().positive() }).strict(),
+        decide: z.object({ run_room: z.number().positive(), roll_out: z.object({ lane: z.number().positive(), clear: z.number().positive() }).strict() }).strict(),
         points: Points,
       })
       .strict(),

@@ -164,6 +164,8 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     const r = drills.routine;
     const order = [...r.chunks.know, ...r.chunks.see, ...r.chunks.threats, ...r.chunks.plan];
     for (const st of S.STEPS) if (order.filter((x) => x === st).length !== 1) errors.push(`${file}: routine step ${st} must appear in exactly one chunk`);
+    for (const st of S.POST_STEPS) if (r.post.questions.filter((x) => x === st).length !== 1) errors.push(`${file}: post-snap question ${st} must be asked exactly once`);
+    for (const id of ['look-off', 'roll-out', 'blitz', 'quarterback-run', 'throwaway']) term(file, 'post-snap', id);
     for (const [name, tier] of Object.entries(r.tiers)) {
       for (const id of tier.coverages) if (!coverages.coverages.some((c) => c.id === id)) errors.push(`${file}: ${name} uses unknown coverage ${id}`);
       for (const id of tier.fronts) if (!fronts.fronts.some((f) => f.id === id)) errors.push(`${file}: ${name} uses unknown front ${id}`);

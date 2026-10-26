@@ -1,5 +1,5 @@
 # Drill tuning (PRD §8, §10). Every number is a feel constant to tune in playtests. Rewritten for the routine
-# game (batch 3), signed off by the owner with defaults (2026-10-26).
+# game (batch 3) and changed after the owner's playtest; signed off by the owner (2026-10-26).
 version: 1
 batch: 2
 
@@ -11,27 +11,35 @@ ball: { speed: 17, release_delay: 0.15, release_height: 1.95 }
 # when no one is open, the receiver with the most room. Any other open receiver earns part credit.
 reads: { open_separation: 2.5 }
 
-# The rep (PRD §8.2 Cadence + §8.3 reads, one game): at the line he runs his pre-snap routine against the clock,
-# then the snap; the play runs at real speed and freezes `decision` seconds after the snap for his post-snap
-# answers. Batch 3 settings, not yet reviewed.
+# The rep (PRD §8.2 Cadence + §8.3 reads, one game). At the line he runs his whole pre-snap routine against the
+# play clock: every step is asked, and running out of time only costs the beat-the-clock points. His reads come
+# last: the concept's read order is recommended, and he keeps it or picks his own.
+# After the snap the play stops twice (owner, 2026-10-26):
+#   1. snap_freeze seconds after the snap: his drop, the post-snap coverage, the blitz, and the look-off (a
+#      mental rep, not scored);
+#   2. decision_after seconds later, his eyes turned to his first read: the ball.
 routine:
   reps: 6
-  decision: 1.0
   # the steps of his routine, in order, by chunk (glossary pre-snap-routine)
   chunks:
     know: [alignment]
     see: [shell, box, corners, tells]
     threats: [threats]
-    plan: [adjust, key, drop, escape]
+    plan: [adjust, key, escape, reads]
+  max_reads: 3
+  post:
+    snap_freeze: 0.4
+    decision_after: 1.0
+    questions: [drop, coverage, blitz, look-off]
   tiers:
     youth:
-      clock: 25
+      clock: 40
       coverages: [cover-0, cover-1, cover-2, cover-3]
       fronts: [four-two-five-even, three-three-stack, four-three-over]
       motions: [none]
       answers: { shell: [zero-high, one-high, two-high], coverage: [cover-0, cover-1, cover-2, cover-3] }
     jv:
-      clock: 15
+      clock: 30
       coverages: [cover-0, cover-1, cover-2, cover-3, cover-4, cover-3-sky, cover-1-robber, two-man, fire-zone]
       fronts: [four-two-five-even, three-three-stack, four-three-over, four-two-five-over]
       motions: [none]
@@ -44,10 +52,15 @@ routine:
   #   off-the-line: the split end steps back off the line, leaving 6 on it (legal-formation)
   #   covered: a slot steps up onto the line inside the split end and is covered (covered-receiver)
   faults: { rate: 0.3, step: 0.6 }
-  # The post-snap decision at the freeze: the first open receiver in his progression; when no one is open, a
-  # quarterback run if no defender is within run_room yards of him in front, otherwise escape and throw it away.
-  decide: { run_room: 5.0 }
-  points: { alignment: 10, shell: 10, box: 5, corners: 5, tells: 5, threats: 10, adjust: 10, key: 10, drop: 5, escape: 5, coverage: 10, decision: 20, beat_the_clock: 10 }
+  # The ball, at the second stop, in this order:
+  #   1. the first open receiver in HIS reads, in his order;
+  #   2. no one open: a quarterback run if no unblocked defender is within run_room yards of him in front;
+  #   3. otherwise a roll-out toward his escape lane if no unblocked defender is within roll_out.clear yards of the
+  #      spot roll_out.lane yards to that side;
+  #   4. otherwise throw it away (legal only outside the free-blocking zone, glossary throwaway).
+  # The blitz answer is every linebacker or defensive back rushing by the call (glossary blitz; a green dog is not).
+  decide: { run_room: 5.0, roll_out: { lane: 5.0, clear: 4.0 } }
+  points: { alignment: 10, shell: 10, box: 5, corners: 5, tells: 5, threats: 10, adjust: 10, key: 10, escape: 5, drop: 5, coverage: 10, blitz: 10, decision: 20, beat_the_clock: 10 }
 
 # Points and progress (PRD §11): XP per correct answer, the rank ladder by total XP.
 scoring:

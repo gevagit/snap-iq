@@ -40,7 +40,9 @@ function poseRole(play, t) {
 
 /**
  * Build the renderer's scene for a rep. opts.fault: a receiver lined up wrong until the snap (shown where he stands,
- * then he resets); opts.readId: the defender (or receiver) his pre-snap read sends his eyes to at the snap.
+ * then he resets); opts.readId: his first read, where his eyes go after the first stop; opts.turnAt: when they
+ * start to turn (the first stop); opts.aimAt: the moment they are aimed to keep his read in the middle of his view
+ * (the second stop).
  */
 export function sceneFor(rep, opts = {}) {
   const play = rep.play, sim = play.sim, fr = play.offense.frame;
@@ -69,25 +71,27 @@ export function sceneFor(rep, opts = {}) {
     rep, players, byId,
     field: { xl: fr.leftSideline, xr: fr.rightSideline, hashes: [fr.leftHash, fr.rightHash], los: 35 },
     // the frozen look at the line is the moment before the snap; the play runs from the cadence to the freeze
-    T0: -1.2, T1: Math.min(sim.steps * sim.dt + sim.tStart, rep.decision + 1.9),
+    T0: -1.2, T1: Math.min(sim.steps * sim.dt + sim.tStart, rep.freeze2 + 1.9),
     cam: (t) => {
       if (S.runFrom != null && t > S.runFrom) { const q = qb(S.runFrom), d = Math.min(9, 6 * (t - S.runFrom)); return { x: q[0], y: q[1] + d, eye: 1.64 }; }
       const q = qb(t); return { x: q[0], y: q[1], eye: 1.64 };
     },
     Tt: Infinity, Tc: Infinity, target: null, catchPt: null, release: null, runFrom: null, yawOverride: null,
   };
-  // his read sets his eyes at the snap (PRD §7.5): toward the read defender, or the side his progression starts on
+  // his first read sets his eyes after the first stop (PRD §7.5): aimed so the read is in the middle of his view at
+  // the second stop; until then he looks where he looked at the line
   S.readId = opts.readId && byId[opts.readId] ? opts.readId : null;
   const rd = byId[S.readId];
-  S.readText = rd ? (rd.side === 'D' ? 'Eyes → #' + rd.num + ', your read' : 'Eyes → ' + rd.label) : '';
-  const rp = rd ? rd.pos(0.5) : [0, 10], rc = S.cam(0.5);
-  S.yawPost = 0.75 * Math.atan2(rp[0] - rc.x, rp[1] - rc.y);
-  const scan = [[-2.0, 0], [-1.75, 0], [-1.4, -0.6], [-1.1, -0.6], [-0.65, 0.6], [-0.35, 0.6], [-0.05, 0]];
-  S.scanYaw = (t) => { for (let i = 1; i < scan.length; i++) if (t <= scan[i][0]) return ease(scan[i - 1][1], scan[i][1], t, scan[i - 1][0], scan[i][0]); return 0; };
-  if (!rd) S.yawPost = 0;
+  S.readText = rd ? 'Eyes → ' + rd.label + ', your first read' : '';
+  S.turnAt = opts.turnAt ?? 0.2;
+  const aimAt = opts.aimAt ?? S.turnAt + 1;
+  if (rd) { const rp = rd.pos(aimAt), rc = S.cam(aimAt); S.yawRead = clamp(Math.atan2(rp[0] - rc.x, rp[1] - rc.y), -1.25, 1.25); }
   S.yaw = (t) => {
-    if (S.runFrom != null && t > S.runFrom) return ease(S.yawPost, 0, t, S.runFrom, S.runFrom + 0.4);
-    return t < 0 ? (S.yawPre || 0) : t < S.Tt ? ease(S.yawPre || 0, S.yawPost, t, 0.2, 0.65) : ease(S.yawPost, S.yawThrow, t, S.Tt, S.Tt + 0.45);
+    const read = S.yawRead ?? (S.yawPre || 0);
+    if (S.runFrom != null && t > S.runFrom) return ease(read, 0, t, S.runFrom, S.runFrom + 0.4);
+    if (t < S.turnAt) return S.yawPre || 0;
+    if (t < S.Tt) return ease(S.yawHold ?? (S.yawPre || 0), read, t, S.turnAt, S.turnAt + 0.45);
+    return ease(read, S.yawThrow, t, S.Tt, S.Tt + 0.45);
   };
   precompute(S);
   return S;
@@ -97,6 +101,14 @@ export function sceneFor(rep, opts = {}) {
 export function setRun(S, t) {
   S.runFrom = t;
   S.T1 = Math.min(t + 1.6, S.rep.play.sim.steps * S.rep.play.sim.dt + S.rep.play.sim.tStart);
+  precompute(S);
+}
+
+/** He rolls out from time t toward `side` (-1 left, +1 right): out of the pocket toward his escape lane. */
+export function setRollOut(S, t, side) {
+  const base = S.cam;
+  S.cam = (tt) => { const c = base(tt); if (tt <= t) return c; const u = Math.min(1, (tt - t) / 1.2); return { x: c.x + side * 5 * u, y: c.y - 0.5 * u, eye: c.eye }; };
+  S.T1 = Math.min(t + 1.4, S.rep.play.sim.steps * S.rep.play.sim.dt + S.rep.play.sim.tStart);
   precompute(S);
 }
 
@@ -487,13 +499,13 @@ export function createEyes(canvas) {
     ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(a, y0, b - a, h);
     ctx.fillStyle = '#1C2430'; ctx.beginPath(); ctx.arc(toX(cam.yaw), y0 + h / 2, 3, 0, Math.PI * 2); ctx.fill();
     const i = S.readId ? S.players.indexOf(S.byId[S.readId]) : -1;
-    if (i >= 0 && t > -0.2) {
+    if (i >= 0 && t > S.turnAt) {
       const s = states[i], rx = toX(Math.atan2(s[F_X] - cam.x, s[F_Y] - cam.y));
       ctx.fillStyle = '#E2602A'; ctx.beginPath(); ctx.moveTo(rx, y0 + h + 1); ctx.lineTo(rx - 5, y0 + h + 8); ctx.lineTo(rx + 5, y0 + h + 8); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
     let msg = null;
-    if (t >= 0 && t < 1.0 && S.readText) msg = S.readText;
+    if (t > S.turnAt && t < S.turnAt + 1.2 && S.readText) msg = S.readText;
     if (msg) chip(msg, W / 2, y0 + h + 36, 'rgba(16,20,26,0.82)', '#FFFFFF', null);
   }
 

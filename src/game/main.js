@@ -2,9 +2,9 @@
 // post-snap coverage and decision (§8.3) → result → Breakdown. All football comes from /content through the engine.
 import raw from 'virtual:content';
 import { parsePlayContent } from '../play/content';
-import { makeRep, grade, recordRep, finishWorkout, newProgress, rank, catchPoint, withChanges, routeMenu, emptyAnswers, posAt } from './drill';
+import { makeRep, grade, recordRep, finishWorkout, newProgress, rank, catchPoint, withChanges, withReads, recommendedReads, routeMenu, emptyAnswers, posAt } from './drill';
 import { explain, CORNER_LABEL } from './explain';
-import { createEyes, sceneFor, setThrow, setRun, SHAPES } from './eyes.js';
+import { createEyes, sceneFor, setThrow, setRun, setRollOut, SHAPES } from './eyes.js';
 import { drawBoard, drawCall } from './board.js';
 import { callSheet } from './call';
 
@@ -46,8 +46,8 @@ function renderHome() {
   b.innerHTML = anyReviewed
     ? '<b>Playtest is on.</b><span>Content the owner hasn\'t signed off can appear. Turn it off in Parent settings.</span>'
     : progress.playtest
-      ? '<b>Playtest: some of this isn\'t signed off yet.</b><span>The routine steps, drops, escape lanes and route changes are new (batch 3) and still in owner review.</span>'
-      : '<b>Waiting for sign-off.</b><span>The routine game uses new football content (batch 3) the owner hasn\'t reviewed yet. To playtest it now, turn on playtest in Parent settings.</span><button class="plain" id="ptQuick" type="button">Playtest now</button>';
+      ? '<b>Playtest: some of this isn\'t signed off yet.</b><span>Content changed after the owner\'s playtest is back in review until it is signed off.</span>'
+      : '<b>Waiting for sign-off.</b><span>The routine game uses football content the owner hasn\'t reviewed yet. To playtest it now, turn on playtest in Parent settings.</span><button class="plain" id="ptQuick" type="button">Playtest now</button>';
   const q = $('ptQuick'); if (q) q.addEventListener('click', () => { progress.playtest = true; save(); renderHome(); });
   $('startBtn').disabled = !anyReviewed && !progress.playtest;
   $('startBtn').style.opacity = $('startBtn').disabled ? 0.45 : 1;
@@ -176,7 +176,7 @@ function turn(d) { if (!scene || scene.yawOverride == null) return; scene.yawOve
 // ---------------------------------------------------------------- the routine at the line
 const CHUNKS = ['know', 'see', 'threats', 'plan'];
 function routine() {
-  const receivers = rep.post.options.map((o) => o.id).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+  const receivers = called(rep.play);
   const recBtn = (id) => ({ id, label: `${SHAPES[id] || ''} ${id}` });
   const defenders = rep.play.defense.players.filter((d) => d.group !== 'dl').map((d) => ({ id: d.role, label: `${d.label} #${d.number}` }));
   const k = rep.routine;
@@ -192,34 +192,33 @@ function routine() {
       steps.push({ chunk, q: 'Your hot route', when: () => answers.threats.more === true, opts: receivers.map(recBtn), set: (v) => { answers.threats.hot = v; } });
     }
     if (step === 'adjust') steps.push({ chunk, q: `Change routes? (up to ${C.adjustments.max_changes})`, adjust: true });
-    if (step === 'key') {
-      steps.push({ chunk, q: `Your key: the ${lower(term(C.concepts.concepts.find((c) => c.id === rep.call.concept).read.key))}`, opts: [...defenders, { id: 'none', label: 'No one has that job' }], set: (v) => { answers.key = v === 'none' ? null : v; answers.keyAnswered = true; } });
-      steps.push({ chunk, q: 'Your first look', opts: receivers.map(recBtn), set: (v) => { answers.firstLook = v; } });
-    }
-    if (step === 'drop') steps.push({ chunk, q: 'Your drop', opts: ['catch-and-throw', 'one-step-drop', 'three-step-drop', 'five-step-drop'].map((id) => ({ id, label: term(id) })), set: (v) => { answers.drop = v; } });
+    if (step === 'key') steps.push({ chunk, q: `Your key: the ${lower(term(C.concepts.concepts.find((c) => c.id === rep.call.concept).read.key))}`, opts: [...defenders, { id: 'none', label: 'No one has that job' }], set: (v) => { answers.key = v === 'none' ? null : v; answers.keyAnswered = true; } });
+    if (step === 'reads') steps.push({ chunk, q: 'Your reads', reads: true });
     if (step === 'escape') steps.push({ chunk, q: 'Your escape lane', opts: [{ id: 'left', label: C.quarterback.throwing_hand === 'left' ? 'Left (throwing hand)' : 'Left' }, { id: 'right', label: C.quarterback.throwing_hand === 'right' ? 'Right (throwing hand)' : 'Right' }], set: (v) => { answers.escape = v; } });
   }
   let i = 0;
   const started = performance.now();
   const limit = rep.clock;
+  // the play clock: every step is still asked when it runs out; he only loses the beat-the-clock points
   const tickClock = () => {
     const left = Math.max(0, limit - (performance.now() - started) / 1000);
     $('clockBar').style.width = (left / limit) * 100 + '%';
-    $('clockNum').textContent = Math.ceil(left);
+    $('clockNum').textContent = left > 0 ? Math.ceil(left) : 'Play clock out: finish your routine';
+    $('clock').classList.toggle('out', left <= 0);
     eyes.draw(clock.t); // the look at the line, redrawn every frame so turning his head stays live
-    if (left <= 0) { finish(false); return; }
     routineTimer = requestAnimationFrame(tickClock);
   };
   routineTimer = requestAnimationFrame(tickClock);
-  const finish = (inTime) => {
+  const finish = () => {
     cancelAnimationFrame(routineTimer);
-    answers.routineTime = inTime ? (performance.now() - started) / 1000 : null;
+    const took = (performance.now() - started) / 1000;
+    answers.routineTime = took <= limit ? took : null;
     hide('ask');
     snap();
   };
   const render = () => {
     while (i < steps.length && steps[i].when && !steps[i].when()) i++;
-    if (i >= steps.length) { finish(true); return; }
+    if (i >= steps.length) { finish(); return; }
     const s = steps[i];
     document.querySelectorAll('#chunks span').forEach((el) => {
       const ci = CHUNKS.indexOf(el.dataset.chunk), cur = CHUNKS.indexOf(s.chunk);
@@ -227,6 +226,7 @@ function routine() {
     });
     $('askQ').textContent = s.q;
     if (s.adjust) { renderAdjust(() => { i++; render(); }); return; }
+    if (s.reads) { renderReads(() => { i++; render(); }); return; }
     $('choices').innerHTML = s.opts.map((o) => `<button type="button" data-id="${esc(o.id)}">${esc(o.label)}</button>`).join('');
     for (const b of $('choices').querySelectorAll('button')) b.addEventListener('click', () => { s.set(b.dataset.id); i++; render(); });
   };
@@ -246,9 +246,9 @@ function fixAlignment() {
 
 function renderAdjust(done) {
   const max = C.adjustments.max_changes;
-  const routeOf = (id) => played.play.sim.routes.find((r) => r.id === id);
+  const routeOf = (id) => played.play.jobs.routes.find((r) => r.id === id);
   const list = () => {
-    const ids = rep.post.options.map((o) => o.id).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+    const ids = rep.play.jobs.routes.map((r) => r.id).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
     const n = Object.keys(answers.changes).length;
     $('choices').innerHTML = ids.map((id) => {
       const r = routeOf(id);
@@ -261,7 +261,7 @@ function renderAdjust(done) {
     });
   };
   const menu = (id) => {
-    const current = rep.play.sim.routes.find((r) => r.id === id);
+    const current = rep.play.jobs.routes.find((r) => r.id === id);
     const opts = routeMenu(C, rep.play, id).filter((r) => r !== (current && current.route));
     $('choices').innerHTML = opts.map((r) => `<button type="button" data-r="${r}">${esc(term(r))}</button>`).join('') +
       (answers.changes[id] ? `<button type="button" data-r="__undo">Back to the ${esc(lower(term(current.route)))}</button>` : '') +
@@ -276,16 +276,118 @@ function renderAdjust(done) {
   list();
 }
 
+/** Receivers and backs with a job in the pattern, from the call (never from the simulation). */
+function called(play) {
+  const ids = [...play.jobs.routes.map((r) => r.id), ...(play.jobs.checker ? [play.jobs.checker] : [])];
+  return [...new Set(ids)].sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+}
+const recLabel = (id) => `${SHAPES[id] || ''} ${id}`;
+
+/** The last step of his routine: keep the recommended reads or pick his own, in order. */
+function renderReads(done) {
+  const rec = recommendedReads(C, played.play);
+  const max = R.max_reads;
+  const set = (reads) => { answers.reads = reads; played = withReads(C, played, reads); done(); };
+  const intro = () => {
+    $('askQ').textContent = `Your reads. Recommended: ${rec.map((id, k) => `${k + 1} ${recLabel(id)}`).join(' · ')}`;
+    $('choices').innerHTML = '<button type="button" class="wide" data-id="keep">Keep these reads</button><button type="button" data-id="own" style="grid-column:1/-1">Pick my own</button>';
+    $('choices').querySelector('[data-id="keep"]').addEventListener('click', () => set(rec));
+    $('choices').querySelector('[data-id="own"]').addEventListener('click', () => pick([]));
+  };
+  const pick = (mine) => {
+    $('askQ').textContent = `Tap your reads in order (up to ${max})`;
+    $('choices').innerHTML = called(played.play).map((id) => {
+      const n = mine.indexOf(id);
+      return `<button type="button" data-id="${id}" ${n < 0 && mine.length >= max ? 'disabled' : ''}>${n >= 0 ? `${n + 1} · ` : ''}${recLabel(id)}</button>`;
+    }).join('') + `<button type="button" class="wide" data-id="__done" ${mine.length ? '' : 'disabled'}>Done</button><button type="button" data-id="__back" style="grid-column:1/-1">Back</button>`;
+    for (const b of $('choices').querySelectorAll('button')) b.addEventListener('click', () => {
+      const id = b.dataset.id;
+      if (id === '__done') set(mine);
+      else if (id === '__back') intro();
+      else pick(mine.includes(id) ? mine.filter((x) => x !== id) : [...mine, id]);
+    });
+  };
+  intro();
+}
+
 // ---------------------------------------------------------------- the snap and the play
 function snap() {
   $('clock').hidden = true;
-  // his pre-snap read sets his eyes at the snap (PRD §7.5): his key defender, or his first look
-  const readId = answers.key || answers.firstLook || null;
+  // he snaps the ball looking where he last looked; after the first stop his eyes go to his first read (PRD §7.5)
   const lastYaw = scene && scene.yawOverride != null ? scene.yawOverride : 0;
-  scene = sceneFor(played, { readId });
-  scene.yawPre = lastYaw; // he snaps the ball looking where he last looked, then his eyes go to his read
+  scene = sceneFor(played, { readId: (answers.reads || [])[0], turnAt: played.freeze1, aimAt: played.freeze2 });
+  scene.yawPre = lastYaw;
   eyes.setScene(scene);
-  run(-0.7, played.decision, () => postSnap());
+  run(-0.7, played.freeze1, () => firstStop());
+}
+
+/** Ask a list of questions in the answer panel, then call done. */
+function ask(steps, done) {
+  let i = 0;
+  const render = () => {
+    if (i >= steps.length) { hide('ask'); done(); return; }
+    const s = steps[i];
+    $('askQ').textContent = s.q;
+    $('choices').innerHTML = s.opts.map((o) => `<button type="button" class="${o.cls || ''}" data-id="${esc(o.id)}">${esc(o.label)}</button>`).join('');
+    for (const b of $('choices').querySelectorAll('button')) b.addEventListener('click', () => { s.set(b.dataset.id); i++; render(); });
+  };
+  $('ask').classList.add('on');
+  render();
+}
+
+/** Pick several defenders (the blitzers), then Done. */
+function pickDefenders(q, onDone) {
+  const ds = played.play.defense.players.filter((d) => d.group !== 'dl');
+  const chosen = new Set();
+  const draw = () => {
+    $('askQ').textContent = q;
+    $('choices').innerHTML = ds.map((d) => `<button type="button" data-id="${d.role}" aria-pressed="${chosen.has(d.role)}" style="${chosen.has(d.role) ? 'background:#F2C14E' : ''}">${esc(d.label)} #${d.number}</button>`).join('') +
+      `<button type="button" class="wide" data-id="__done" ${chosen.size ? '' : 'disabled'}>Done</button>`;
+    for (const b of $('choices').querySelectorAll('button')) b.addEventListener('click', () => {
+      if (b.dataset.id === '__done') { onDone([...chosen]); return; }
+      if (chosen.has(b.dataset.id)) chosen.delete(b.dataset.id); else chosen.add(b.dataset.id);
+      draw();
+    });
+  };
+  $('ask').classList.add('on');
+  draw();
+}
+
+/** First stop, right at the snap: drop, coverage, blitz, look-off. He can turn his head while it is stopped. */
+function firstStop() {
+  scene.yawOverride = scene.yaw(clock.t);
+  document.querySelectorAll('#chunks span').forEach((el) => { el.className = 'done'; });
+  const Q = {
+    drop: { q: 'Your drop', opts: ['catch-and-throw', 'one-step-drop', 'three-step-drop', 'five-step-drop'].map((id) => ({ id, label: term(id) })), set: (v) => { answers.drop = v; } },
+    coverage: { q: 'The coverage after the snap', opts: R.tiers[progress.tier].answers.coverage.map((id) => ({ id, label: term(id) })), set: (v) => { answers.coverage = v; } },
+    blitz: { q: 'Are you getting blitzed?', opts: [{ id: 'no', label: 'No' }, { id: 'yes', label: 'Yes: point them out' }], set: (v) => { if (v === 'no') answers.blitz = []; else answers.blitz = 'pick'; } },
+    'look-off': { q: 'Did you need to look off the safety?', opts: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }], set: (v) => { answers.lookOff = v === 'yes'; } },
+  };
+  const steps = R.post.questions.map((k) => Q[k]);
+  // the blitz question opens the defender picker before the next question
+  const run1 = (k) => {
+    if (k >= steps.length) { hide('ask'); resume(); return; }
+    ask([steps[k]], () => {
+      if (answers.blitz === 'pick') pickDefenders('Who is blitzing? Tap each one', (ids) => { answers.blitz = ids; run1(k + 1); });
+      else run1(k + 1);
+    });
+  };
+  run1(0);
+  function resume() {
+    scene.yawHold = scene.yawOverride; scene.yawOverride = null;
+    run(played.freeze1, played.freeze2, () => secondStop());
+  }
+}
+
+/** Second stop, his eyes on his first read: the ball. */
+function secondStop() {
+  scene.yawOverride = scene.yaw(clock.t);
+  const reads = answers.reads || [];
+  ask([{
+    q: 'The ball',
+    opts: [...reads.map((id, k) => ({ id, label: `${k + 1} · ${recLabel(id)}`, cls: 'throw' })), { id: 'roll-out', label: 'Roll out' }, { id: 'run', label: 'Keep it and run' }, { id: 'throw-away', label: 'Throw it away' }],
+    set: (v) => { answers.decision = v; },
+  }], () => outcome());
 }
 function run(from, to, onDone) {
   clock = { t: from, running: true, until: to, last: performance.now(), onDone };
@@ -303,29 +405,14 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
-function postSnap() {
-  const receivers = played.post.options.map((o) => o.id).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
-  const steps = [
-    { q: 'The coverage after the snap', opts: R.tiers[progress.tier].answers.coverage.map((id) => ({ id, label: term(id) })), set: (v) => { answers.coverage = v; } },
-    { q: 'The ball', opts: [...receivers.map((id) => ({ id, label: `${SHAPES[id] || ''} ${id}`, cls: 'throw' })), { id: 'run', label: 'Keep it and run' }, { id: 'throw-away', label: 'Throw it away' }], set: (v) => { answers.decision = v; } },
-  ];
-  let i = 0;
-  document.querySelectorAll('#chunks span').forEach((el) => { el.className = 'done'; });
-  const render = () => {
-    if (i >= steps.length) { hide('ask'); outcome(); return; }
-    const s = steps[i];
-    $('askQ').textContent = s.q;
-    $('choices').innerHTML = s.opts.map((o) => `<button type="button" class="${o.cls || ''}" data-id="${esc(o.id)}">${esc(o.label)}</button>`).join('');
-    for (const b of $('choices').querySelectorAll('button')) b.addEventListener('click', () => { s.set(b.dataset.id); i++; render(); });
-  };
-  $('ask').classList.add('on');
-  render();
-}
-
 function outcome() {
-  const release = played.decision + C.drills.ball.release_delay;
+  // he may have turned his head at the stop: the play goes on from where he is looking
+  if (scene.yawOverride != null) { scene.yawRead = scene.yawOverride; scene.yawOverride = null; }
+  const T = played.freeze2;
+  const release = T + C.drills.ball.release_delay;
   const d = answers.decision;
-  if (d === 'run') setRun(scene, played.decision);
+  if (d === 'run') setRun(scene, T);
+  else if (d === 'roll-out') setRollOut(scene, T, (answers.escape || played.routine.escape) === 'right' ? 1 : -1);
   else if (d === 'throw-away') {
     const qb = posAt(played.play, 'QB', release), side = answers.escape === 'right' ? 1 : -1;
     const fr = played.play.offense.frame, x = side > 0 ? fr.rightSideline + 1.5 : fr.leftSideline - 1.5;
@@ -334,11 +421,13 @@ function outcome() {
     const cp = catchPoint(C, played.play, d, release);
     setThrow(scene, d, release, cp.t, cp.at);
   }
-  run(played.decision, scene.T1, () => result());
+  run(T, scene.T1, () => result());
 }
 
 // ---------------------------------------------------------------- result
-const STEP_NAME = { alignment: 'Alignment', shell: 'Shell', box: 'Box', corners: 'Corners', tells: 'Tells', threats: 'Threats', adjust: 'Route changes', key: 'Key and first look', drop: 'Drop', escape: 'Escape lane', coverage: 'Coverage' };
+const STEP_NAME = { alignment: 'Alignment', shell: 'Shell', box: 'Box', corners: 'Corners', tells: 'Tells', threats: 'Threats', adjust: 'Route changes', key: 'Key defender', escape: 'Escape lane', drop: 'Drop', coverage: 'Coverage', blitz: 'Blitz' };
+const PRE = ['alignment', 'shell', 'box', 'corners', 'tells', 'threats', 'adjust', 'key', 'escape'];
+const AT_SNAP = ['drop', 'coverage', 'blitz'];
 function result() {
   if (!answers.keyAnswered) answers.key = '__unanswered';
   const g = grade(C, rep, played, answers);
@@ -350,11 +439,17 @@ function result() {
   const total = Object.keys(g.steps).length;
   $('resTitle').textContent = g.decision === 'read' && right === total ? 'Perfect play' : g.decision === 'read' ? 'Right decision' : g.decision === 'open' ? 'Completed' : 'Not this time';
   const dec = played.post.decision;
-  const decText = dec === 'run' ? 'Keep it and run' : dec === 'throw-away' ? 'Throw it away' : `${SHAPES[dec] || ''} ${dec} on the ${lower(term(played.post.options.find((o) => o.id === dec).route))}`;
+  const opt = played.post.options.find((o) => o.id === dec);
+  const decText = dec === 'run' ? 'Keep it and run' : dec === 'throw-away' ? 'Throw it away' : dec === 'roll-out' ? 'Roll out' : `${recLabel(dec)} on the ${lower(term(opt.route))}`;
+  const li = (k) => `<li><span class="${g.steps[k] ? 'yes' : 'no'}">${g.steps[k] ? '✓' : '✗'}</span><span>${STEP_NAME[k]}</span></li>`;
+  const head = (t) => `<li class="span"><span></span><small>${t}</small></li>`;
   $('resList').innerHTML =
     `<li class="span"><span class="${g.decision === 'read' ? 'yes' : g.decision === 'open' ? 'part' : 'no'}">${g.decision === 'read' ? '✓' : g.decision === 'open' ? '~' : '✗'}</span><span>The ball: ${esc(decText)}</span></li>` +
-    Object.entries(g.steps).map(([k, ok]) => `<li><span class="${ok ? 'yes' : 'no'}">${ok ? '✓' : '✗'}</span><span>${STEP_NAME[k]}</span></li>`).join('') +
-    `<li class="span"><span class="yes">+</span><span>${g.xp} XP${answers.routineTime !== null ? ` · routine in ${answers.routineTime.toFixed(1)} s` : ' · the clock ran out'}</span></li>`;
+    head('Before the snap') + PRE.map(li).join('') +
+    `<li class="span"><span class="part">•</span><span>Your reads: ${esc((answers.reads || []).map((id, k) => `${k + 1} ${id}`).join(', '))}</span></li>` +
+    head('At the snap') + AT_SNAP.map(li).join('') +
+    `<li class="span"><span class="part">•</span><span>Look off the safety: ${answers.lookOff ? 'yes' : 'no'} (mental rep)</span></li>` +
+    `<li class="span"><span class="yes">+</span><span>${g.xp} XP${answers.routineTime !== null ? ` · routine in ${answers.routineTime.toFixed(1)} s` : ' · over the play clock'}</span></li>`;
   $('nextBtn').textContent = session.i >= R.reps ? 'Finish' : 'Next play';
   $('result').classList.add('on');
 }

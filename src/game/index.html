@@ -87,6 +87,7 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 .chunks span.done { background: #7FA6F2; color: #0E1520; }
 .clock { position: relative; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
 .clock i { position: absolute; inset: 0 auto 0 0; background: #F2C14E; }
+.clock.out i { background: #F97066; width: 100% !important; }
 .clock b { position: relative; display: block; text-align: center; font-size: 14px; line-height: 22px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .look { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 6px; }
 .look button { background: var(--panel); color: #fff; border-radius: 12px; padding: 12px 14px; font-weight: 800; font-size: 15px; }
@@ -184,7 +185,7 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
     </div>
     <div class="card">
       <b>How a rep works</b>
-      <p class="note">First the call: see where everyone lines up and what each player does. Then break the huddle: you're at the line. Before the clock runs out, go through your routine: check your alignment, read the defense (shell, box, corners, tells), count the rush, change up to two routes, and set your key, drop and escape lane. Drag the field or use Look left / Look right to turn your head. After the snap the play runs and freezes 1 second in: name the coverage and decide: throw, run, or throw it away.</p>
+      <p class="note">First the call: see where everyone lines up and what each player does. Then break the huddle: you're at the line. Go through your whole routine on the play clock: check your alignment, read the defense (shell, box, corners, tells), count the rush, change up to two routes, set your key and escape lane, and pick your reads. Drag the field or use Look left / Look right to turn your head. The play stops at the snap: your drop, the coverage, the blitz, and whether to look off the safety. It stops again a second later with your eyes on your first read: throw, roll out, run, or throw it away.</p>
     </div>
     <details class="card" id="parent">
       <summary><b>Parent settings</b></summary>
