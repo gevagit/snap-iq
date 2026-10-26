@@ -47,6 +47,35 @@ zones:
   hook:         { term: hook-zone, deep: false, depth: 9, by: 2.0, outside: { end_man_plus: 1.0 }, middle: { at: ball, depth: 10 } }
   hole:         { term: robber, deep: false, depth: 9, by: 1.8, middle: { at: ball } }
 
+# Zone reaction after the drop. Each zone defender opens to his landmark; from react_after seconds after the
+# snap he reads the receivers in his zone's area (half_width yards either side of the landmark, from from_depth
+# to to_depth downfield) and plays the most dangerous one:
+#   under:  the shallowest receiver in his zone (the next one to catch it in front of him, such as a flat route
+#           or a crosser); he stays between the quarterback and him, cushion yards shallower (walls a crosser,
+#           widens with a flat, sits under a curl), never shallower than min_depth or deeper than max_depth.
+#           He only switches to another receiver when that one is switch_margin yards shallower. He comes up
+#           shallower than his landmark only for a receiver running more across the field than up it (a crosser,
+#           a flat, a settled curl); against a receiver running vertically he keeps his depth and sinks under him.
+#           With one_each, he leaves a receiver a teammate underneath is already playing when another receiver is
+#           in his zone (crossers are passed off, not doubled while someone runs free).
+#   deeper: the deepest receiver in his zone; he stays cushion yards deeper, shading toward him by shade
+# When the receiver leaves the area he passes him off and plays the next one, or goes back to his landmark.
+zone_reaction:
+  react_after: 0.6
+  read_by: 1.0          # the invariant: every zone defender is reading by then (react_after may not be later)
+  switch_margin: 1.5
+  one_each: true
+  zones:
+    deep-third:   { half_width: 9, from_depth: 6, to_depth: 40, play: deeper, cushion: 3, shade: 0.5 }
+    deep-middle:  { half_width: 9, from_depth: 6, to_depth: 40, play: deeper, cushion: 3, shade: 0.5 }
+    deep-half:    { half_width: 13, from_depth: 6, to_depth: 40, play: deeper, cushion: 3, shade: 0.5 }
+    deep-quarter: { half_width: 6.5, from_depth: 6, to_depth: 40, play: deeper, cushion: 3, shade: 0.6 }
+    curl-flat:    { half_width: 6, from_depth: -1, to_depth: 13, play: under, cushion: 1.5, min_depth: 2.5, max_depth: 10 }
+    flat:         { half_width: 5, from_depth: -1, to_depth: 9, play: under, cushion: 1.0, min_depth: 2.0, max_depth: 8 }
+    hook:         { half_width: 5, from_depth: 0, to_depth: 15, play: under, cushion: 1.5, min_depth: 3.0, max_depth: 11 }
+    hole:         { half_width: 6, from_depth: 0, to_depth: 14, play: under, cushion: 1.5, min_depth: 3.0, max_depth: 10 }
+  reviewed: false
+
 # Man coverage after the snap: he plays this far to the inside of his man, closing the cushion at close_rate yd/s
 # down to min_cushion. A man defender whose man stays in to block becomes a green dog and rushes.
 man:

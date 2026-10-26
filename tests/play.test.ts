@@ -78,8 +78,14 @@ describe('football scenarios', () => {
     expect(p.analysis.readDefenders).toEqual(['ss']);
     const lm = p.sim.landmarks.find((l) => l.role === 'ss')!;
     expect(lm.zone).toBe('curl-flat');
-    const ss = at(p, 'ss', lm.by);
-    expect(Math.hypot(ss.x - lm.at.x, ss.y - lm.at.y)).toBeLessThan(1);
+    expect(lm.short).toBe(0);
+    // after his drop he plays the flat route that comes into his zone, staying under it
+    const read = p.sim.zoneReads.find((z) => z.role === 'ss')!;
+    const k = Math.round(1.6 / p.sim.dt);
+    expect(read.threat[k]).toBe('H');
+    const ss = at(p, 'ss', 1.6);
+    const h = at(p, 'H', 1.6);
+    expect(Math.abs(ss.x - h.x)).toBeLessThan(3);
     expect(at(p, 'ss', 0).y).toBeGreaterThan(9.5); // still high at the snap (the creep is the tell)
   });
 
@@ -103,6 +109,21 @@ describe('football scenarios', () => {
     expect(hot.analysis.rushers).toBeGreaterThan(hot.analysis.blockers);
     expect(hot.analysis.hot.length).toBeGreaterThan(0);
     expect(hot.analysis.freeRushers.length).toBe(hot.analysis.rushers - hot.analysis.blockers);
+  });
+
+  it('Mesh vs Cover 2: the linebackers drop, then come up to wall the crossers', () => {
+    const p = play({ formation: 'gun-doubles', concept: 'mesh', protection: 'five-man', front: 'four-three-over', coverage: 'cover-2', spot: 'middle' });
+    const crossers = new Set(p.sim.routes.filter((r) => r.route === 'shallow-route').map((r) => r.id));
+    const hooks = p.sim.zoneReads.filter((z) => z.zone === 'hook');
+    expect(hooks.length).toBe(3);
+    // each crosser is picked up by at least one hook defender, who comes up from his drop to play him
+    for (const id of crossers) {
+      const z = hooks.find((h) => h.threat.includes(id))!;
+      expect(z).toBeDefined();
+      const deepest = Math.max(...Array.from({ length: 30 }, (_, i) => at(p, z.role, 0.3 + i * 0.05).y));
+      const j = z.threat.lastIndexOf(id);
+      expect(at(p, z.role, j * p.sim.dt).y).toBeLessThan(deepest - 1);
+    }
   });
 
   it('motion shows man or zone: the man defender travels, zone defenders only bump', () => {
@@ -161,6 +182,12 @@ describe('invariants catch bad football', () => {
   it('a rotation the safety cannot reach in time is caught', () => {
     const bad = mutate((r) => { r.coverages.zones['curl-flat'].by = 0.6; });
     expect(failed(play({}, parsePlayContent(bad as never)))).toContain('landmarks');
+  });
+
+  it('zone defenders who never read the receivers in their zone are caught', () => {
+    const bad = mutate((r) => { r.coverages.zone_reaction.react_after = 5; });
+    expect(validateContent(bad as never).errors.some((e) => e.includes('after read_by'))).toBe(true);
+    expect(failed(play({ formation: 'gun-doubles', concept: 'mesh', front: 'four-three-over', coverage: 'cover-2' }, parsePlayContent(bad as never)))).toContain('zone-reaction');
   });
 
   it('man coverage that leaves a receiver uncovered is caught', () => {

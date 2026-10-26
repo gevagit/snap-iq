@@ -15,7 +15,7 @@ profiles:
   LBdrop: { top: 6.0, tau: 0.45, delay: 0.05 }
   LBman: { top: 6.5, tau: 0.5, delay: 0.2 }
   DBrot: { top: 7.0, tau: 0.4, delay: 0.05 }
-  CBbail: { top: 5.0, tau: 0.5, delay: 0.1 }
+  CBbail: { top: 6.8, tau: 0.6, delay: 0.1 }   # opens and runs; was 5.0, too slow to stay over a go route
   DBman: { top: 6.8, tau: 0.7, delay: 0.2 }
   DBoff: { top: 6.8, tau: 0.6, delay: 0.3 }
 

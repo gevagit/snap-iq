@@ -204,6 +204,7 @@ ul.checks small { display: block; color: var(--ink-2); }
         <h3>Football checks</h3>
         <ul class="checks" id="checks"></ul>
       </div>
+      <p class="foot">Zone defenders drop to their landmark, then from 0.6 s read the receivers in their zone: underneath defenders wall or sit under the shallowest one, deep defenders stay deeper than the deepest. A solid orange line shows whom each one is playing; a dotted one is a man matchup.</p>
       <p class="foot">Positions come from the movement model: alignment, path, speed profile and time. Nothing is placed by hand. A call that does not fit (a motion with no one to move, a protection with no back, more rushers than blockers and no hot route) is not a legitimate play and is not drawn. Rules are NFHS.</p>
     </aside>
   </div>
@@ -220,14 +221,14 @@ ul.checks small { display: block; color: var(--ink-2); }
     'eleven-on-eleven': '11 on 11', 'legal-formation': 'Legal formation', 'eligible-receivers': 'Eligible receivers', motion: 'Motion',
     'set-one-second': 'Set for 1 second', 'neutral-zone': 'Neutral zone', 'in-bounds': 'In bounds', spacing: 'Spacing at the snap',
     techniques: 'Technique labels', shell: 'Shell label', 'rotation-tag': 'Rotation tag', 'coverage-complete': 'Coverage complete',
-    'hot-answer': 'Hot answer', reachability: 'Reachability (no teleporting)', landmarks: 'Zone landmarks in time', 'ineligible-downfield': 'Ineligibles downfield'
+    'hot-answer': 'Hot answer', reachability: 'Reachability (no teleporting)', landmarks: 'Zone landmarks in time', 'ineligible-downfield': 'Ineligibles downfield', 'zone-reaction': 'Zone defenders play their receivers'
   };
   // Look B "coaching board" (PRD §15.1), the same in both themes: the field is a picture, not page chrome
   var B = {
     oob: '#BAC3BA', turf: ['#CAD4C7', '#C2CDBF'], line: '#FFFFFF', los: '#1F5FD1', num: 'rgba(255,255,255,0.7)', halo: 'rgba(202,212,199,0.9)',
     oFill: 'rgba(227,236,251,0.78)', oEdge: '#1F5FD1', oText: '#173F8F',
     dFill: '#FFFFFF', dEdge: '#C94A16', dText: '#8A2E0A', route: 'rgba(31,95,209,0.75)', routeFaint: 'rgba(31,95,209,0.28)',
-    zone: 'rgba(201,74,22,0.55)', zoneFill: 'rgba(201,74,22,0.08)', man: 'rgba(201,74,22,0.6)', trailO: 'rgba(31,95,209,0.35)', trailD: 'rgba(201,74,22,0.35)',
+    zone: 'rgba(201,74,22,0.55)', read2: 'rgba(201,74,22,0.85)', zoneFill: 'rgba(201,74,22,0.08)', man: 'rgba(201,74,22,0.6)', trailO: 'rgba(31,95,209,0.35)', trailD: 'rgba(201,74,22,0.35)',
     chipBg: 'rgba(28,36,48,0.86)', chipFg: '#FFFFFF', ball: '#8A5A3C', read: '#1F5FD1'
   };
 
@@ -331,6 +332,8 @@ ul.checks small { display: block; color: var(--ink-2); }
   }
   function jobText(p) {
     var j = p.job || '';
+    var z = state.view.zoneReads.filter(function (x) { return x.role === p.id; })[0];
+    if (z && state.t > 0) { var th = z.threat[Math.max(0, Math.min(z.threat.length - 1, Math.round(state.t / state.view.dt)))]; if (th) return j.replace(/-/g, ' ') + ', playing ' + offName(th); }
     var r = state.view.routes.filter(function (x) { return x.id === p.id; })[0];
     if (r) return r.name + (r.quick ? ' (quick)' : '');
     return j.replace(/-/g, ' ');
@@ -463,6 +466,14 @@ ul.checks small { display: block; color: var(--ink-2); }
         var zl = l.zone === 'hole' ? 'robber' : l.zone.replace(/-/g, ' ');
         ctx.strokeStyle = B.halo; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeText(zl, X(l.at.x), Yp(l.at.y) - s * 1.2);
         ctx.fillStyle = B.dText; ctx.fillText(zl, X(l.at.x), Yp(l.at.y) - s * 1.2);
+      });
+      // after the drop: the receiver each zone defender is playing
+      if (after) v.zoneReads.forEach(function (z) {
+        var j = Math.max(0, Math.min(z.threat.length - 1, Math.round(t / v.dt))), th = z.threat[j];
+        if (!th) return;
+        var d = posAt(playerById(z.role), t), o = posAt(playerById(th), t);
+        ctx.strokeStyle = B.read2; ctx.lineWidth = Math.max(1, s * 0.11);
+        ctx.beginPath(); ctx.moveTo(X(d.x), Yp(d.y)); ctx.lineTo(X(o.x), Yp(o.y)); ctx.stroke();
       });
       v.man.forEach(function (m) {
         var d = posAt(playerById(m.role), t), o = posAt(playerById(m.target), t);

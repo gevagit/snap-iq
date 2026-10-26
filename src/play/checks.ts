@@ -134,12 +134,51 @@ export function runChecks(c: PlayContent, play: Play): Check[] {
       if (v > cap) { fast.push(`${t.id} ${v.toFixed(1)} yd/s at ${(sim.tStart + k * dt).toFixed(2)} s`); break; }
     }
   add('reachability', fast.length === 0, fast.length ? `faster than his profile: ${fast.join(', ')}` : 'every player within his speed profile');
-  const late = sim.landmarks.filter((l) => {
-    const k = Math.min(sim.steps, k0 + Math.round(l.by / dt));
-    const p = at(l.role, k);
-    return Math.hypot(p.x - l.at.x, p.y - l.at.y) > 1.0;
-  });
+  // his drop must be able to reach the landmark in time, whatever he reads on the way
+  const late = sim.landmarks.filter((l) => l.short > 1.0);
   add('landmarks', late.length === 0, late.length ? `not at his landmark in time: ${late.map((l) => `${l.role} (${l.zone} by ${l.by} s)`).join(', ')}` : `${sim.landmarks.length} zone defenders at their landmarks in time`);
+
+  // ---------------- zone defenders play the receivers in their zone
+  // While a defender plays the same receiver for a second or more, he must at some point be on his spot
+  // (within 3 yd) or running at it (over 0.2 s, at least 40% of his top speed toward it). Only a defender who
+  // never does either has ignored him; a fast crosser may still pull away from someone chasing him.
+  const ignored: string[] = [];
+  const hold = Math.round(1.0 / dt);
+  const back = Math.round(0.2 / dt);
+  for (const z of sim.zoneReads) {
+    const top = tr(z.role).capPost;
+    const plays = (i: number) => {
+      const p0 = at(z.role, k0 + i - back);
+      const p1 = at(z.role, k0 + i);
+      const ux = z.tx[i]! - p1.x;
+      const uy = z.ty[i]! - p1.y;
+      const gap = Math.hypot(ux, uy);
+      return gap <= 3 || ((p1.x - p0.x) * ux + (p1.y - p0.y) * uy) / gap / (back * dt) >= 0.4 * top;
+    };
+    let start = 0;
+    let ok = false;
+    for (let i = 1; i <= z.threat.length; i++) {
+      const ends = i === z.threat.length || z.threat[i] === null || z.threat[i] !== z.threat[i - 1];
+      if (!ends) { if (i >= back && plays(i)) ok = true; continue; }
+      if (z.threat[i - 1] !== null && i - start > hold && !ok) ignored.push(`${z.role} on ${z.threat[i - 1]} from ${(start * dt).toFixed(1)} s`);
+      start = i;
+      ok = i < z.threat.length && i >= back && plays(i);
+    }
+    // ... and a receiver standing in his zone for a second after he should be reading is never left unplayed
+    const rule = c.coverages.zone_reaction.zones[z.zone];
+    const lm = sim.landmarks.find((l) => l.role === z.role);
+    if (!rule || !lm) continue;
+    let run = 0;
+    for (let i = Math.round(c.coverages.zone_reaction.read_by / dt); i < z.threat.length; i++) {
+      const inside = sim.routes.some((rt) => {
+        const q = at(rt.id, k0 + i);
+        return Math.abs(q.x - lm.at.x) <= rule.half_width && q.y >= rule.from_depth && q.y <= rule.to_depth;
+      });
+      run = inside && z.threat[i] === null ? run + 1 : 0;
+      if (run === hold) { ignored.push(`${z.role} left a receiver in his zone unplayed at ${(i * dt).toFixed(1)} s`); break; }
+    }
+  }
+  add('zone-reaction', ignored.length === 0, ignored.length ? `not playing the receiver in his zone: ${ignored.join(', ')}` : `${sim.zoneReads.length} zone defenders read and play the receivers in their zones`);
 
   // ---------------- linemen stay behind the expanded neutral zone
   const downfield = LINEMEN.filter((id) => { for (let k = k0; k <= sim.steps; k++) if (at(id, k).y > fa.neutral_zone + 2) return true; return false; });

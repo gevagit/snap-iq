@@ -1,7 +1,7 @@
 import type { Profile } from '../content/playSchemas';
 import type { PlayContent } from './content';
 import { type DefPlayer, type DefenseSetup, type OffView, alignDefense, landmark, laneX, lineOf } from './defense';
-import { type Leg, Path, type Vec, dist, legPosition, legSpeed, timeToCover, vec } from './movement';
+import { type Leg, Path, type Vec, dist, legPosition, legSpeed, profileDistance, timeToCover, vec } from './movement';
 import { LINEMEN, type MotionPlan, type Offense, type OffenseJobs, type Sign, checkPoint } from './offense';
 
 export interface Track {
@@ -29,7 +29,10 @@ export interface Simulation {
   /** route and motion polylines for drawing */
   routes: { id: string; route: string; quick: boolean; points: Vec[] }[];
   motionPath: Vec[] | null;
-  landmarks: { role: string; zone: string; at: Vec; by: number }[];
+  /** zone landmarks; short is how far his drop would fall short of the landmark at `by` (0 when he makes it) */
+  landmarks: { role: string; zone: string; at: Vec; by: number; short: number }[];
+  /** zone defenders after the drop: whom he is playing and where he is heading, per step from the snap */
+  zoneReads: { role: string; zone: string; threat: (string | null)[]; tx: Float64Array; ty: Float64Array }[];
   rushers: Rusher[];
   blockers: string[];
   /** man matchups: defender role -> offensive player */
@@ -304,6 +307,10 @@ export function simulate(c: PlayContent, off: Offense, plan: MotionPlan | null, 
   const man: Simulation['man'] = [];
   const greenDogs: string[] = [];
   const pursuers = new Map<string, { target: string; prof: Profile; lev: number; c0: number }>();
+  const zoneReads: Simulation['zoneReads'] = [];
+  type Rule = PlayContent['coverages']['zone_reaction']['zones'][string];
+  const readers = new Map<string, { at: Vec; rule: Rule; prof: Profile; read: Simulation['zoneReads'][number] }>();
+  const runners = [...routeJobs.keys()];
   const offIndex = new Map(off.players.map((p, i) => [p.id, i]));
   for (const p of def.players) {
     const s0 = snapPosOf(p.role);
@@ -320,7 +327,15 @@ export function simulate(c: PlayContent, off: Offense, plan: MotionPlan | null, 
       const job = j.kind === 'drop' ? 'drop-lineman' : p.group === 'lb' ? 'zone-linebacker' : p.role.startsWith('cb') && deep ? 'zone-corner-deep' : 'zone-back';
       const prof = profileFor(c, job);
       defLegs.set(p.role, [{ t0: 0, path: new Path([s0, at]), profile: prof, v0: 0, delay: prof.delay, job }]);
-      landmarks.push({ role: p.role, zone: zoneId, at, by: c.coverages.zones[zoneId]!.by });
+      const rule = c.coverages.zone_reaction.zones[zoneId];
+      if (rule) {
+        const n = steps - snapIndex + 1;
+        const read = { role: p.role, zone: zoneId, threat: new Array<string | null>(n).fill(null), tx: new Float64Array(n), ty: new Float64Array(n) };
+        zoneReads.push(read);
+        readers.set(p.role, { at, rule, prof, read });
+      }
+      const by = c.coverages.zones[zoneId]!.by;
+      landmarks.push({ role: p.role, zone: zoneId, at, by, short: Math.max(0, dist(s0, at) - profileDistance(prof, by - prof.delay)) });
       tr.capPost = prof.top;
       tr.job = j.kind === 'hole' ? 'robber (hole)' : `${zoneId}${j.side === 'middle' ? '' : ` ${j.side}`}`;
     } else {
@@ -335,13 +350,31 @@ export function simulate(c: PlayContent, off: Offense, plan: MotionPlan | null, 
     }
   }
   const mc = c.coverages.man;
+  const reactAfter = c.coverages.zone_reaction.react_after;
+  let underPick = new Map<string, string | null>();
   for (let k = snapIndex + 1; k <= steps; k++) {
     const t = time(k);
+    underPick = t >= reactAfter ? pickUnder(k) : new Map();
     def.players.forEach((p, i) => {
       const tr = defTracks[i]!;
       const legs = defLegs.get(p.role);
+      const zr = readers.get(p.role);
       let v: Vec;
-      if (legs) v = legAt(legs, t);
+      if (zr) {
+        const prev = vec(tr.xs[k - 1]!, tr.ys[k - 1]!);
+        const target = zoneTarget(zr, prev, k, t >= reactAfter);
+        zr.read.tx[k - snapIndex] = target.x;
+        zr.read.ty[k - snapIndex] = target.y;
+        if (t < reactAfter) v = legAt(legs!, t);
+        else {
+          const vel0 = vec((prev.x - tr.xs[k - 2]!) / dt, (prev.y - tr.ys[k - 2]!) / dt);
+          // while he stays on the same receiver he leads where that receiver is going
+          const j = k - snapIndex;
+          const same = zr.read.threat[j] !== null && zr.read.threat[j] === zr.read.threat[j - 1];
+          const lead = same ? vec((target.x - zr.read.tx[j - 1]!) / dt, (target.y - zr.read.ty[j - 1]!) / dt) : vec(0, 0);
+          v = steer(prev, vel0, target, lead, zr.prof.top, zr.prof.top / zr.prof.tau, dt, 0.3, () => undefined);
+        }
+      } else if (legs) v = legAt(legs, t);
       else {
         const m = pursuers.get(p.role)!;
         const prev = vec(tr.xs[k - 1]!, tr.ys[k - 1]!);
@@ -372,8 +405,64 @@ export function simulate(c: PlayContent, off: Offense, plan: MotionPlan | null, 
     });
   }
 
+  /**
+   * Underneath defenders share out the receivers in their zones each step: the defender with the fewest receivers
+   * to choose from picks first. Each keeps his receiver unless another is switch_margin yards shallower, and with
+   * one_each he leaves a receiver a teammate already has when another one is in his zone.
+   */
+  function pickUnder(k: number): Map<string, string | null> {
+    const zrc = c.coverages.zone_reaction;
+    const opts = [...readers.values()]
+      .filter((r) => r.rule.play === 'under')
+      .map((r) => ({
+        r,
+        here: vec(defTracks[def.players.findIndex((q) => q.role === r.read.role)]!.xs[k - 1]!, defTracks[def.players.findIndex((q) => q.role === r.read.role)]!.ys[k - 1]!),
+        cands: runners
+          .map((id) => ({ id, p: vec(offTracks[offIndex.get(id)!]!.xs[k]!, offTracks[offIndex.get(id)!]!.ys[k]!) }))
+          .filter((q) => Math.abs(q.p.x - r.at.x) <= r.rule.half_width && q.p.y >= r.rule.from_depth && q.p.y <= r.rule.to_depth),
+      }))
+      .sort((a, b) => a.cands.length - b.cands.length || a.r.read.role.localeCompare(b.r.read.role));
+    const out = new Map<string, string | null>();
+    const taken = new Set<string>();
+    for (const o of opts) {
+      const free = zrc.one_each ? o.cands.filter((q) => !taken.has(q.id)) : o.cands;
+      const pool = free.length ? free : o.cands;
+      const before = pool.find((q) => q.id === o.r.read.threat[k - snapIndex - 1]);
+      const shallowest = pool.reduce<(typeof pool)[number] | undefined>((a, b) => (!a || b.p.y < a.p.y || (b.p.y === a.p.y && dist(b.p, o.here) < dist(a.p, o.here)) ? b : a), undefined);
+      const pick = before && shallowest && shallowest.p.y > before.p.y - zrc.switch_margin ? before : shallowest;
+      out.set(o.r.read.role, pick?.id ?? null);
+      if (pick) taken.add(pick.id);
+    }
+    return out;
+  }
+
+  /** Zone reaction (content/defense/coverages.yaml zone_reaction): the receiver he plays and where that puts him. */
+  function zoneTarget(zr: { at: Vec; rule: Rule; read: Simulation['zoneReads'][number] }, here: Vec, k: number, reading: boolean): Vec {
+    const { at, rule, read } = zr;
+    if (!reading) return at;
+    const inArea = runners
+      .map((id) => ({ id, p: vec(offTracks[offIndex.get(id)!]!.xs[k]!, offTracks[offIndex.get(id)!]!.ys[k]!) }))
+      .filter((r) => Math.abs(r.p.x - at.x) <= rule.half_width && r.p.y >= rule.from_depth && r.p.y <= rule.to_depth);
+    let threat: (typeof inArea)[number] | undefined;
+    if (rule.play === 'deeper') threat = inArea.reduce<(typeof inArea)[number] | undefined>((a, b) => (!a || b.p.y > a.p.y ? b : a), undefined);
+    else {
+      const id = underPick.get(read.role);
+      threat = inArea.find((r) => r.id === id);
+    }
+    read.threat[k - snapIndex] = threat?.id ?? null;
+    if (!threat) return at;
+    if (rule.play === 'deeper') return vec(at.x + (threat.p.x - at.x) * (rule.shade ?? 0), Math.max(at.y, threat.p.y + rule.cushion));
+    // a receiver running more across than up (or settled) brings him up; against a vertical one he keeps his depth
+    const ti = offTracks[offIndex.get(threat.id)!]!;
+    const vx = (ti.xs[k]! - ti.xs[k - 1]!) / dt;
+    const vy = (ti.ys[k]! - ti.ys[k - 1]!) / dt;
+    const floor = Math.abs(vy) > Math.abs(vx) && vy > 1 ? Math.min(at.y, rule.max_depth ?? at.y) : (rule.min_depth ?? -Infinity);
+    const y = Math.min(rule.max_depth ?? Infinity, Math.max(floor, threat.p.y - rule.cushion));
+    return vec(threat.p.x, y);
+  }
+
   return {
-    dt, tStart, snapIndex, steps, tracks,
+    dt, tStart, snapIndex, steps, tracks, zoneReads,
     routes: [...routeJobs.values()].map((r) => ({ id: r.id, route: r.route, quick: r.quick, points: r.points })),
     motionPath: plan ? plan.leg.path.points : null,
     landmarks,

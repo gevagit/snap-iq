@@ -152,6 +152,9 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
       }
     }
     for (const z of zoneIds) if (!/^[a-z-]+$/.test(z)) errors.push(`defense/coverages.yaml: zone id ${z}`);
+    const zr = coverages.zone_reaction;
+    if (zr.react_after > zr.read_by) errors.push(`defense/coverages.yaml: zone defenders react at ${zr.react_after} s, after read_by (${zr.read_by} s)`);
+    for (const z of zoneIds) if (!zr.zones[z]) errors.push(`defense/coverages.yaml: zone ${z} has no zone_reaction rule`);
   }
   if (speeds) for (const [job, prof] of Object.entries(speeds.jobs)) if (!speeds.profiles[prof]) errors.push(`tuning/speeds.yaml: job ${job} uses unknown profile ${prof}`);
 

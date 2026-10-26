@@ -241,6 +241,21 @@ export const Coverages = z
       .strict()
       .refine(reviewComplete, reviewMessage),
     zones: z.record(Id, Zone),
+    zone_reaction: reviewed({
+      react_after: z.number(),
+      read_by: z.number(),
+      switch_margin: z.number(),
+      one_each: z.boolean(),
+      zones: z.record(
+        Id,
+        z
+          .object({
+            half_width: z.number(), from_depth: z.number(), to_depth: z.number(), play: z.enum(['under', 'deeper']), cushion: z.number(),
+            shade: z.number().optional(), min_depth: z.number().optional(), max_depth: z.number().optional(),
+          })
+          .strict(),
+      ),
+    }),
     man: reviewed({ leverage: z.number(), min_cushion: z.number(), close_rate: z.number(), green_dog: z.boolean() }),
     motion_response: z.object({ man: z.literal('travel'), zone: z.literal('bump') }).strict(),
     coverages: z.array(
