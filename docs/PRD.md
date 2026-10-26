@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.4 (positions and routes from a movement model; wireframes v4 in review) |
+| **Version** | 1.5 (Look B chosen from the style frame; puppet players) |
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
@@ -797,7 +797,7 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 
 ### 14.3 Rendering
 - **Projection:** cylindrical panoramic projection from his eye point. Horizontal position comes from the angle to the player; size and height come from distance. Players are sorted far to near; his own players are drawn see-through.
-- **Pose library:** front-view silhouette sprites per position group and pose (§15.2) for his-eyes view, plus back views of his own players. Top-down glyphs for Learn and Breakdown.
+- **Players are 3D puppets drawn flat:** about 15 joints in 3D (hips, knees, feet, shoulders, elbows, hands, chest, head), projected with the same camera and drawn as simple shapes (helmet, pads, jersey with number, limbs). One rig gives every viewing angle, so a player can face him, run away or turn his hips with no sprite sheets. Poses (§15.2) are joint targets stored in `/content`; gait, arm swing and leaning come from the movement model's speed, driven by game time (no physics). The head is posed on its own, because eyes are a tell. Top-down glyphs for Learn and Breakdown.
 - **Legibility check** (§7.6) computes projected sizes per scenario. It runs in tests and adjusts the view at runtime.
 - **HUD:** an HTML/React overlay (call card, beat track, clocks, buttons) above the canvas.
 
@@ -868,8 +868,10 @@ tools/     content compiler, diagram renderer (SVG), bible doc generator, flags 
 ## 15. Art, audio and accessibility
 
 ### 15.1 Visual direction
-- **Style:** clean, high-contrast "night game" stylized vector. Readability beats realism.
-- **Palette:** dark turf; offense blue, defense orange, Sahar gold. Positive/open states use white or mint plus a shape.
+- **Look B, "coaching board"** (chosen from the Phase 0 style frame as the simplest): flat, high-contrast shapes on a muted field. Readability beats realism.
+- **Field:** muted grey-green turf with light 5-yard mow stripes, white lines and NFHS hashes, yard numbers on the ground, a blue line of scrimmage and a dashed dark line to gain; a plain light horizon, no stadium or crowd.
+- **Players:** defenders in white jerseys with orange outlines, orange helmets and numbers; his own players see-through in blue; Sahar gold where he appears (Learn, Breakdown). Soft contact shadows under every player and the ball.
+- **Palette:** offense blue, defense orange, Sahar gold. Positive/open states use white or mint plus a shape.
 - **Contrast:** text meets WCAG AA contrast.
 
 ### 15.2 Pose library (per position group, front view for his-eyes view)
@@ -1003,6 +1005,8 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Views | His eyes (panoramic, about 140°) in every drill at every tier; top-down only in Learn and Breakdown |
 | Movement | Every post-snap position computed from alignment + path + speed profile + time; routes as waypoints; no hand placement (§6.13) |
 | Renderer | 2D WebGL (PixiJS) with a custom panoramic projection; true 3D only for a future VR mode |
+| Look | B, coaching board: muted field, orange-outlined defenders, see-through blue offense (§15.1) |
+| Players | 3D puppets of about 15 joints drawn as flat shapes; poses stored as content (§14.3) |
 | Information policy | Difficulty never removes information |
 | AI | No live AI. Claude used only for authoring and rule maintenance via Claude Code. |
 | Explanations | Breakdown for every rep, assembled from reviewed snippets |
