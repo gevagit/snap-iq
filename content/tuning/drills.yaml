@@ -1,5 +1,5 @@
 # Drill tuning (PRD §8, §10). Every number is a feel constant to tune in playtests. Rewritten for the routine
-# game (batch 3) and changed after the owner's playtest: back to the owner for review.
+# game (batch 3) and changed after the owner's playtest; signed off by the owner (2026-10-26).
 version: 1
 batch: 2
 
@@ -67,4 +67,6 @@ scoring:
   open_not_read: 10
   workout_bonus: 25
 ranks: [[0, Rookie], [150, Scout Team], [400, Backup], [800, Starter], [1500, Captain], [2500, All-League]]
-reviewed: false   # two post-snap stops, his own reads, roll-out and blitz answers (2026-10-26); back to the owner
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-26"

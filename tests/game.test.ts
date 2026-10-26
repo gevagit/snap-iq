@@ -50,9 +50,8 @@ describe('Pre-snap routine game', () => {
     expect(callReviewed(withReview(true), ok.call)).toBe(true);
   });
 
-  it('runs only in playtest until the post-playtest changes are signed off', () => {
-    expect(makeRep(c, 'youth', 1, 0, false)).toBeNull();
-    expect(makeRep(c, 'youth', 1, 0, true)).not.toBeNull();
+  it('runs on the signed-off Football Bible without playtest', () => {
+    expect(makeRep(c, 'youth', 1, 0, false)!.reviewed).toBe(true);
   });
 
   it('is deterministic: the same seed gives the same workout', () => {

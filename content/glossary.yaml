@@ -1913,7 +1913,9 @@ terms:
     definition: The quarterback looks one way after the snap to pull a safety toward that side, then throws to the other side.
     aliases: [look off the safety, look him off]
     see: [free-safety, progression]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: roll-out
     term: Roll-out
@@ -1922,4 +1924,6 @@ terms:
     definition: The quarterback leaves the pocket toward his escape lane to buy time and find a receiver, run, or throw it away from outside the free-blocking zone.
     aliases: [roll out, rollout, scramble drill]
     see: [escape-lane, throwaway, quarterback-run]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
