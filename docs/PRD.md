@@ -6,7 +6,7 @@
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
-| **Current phase** | Phase 0: Wireframes (in owner review). Next: Phase 1, Football Bible |
+| **Current phase** | Phase 1: Football Bible (batch 1 in owner review). Phase 0 wireframes signed off |
 
 ---
 
