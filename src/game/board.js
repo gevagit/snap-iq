@@ -106,7 +106,7 @@ export function drawBoard(canvas, rep, t, opts) {
   // the throws: the answer (green) and his (dark), from the release to the catch
   const throwLine = (id, color, dash) => {
     const o = rep.post.options.find((q) => q.id === id); if (!o) return;
-    const qb = at('QB', rep.decision), c = at(id, o.catchT);
+    const qb = at('QB', rep.freeze2), c = at(id, o.catchT);
     ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, s * 0.2); ctx.setLineDash(dash ? [s * 0.5, s * 0.35] : []);
     ctx.beginPath(); ctx.moveTo(X(qb.x), Y(qb.y)); ctx.lineTo(X(c.x), Y(c.y)); ctx.stroke(); ctx.setLineDash([]);
     ctx.beginPath(); ctx.arc(X(c.x), Y(c.y), s * 1.0, 0, Math.PI * 2); ctx.stroke();

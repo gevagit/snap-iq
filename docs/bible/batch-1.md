@@ -211,7 +211,7 @@
 | **Travel** | A defender following a motioning player across the formation - a man coverage tell. | travels |
 | **Bump** | Defenders sliding over a gap or two as a motioning player passes, without following him - a zone coverage tell. | bumps, slide over |
 
-### Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions (13)
+### Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions (15)
 
 | Term | Meaning | Also called |
 | --- | --- | --- |
@@ -228,6 +228,8 @@
 | **Quarterback run** | The quarterback keeps the ball and runs when no receiver is open and there is room in front of him. | keep, scramble, QB run |
 | **Route adjustment** | Changing a receiver's route at the line before the snap. In SNAP IQ he may change up to two routes per play. | route change, route tag |
 | **Play call** | The play the quarterback calls in the huddle: the formation, the pass concept and the protection. Every player's job comes from it. | call, the call |
+| **Look-off** | The quarterback looks one way after the snap to pull a safety toward that side, then throws to the other side. | look off the safety, look him off |
+| **Roll-out** | The quarterback leaves the pocket toward his escape lane to buy time and find a receiver, run, or throw it away from outside the free-blocking zone. | roll out, rollout, scramble drill |
 
 ---
 

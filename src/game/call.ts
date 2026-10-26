@@ -1,6 +1,6 @@
 import type { PlayContent } from '../play/content';
 import type { Play } from '../play';
-import type { Rep } from './drill';
+import { recommendedReads, type Rep } from './drill';
 
 /** One player on the call sheet: his letter, number, position and job, each a glossary id. */
 export interface CallRow {
@@ -48,13 +48,8 @@ export function callSheet(c: PlayContent, rep: Rep): CallSheet {
   const concept = c.concepts.concepts.find((x) => x.id === play.call.concept)!;
   const protection = c.protections.protections.find((x) => x.id === play.call.protection)!;
   const jobs = play.jobs;
-  // read order from the call alone (not from the simulation, which knows whether the back released)
-  const called = [...jobs.routes.map((r) => ({ id: r.id, route: r.route })), ...(jobs.checker && protection.back === 'check-release' ? [{ id: jobs.checker, route: 'check-release' }] : [])];
-  const order: string[] = [];
-  for (const route of concept.read.progression) {
-    const r = called.find((x) => x.route === route && !order.includes(x.id));
-    if (r) order.push(r.id);
-  }
+  // the recommended reads, from the call alone (src/game/drill.ts recommendedReads)
+  const order = recommendedReads(c, play);
   const rows: CallRow[] = play.offense.players.map((p) => {
     const route = jobs.routes.find((r) => r.id === p.id);
     const base = { id: p.id, number: p.number, position: positionOf(play, p.id), read: order.includes(p.id) ? order.indexOf(p.id) + 1 : null, quick: route?.quick ?? false };

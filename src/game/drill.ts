@@ -64,19 +64,26 @@ export interface RoutineKey {
   tells: string;
   /** more rushers than blockers, and the receivers on quick (hot) routes */
   threats: { more: boolean; hot: string[] };
-  /** his key defender (null: no defender has that job, as in man coverage) and his first look */
+  /** his key defender (null: no defender has that job, as in man coverage) */
   key: string | null;
-  firstLook: string;
-  drop: string;
   escape: 'left' | 'right';
+  /** the recommended reads: the concept's read order (he keeps it or picks his own) */
+  reads: string[];
+  /** his drop, asked at the first stop after the snap */
+  drop: string;
 }
 
 export interface Option { id: string; route: string; separation: number; catchT: number; open: boolean }
-/** After the snap: the coverage he names and what he does with the ball at the freeze. */
+/** After the snap: the coverage and the blitz at the first stop, and the ball at the second. */
 export interface PostKey {
   coverage: string;
-  /** a receiver letter, 'run' or 'throw-away' */
+  /** linebackers and defensive backs rushing by the call (glossary blitz), sorted; empty: no blitz */
+  blitz: string[];
+  /** the reads the ball decision follows (his own once he has picked them) */
+  reads: string[];
+  /** a receiver letter, 'roll-out', 'run' or 'throw-away' */
   decision: string;
+  /** every receiver running a route, with his room at the catch */
   options: Option[];
 }
 
@@ -88,9 +95,10 @@ export interface Rep {
   fault: Fault | null;
   routine: RoutineKey;
   post: PostKey;
-  /** seconds he has at the line, and when the play freezes after the snap */
+  /** seconds on his play clock at the line; the two stops after the snap (seconds after it) */
   clock: number;
-  decision: number;
+  freeze1: number;
+  freeze2: number;
 }
 
 /** Pick the next legitimate play for a tier, deterministically from the seed. */
@@ -121,7 +129,9 @@ export function makeRep(c: PlayContent, tier: Tier, seed: number, index: number,
     if (!built.ok || built.value.checks.some((ch) => !ch.ok)) continue;
     const play = built.value;
     const fault = r() < R.faults.rate ? makeFault(c, play, r) : null;
-    return { index, call, play, reviewed, fault, routine: routineKey(c, play, fault), post: postKey(c, play, R.decision), clock: t.clock, decision: R.decision };
+    const routine = routineKey(c, play, fault);
+    const freeze2 = R.post.snap_freeze + R.post.decision_after;
+    return { index, call, play, reviewed, fault, routine, post: postKey(c, play, freeze2, routine.reads, routine.escape), clock: t.clock, freeze1: R.post.snap_freeze, freeze2 };
   }
   return null;
 }
@@ -161,7 +171,6 @@ export function routineKey(c: PlayContent, play: Play, fault: Fault | null): Rou
     .map(({ role, side, look }) => ({ role, side, look }));
   const tells = (play.defense.coverage.tells ?? []).find((tl) => tl.kind)?.kind ?? 'none';
   const concept = c.concepts.concepts.find((x) => x.id === play.call.concept)!;
-  const firstLook = progression(c, play)[0] ?? play.sim.routes[0]!.id;
   // escape: toward his throwing hand, unless more edge threats show on that side
   const qb = c.quarterback;
   const hand: Sign = qb.throwing_hand === 'left' ? -1 : 1;
@@ -180,10 +189,28 @@ export function routineKey(c: PlayContent, play: Play, fault: Fault | null): Rou
     tells,
     threats: { more: play.analysis.rushers > play.analysis.blockers, hot: play.sim.routes.filter((rt) => rt.quick).map((rt) => rt.id) },
     key: play.analysis.readDefenders[0] ?? null,
-    firstLook,
-    drop: qb.drops[concept.id]![play.offense.formation.qb],
     escape: escapeSign < 0 ? 'left' : 'right',
+    reads: recommendedReads(c, play),
+    drop: qb.drops[concept.id]![play.offense.formation.qb],
   };
+}
+
+/**
+ * The reads the call recommends: the concept's read order (content/offense/concepts.yaml) matched to the receivers'
+ * called routes, at most routine.max_reads. Built from the call alone (not the simulation, which knows whether a
+ * check-release back released).
+ */
+export function recommendedReads(c: PlayContent, play: Play): string[] {
+  const concept = c.concepts.concepts.find((x) => x.id === play.call.concept)!;
+  const protection = c.protections.protections.find((x) => x.id === play.call.protection)!;
+  const jobs = play.jobs;
+  const called = [...jobs.routes.map((r) => ({ id: r.id, route: r.route })), ...(jobs.checker && protection.back === 'check-release' ? [{ id: jobs.checker, route: 'check-release' }] : [])];
+  const out: string[] = [];
+  for (const route of concept.read.progression) {
+    const r = called.find((x) => x.route === route && !out.includes(x.id));
+    if (r) out.push(r.id);
+  }
+  return out.slice(0, c.drills.routine.max_reads);
 }
 
 /** His progression: the concept's read order (content/offense/concepts.yaml), then everyone else running a route. */
@@ -209,7 +236,13 @@ export function catchPoint(c: PlayContent, play: Play, id: string, release: numb
   return { t, at: posAt(play, id, t) };
 }
 
-export function postKey(c: PlayContent, play: Play, decision: number): PostKey {
+/** Linebackers and defensive backs rushing by the call (glossary blitz); a green dog only rushes once his back blocks. */
+export function blitzers(play: Play): string[] {
+  return play.sim.rushers.filter((r) => !r.dl && !play.sim.greenDogs.includes(r.role)).map((r) => r.role).sort();
+}
+
+/** The answer key after the snap, with the ball decided at `decision` seconds from his reads (content/tuning/drills.yaml decide). */
+export function postKey(c: PlayContent, play: Play, decision: number, reads: string[], escape: 'left' | 'right'): PostKey {
   const release = decision + c.drills.ball.release_delay;
   const defenders = play.defense.players.map((d) => d.role);
   const options: Option[] = progression(c, play).map((id) => {
@@ -217,16 +250,19 @@ export function postKey(c: PlayContent, play: Play, decision: number): PostKey {
     const separation = Math.min(...defenders.map((d) => { const q = posAt(play, d, cp.t); return Math.hypot(q.x - cp.at.x, q.y - cp.at.y); }));
     return { id, route: play.sim.routes.find((r) => r.id === id)!.route, separation, catchT: cp.t, open: separation >= c.drills.reads.open_separation };
   });
-  const first = options.find((o) => o.open);
-  let choice = first?.id;
+  let choice = reads.find((id) => options.find((o) => o.id === id)?.open);
   if (!choice) {
-    // no one open: run if no free defender is within run_room yards in front of him, otherwise throw it away
+    const D = c.drills.routine.decide;
     const qb = posAt(play, 'QB', decision);
     const blocked = new Set(play.sim.rushers.filter((r) => r.blocker).map((r) => r.role));
-    const near = defenders.some((d) => { if (blocked.has(d)) return false; const q = posAt(play, d, decision); return q.y >= qb.y && Math.hypot(q.x - qb.x, q.y - qb.y) < c.drills.routine.decide.run_room; });
-    choice = near ? 'throw-away' : 'run';
+    const free = defenders.filter((d) => !blocked.has(d)).map((d) => posAt(play, d, decision));
+    const room = !free.some((q) => q.y >= qb.y && Math.hypot(q.x - qb.x, q.y - qb.y) < D.run_room);
+    const side = escape === 'left' ? -1 : 1;
+    const spot = { x: qb.x + side * D.roll_out.lane, y: qb.y };
+    const lane = !free.some((q) => Math.hypot(q.x - spot.x, q.y - spot.y) < D.roll_out.clear);
+    choice = room ? 'run' : lane ? 'roll-out' : 'throw-away';
   }
-  return { coverage: play.defense.coverage.answer, decision: choice, options };
+  return { coverage: play.defense.coverage.answer, blitz: blitzers(play), reads: [...reads], decision: choice, options };
 }
 
 /** Rebuild the play with his route changes; the post-snap answers follow the routes he actually called. */
@@ -235,7 +271,12 @@ export function withChanges(c: PlayContent, rep: Rep, overrides: Record<string, 
   const call = { ...rep.call, overrides };
   const built = buildPlay(c, call);
   if (!built.ok) return rep;
-  return { ...rep, call, play: built.value, post: postKey(c, built.value, rep.decision) };
+  return { ...rep, call, play: built.value, post: postKey(c, built.value, rep.freeze2, recommendedReads(c, built.value), rep.routine.escape) };
+}
+
+/** His reads, set at the end of his routine: the ball decision follows them. */
+export function withReads(c: PlayContent, rep: Rep, reads: string[]): Rep {
+  return { ...rep, post: postKey(c, rep.play, rep.freeze2, reads, rep.routine.escape) };
 }
 
 /** Which menu of routes a receiver may change to (content/offense/adjustments.yaml). */
@@ -260,17 +301,22 @@ export interface Answers {
   key: string | null;
   /** set once he answers the key step (his answer may be null: no one has that job) */
   keyAnswered?: boolean;
-  firstLook: string | null;
-  drop: string | null;
   escape: 'left' | 'right' | null;
-  /** seconds he took at the line; null when the clock ran out */
+  /** his reads, in order */
+  reads: string[] | null;
+  /** seconds he took at the line; null when the play clock ran out first */
   routineTime: number | null;
+  drop: string | null;
   coverage: string | null;
+  /** the defenders he says are blitzing; [] for no blitz */
+  blitz: string[] | null;
+  /** the look-off question: a mental rep, not scored */
+  lookOff: boolean | null;
   decision: string | null;
 }
 export const emptyAnswers = (): Answers => ({
-  alignment: null, shell: null, box: null, corners: [], tells: null, threats: { more: null, hot: null }, changes: {}, key: null, firstLook: null,
-  drop: null, escape: null, routineTime: null, coverage: null, decision: null,
+  alignment: null, shell: null, box: null, corners: [], tells: null, threats: { more: null, hot: null }, changes: {}, key: null, escape: null,
+  reads: null, routineTime: null, drop: null, coverage: null, blitz: null, lookOff: null, decision: null,
 });
 
 export interface Grade {
@@ -295,10 +341,11 @@ export function grade(c: PlayContent, original: Rep, played: Rep, a: Answers): G
     tells: a.tells === k.tells,
     threats: a.threats.more === k.threats.more && (!k.threats.more || (a.threats.hot !== null && k.threats.hot.includes(a.threats.hot))),
     adjust: !changed || adjustGain > 0.5,
-    key: a.key === k.key && a.firstLook === k.firstLook,
-    drop: a.drop === k.drop,
+    key: a.key === k.key,
     escape: a.escape === k.escape,
+    drop: a.drop === k.drop,
     coverage: a.coverage === played.post.coverage,
+    blitz: a.blitz !== null && [...a.blitz].sort().join() === played.post.blitz.join(),
   };
   const pick = played.post.options.find((o) => o.id === a.decision);
   const decision: Grade['decision'] = a.decision === played.post.decision ? 'read' : pick?.open ? 'open' : 'miss';
