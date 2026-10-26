@@ -414,5 +414,10 @@ $('wrapDone').addEventListener('click', () => { session = null; show('home'); re
 
 window.addEventListener('resize', () => { if ($('rep').classList.contains('on')) { eyes.resize(); eyes.draw(clock.t); } if ($('call').classList.contains('on')) drawCallBoard(); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (scene) eyes.draw(clock.t); });
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => { /* offline install is optional */ });
+if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
+  // a new deploy takes over at once: reload into it, unless he is in the middle of a workout
+  const fresh = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (fresh && !session) location.reload(); });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => { /* offline install is optional */ });
+}
 renderHome();
