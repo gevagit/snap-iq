@@ -1,0 +1,124 @@
+# Defensive fronts: how the linemen and linebackers line up. Batch 2, not yet reviewed.
+# Fronts are written to the defense's strength call; the engine mirrors them. Defensive backs (and any player
+# whose coverage job moves him) are aligned by content/defense/coverages.yaml.
+version: 1
+batch: 2
+
+# The side the defense sets its front and coverage to: the first rule that decides it wins.
+strength_call: [tight-end, more-receivers, field, away-from-back, offense-right]
+
+alignment:
+  dl_depth: 0.9            # body centre past the ball
+  neutral_zone: 0.3        # the length of the ball; no player's body may be in it at the snap
+  body_radius: 0.25        # half a player's body width, for the neutral zone and spacing checks
+  shoulder: 0.5            # a shoulder alignment sits half a yard off head-up
+  lb_depth: 4.5            # linebacker depth (the apex depth in content/field/geometry.yaml)
+  c_gap_without_te: 0.8    # with no tight end, the C gap is this far outside the tackle
+  apex_without_slot: { outside_end_man: 3.0 }   # an overhang with no detached #2 on his side
+  reviewed: false
+
+# Glossary "technique": which blocker and which shoulder. "1" is the center's shoulder to the lineman's side.
+techniques:
+  "0": { of: center, shoulder: head-up }
+  "1": { of: center, shoulder: outside }
+  "2i": { of: guard, shoulder: inside }
+  "2": { of: guard, shoulder: head-up }
+  "3": { of: guard, shoulder: outside }
+  "4i": { of: tackle, shoulder: inside }
+  "4": { of: tackle, shoulder: head-up }
+  "5": { of: tackle, shoulder: outside }
+  "7": { of: tight-end, shoulder: inside }
+  "6": { of: tight-end, shoulder: head-up }
+  "9": { of: tight-end, shoulder: outside }
+
+# Rush lane of each technique (PRD §6.13): 1-tech A gap, 3-tech B gap, 5-tech C gap, 9-tech wide edge;
+# a head-up lineman bull rushes the man in front of him.
+rush_lanes: { "0": bull, "1": a, "2i": a, "2": bull, "3": b, "4i": b, "4": bull, "5": c, "7": c, "6": bull, "9": edge }
+
+# Rush paths: through the gap point (gap_depth behind the line), then at the quarterback's launch point, stopping
+# stop_short yd from it. A blocked rusher stops where he meets his blocker: meet_line behind the line for a
+# lineman's block, meet_back for a back's. The edge lane is edge_outside_end_man yd outside the end man.
+rush:
+  gap_depth: 0.6
+  meet_line: 1.2
+  meet_back: 2.2
+  stop_short: 1.0
+  edge_outside_end_man: 1.5
+  reviewed: false
+
+# players: role (used by coverages), label shown on the field, jersey number, group (dl | lb | db), side, and
+#   tech for linemen - one technique, or { tight-end: , none: } by whether a tight end is attached on his side;
+#   align for linebackers and overhangs - { gap: a | b | c }, { stack: <lineman role> } or { at: apex },
+#   again optionally split by { tight-end: , none: }.
+fronts:
+  - id: four-three-over
+    name: 4-3 Over
+    terms: [four-three, over-front]
+    tier: jv
+    players:
+      - { role: de-weak, label: DE, number: 91, group: dl, side: weak, tech: "5" }
+      - { role: nt, label: NT, number: 72, group: dl, side: weak, tech: "1" }
+      - { role: dt, label: DT, number: 95, group: dl, side: strong, tech: "3" }
+      - { role: de-strong, label: DE, number: 97, group: dl, side: strong, tech: { tight-end: "9", none: "5" } }
+      - { role: will, label: W, number: 44, group: lb, side: weak, align: { gap: b } }
+      - { role: mike, label: M, number: 52, group: lb, side: strong, align: { gap: a } }
+      - { role: sam, label: S, number: 45, group: lb, side: strong, align: { tight-end: { gap: c }, none: { at: apex } } }
+      - { role: cb-weak, label: CB, number: 3, group: db, side: weak }
+      - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
+      - { role: fs, label: FS, number: 31, group: db, side: weak }
+      - { role: ss, label: SS, number: 6, group: db, side: strong }
+    reviewed: false
+
+  - id: four-two-five-over
+    name: 4-2-5 Over
+    terms: [four-two-five, over-front, nickel]
+    tier: jv
+    players:
+      - { role: de-weak, label: DE, number: 91, group: dl, side: weak, tech: "5" }
+      - { role: nt, label: NT, number: 72, group: dl, side: weak, tech: "1" }
+      - { role: dt, label: DT, number: 95, group: dl, side: strong, tech: "3" }
+      - { role: de-strong, label: DE, number: 97, group: dl, side: strong, tech: { tight-end: "9", none: "5" } }
+      - { role: will, label: W, number: 44, group: lb, side: weak, align: { gap: b } }
+      - { role: mike, label: M, number: 52, group: lb, side: strong, align: { gap: a } }
+      - { role: nickel, label: N, number: 21, group: db, side: strong, align: { at: apex } }
+      - { role: cb-weak, label: CB, number: 3, group: db, side: weak }
+      - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
+      - { role: fs, label: FS, number: 31, group: db, side: weak }
+      - { role: ss, label: SS, number: 6, group: db, side: strong }
+    reviewed: false
+
+  - id: four-two-five-even
+    name: 4-2-5 Even
+    terms: [four-two-five, nickel]
+    tier: youth
+    players:
+      - { role: de-weak, label: DE, number: 91, group: dl, side: weak, tech: "5" }
+      - { role: dt-weak, label: DT, number: 72, group: dl, side: weak, tech: "3" }
+      - { role: dt, label: DT, number: 95, group: dl, side: strong, tech: "3" }
+      - { role: de-strong, label: DE, number: 97, group: dl, side: strong, tech: "5" }
+      - { role: will, label: W, number: 44, group: lb, side: weak, align: { gap: a } }
+      - { role: mike, label: M, number: 52, group: lb, side: strong, align: { gap: a } }
+      - { role: nickel, label: N, number: 21, group: db, side: strong, align: { at: apex } }
+      - { role: cb-weak, label: CB, number: 3, group: db, side: weak }
+      - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
+      - { role: fs, label: FS, number: 31, group: db, side: weak }
+      - { role: ss, label: SS, number: 6, group: db, side: strong }
+    reviewed: false
+
+  - id: three-three-stack
+    name: 3-3 Stack
+    terms: [three-three-stack, overhang]
+    tier: youth
+    players:
+      - { role: de-weak, label: DE, number: 91, group: dl, side: weak, tech: "5" }
+      - { role: nt, label: NT, number: 72, group: dl, side: strong, tech: "0" }
+      - { role: de-strong, label: DE, number: 97, group: dl, side: strong, tech: "5" }
+      - { role: will, label: W, number: 44, group: lb, side: weak, align: { stack: de-weak } }
+      - { role: mike, label: M, number: 52, group: lb, side: strong, align: { stack: nt } }
+      - { role: sam, label: S, number: 45, group: lb, side: strong, align: { stack: de-strong } }
+      - { role: oh-weak, label: OH, number: 8, group: db, side: weak, align: { at: apex } }
+      - { role: oh-strong, label: OH, number: 21, group: db, side: strong, align: { at: apex } }
+      - { role: cb-weak, label: CB, number: 3, group: db, side: weak }
+      - { role: cb-strong, label: CB, number: 24, group: db, side: strong }
+      - { role: fs, label: FS, number: 31, group: db, side: weak }
+    reviewed: false

@@ -1,0 +1,136 @@
+# Formations, written with the strength to the offense's right; the game mirrors each one to the left.
+# Batch 2, not yet reviewed. Coordinates as in content/field/geometry.yaml (x across from the ball, + = right;
+# y downfield, + = defense side). Every number the engine uses to place the offense is in this file.
+version: 1
+batch: 2
+
+alignment:
+  line: { split: 1.4, depth: 0.7 }        # linemen 1.4 yd apart; body centre 0.7 yd behind the ball
+  back_min_depth: 1.2                     # a back's body centre at least this far behind the ball
+  wide: { from_sideline: 8, min_from_ball: 8, max_from_ball: 20 }   # on the numbers, kept 8-20 yd from the ball
+  slot: { fraction: 0.5, min_outside_end_man: 3.5 }                 # halfway from the end man to the wide receiver
+  inside_slot: { fraction: 0.5 }                                    # halfway from the end man to the slot
+  attached: { outside_tackle: 1.4 }
+  bunch: { point_outside_end_man: 6, spread: 1.2, depth_behind_point: 1.0 }
+  qb: { gun: 5, pistol: 4, under: 1.1 }   # depth behind the ball; under center he takes the snap hand to hand
+  backs:
+    gun-offset: { x: 1.6, depth: 5 }
+    pistol-back: { x: 0, depth: 7 }
+    i-back: { x: 0, depth: 7 }
+    fullback: { x: 0, depth: 4.5 }
+  reviewed: false
+
+# Quarterback drops (PRD §6.13): depth behind the ball over time after the snap.
+drops:
+  gun: { catch: 0.35, path: [[0.35, 5], [1.05, 6.5], [1.4, 6.0]] }
+  pistol: { catch: 0.3, path: [[0.3, 4], [0.95, 5.6], [1.3, 5.2]] }
+  under: { catch: 0, path: [[0, 1.1], [1.3, 7.0], [1.6, 6.5]] }
+  reviewed: false
+
+# Alignment words: wide, slot, inside-slot, attached, bunch-point (on the line), bunch-inside, bunch-outside,
+# gun-offset, pistol-back, i-back, fullback. on_line: true puts the player on the line of scrimmage; everyone
+# else is a back. side: strong or weak (the side the formation is written to, before mirroring).
+formations:
+  - id: gun-doubles
+    name: Gun Doubles
+    terms: [shotgun, two-by-two]
+    personnel: "10"
+    qb: gun
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      H: { side: weak, align: slot }
+      Y: { side: strong, align: slot }
+      Z: { side: strong, align: wide, on_line: true }
+      R: { side: weak, align: gun-offset }
+    reviewed: false
+
+  - id: gun-trips-te
+    name: Gun Trips TE
+    terms: [shotgun, three-by-one, tight-end, attached]
+    personnel: "11"
+    qb: gun
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      Y: { side: strong, align: attached, on_line: true }
+      H: { side: strong, align: slot }
+      Z: { side: strong, align: wide }
+      R: { side: weak, align: gun-offset }
+    reviewed: false
+
+  - id: gun-trips
+    name: Gun Trips
+    terms: [shotgun, three-by-one]
+    personnel: "10"
+    qb: gun
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      Y: { side: strong, align: inside-slot }
+      H: { side: strong, align: slot }
+      Z: { side: strong, align: wide, on_line: true }
+      R: { side: weak, align: gun-offset }
+    reviewed: false
+
+  - id: gun-empty
+    name: Gun Empty
+    terms: [shotgun, empty]
+    personnel: "10"
+    qb: gun
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      H: { side: weak, align: slot }
+      R: { side: strong, align: inside-slot }
+      Y: { side: strong, align: slot }
+      Z: { side: strong, align: wide, on_line: true }
+    reviewed: false
+
+  - id: gun-bunch
+    name: Gun Bunch
+    terms: [shotgun, bunch, three-by-one]
+    personnel: "10"
+    qb: gun
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      Z: { side: strong, align: bunch-point, on_line: true }
+      H: { side: strong, align: bunch-inside }
+      Y: { side: strong, align: bunch-outside }
+      R: { side: weak, align: gun-offset }
+    reviewed: false
+
+  - id: gun-doubles-te
+    name: Gun Doubles TE
+    terms: [shotgun, two-by-two, tight-end, attached]
+    personnel: "11"
+    qb: gun
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      H: { side: weak, align: slot }
+      Y: { side: strong, align: attached, on_line: true }
+      Z: { side: strong, align: wide }
+      R: { side: strong, align: gun-offset }
+    reviewed: false
+
+  - id: pistol-doubles-te
+    name: Pistol Doubles TE
+    terms: [pistol, two-by-two, tight-end, attached]
+    personnel: "11"
+    qb: pistol
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      H: { side: weak, align: slot }
+      Y: { side: strong, align: attached, on_line: true }
+      Z: { side: strong, align: wide }
+      R: { side: strong, align: pistol-back }
+    reviewed: false
+
+  - id: i-formation
+    name: I-formation
+    terms: [under-center, i-formation, tight-end, attached, fullback]
+    personnel: "21"
+    qb: under
+    players:
+      X: { side: weak, align: wide, on_line: true }
+      Y: { side: strong, align: attached, on_line: true }
+      Z: { side: strong, align: wide }
+      F: { side: strong, align: fullback }
+      R: { side: strong, align: i-back }
+    reviewed: false

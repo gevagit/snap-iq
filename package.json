@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "bible:doc": "tsx scripts/bible-doc.ts",
-    "check": "npm run lint && npm run typecheck && npm test && npm run validate"
+    "check": "npm run lint && npm run typecheck && npm test && npm run validate",
+    "lab": "tsx scripts/play-lab.ts"
   },
   "dependencies": {
     "yaml": "^2.9.1",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",

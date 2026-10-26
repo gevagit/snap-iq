@@ -1,10 +1,11 @@
 import type { ZodType } from 'zod';
 import { Geometry, Glossary, Rules } from '../content/schemas';
 import type { ContentKey } from '../content/load';
+import { type Batch2Counts, validateBatch2 } from './batch2';
 
 export interface Report {
   errors: string[];
-  counts: { terms: number; rules: number; landmarks: number; needsReview: number; toConfirm: number };
+  counts: { terms: number; rules: number; landmarks: number; needsReview: number; toConfirm: number; batch1NeedsReview: number; batch2: Batch2Counts };
 }
 
 const near = (a: number, b: number, tol = 0.01) => Math.abs(a - b) <= tol;
@@ -18,7 +19,7 @@ function parse<T>(schema: ZodType<T>, data: unknown, file: string, errors: strin
   return null;
 }
 
-/** Football invariants for batch 1 content (PRD §6.11 grows with each batch). */
+/** Football invariants for the content files (PRD §6.11 grows with each batch); plays are checked in ./plays. */
 export function validateContent(raw: Record<ContentKey, unknown>): Report {
   const errors: string[] = [];
   const glossary = parse(Glossary, raw.glossary, 'glossary.yaml', errors);
@@ -73,6 +74,12 @@ export function validateContent(raw: Record<ContentKey, unknown>): Report {
       if (!geometry.landmarks.some((l) => l.id === id)) errors.push(`field/geometry.yaml: landmark ${id} is missing`);
   }
 
+  const batch2 = validateBatch2(raw, errors);
+  const batch1 = [
+    ...(glossary?.terms.filter((t) => (t.batch ?? 1) === 1) ?? []),
+    ...(rules?.rules ?? []),
+    ...(geometry ? [geometry.field, geometry.ball_spots, ...geometry.landmarks] : []),
+  ];
   const entries = [
     ...(glossary?.terms ?? []),
     ...(rules?.rules ?? []),
@@ -88,8 +95,10 @@ export function validateContent(raw: Record<ContentKey, unknown>): Report {
       terms: glossary?.terms.length ?? 0,
       rules: rules?.rules.length ?? 0,
       landmarks: geometry?.landmarks.length ?? 0,
-      needsReview: entries.filter((e) => !e.reviewed).length,
+      needsReview: entries.filter((e) => !e.reviewed).length + batch2.needsReview,
       toConfirm,
+      batch1NeedsReview: batch1.filter((e) => !e.reviewed).length,
+      batch2,
     },
   };
 }

@@ -1,0 +1,11 @@
+# Offense personnel groups and the default jersey numbers for Sahar's team. Batch 2, not yet reviewed.
+version: 1
+batch: 2
+groups:
+  - { id: "10", backs: 1, tight_ends: 0, receivers: 4, reviewed: false }
+  - { id: "11", backs: 1, tight_ends: 1, receivers: 3, reviewed: false }
+  - { id: "12", backs: 1, tight_ends: 2, receivers: 2, reviewed: false }
+  - { id: "20", backs: 2, tight_ends: 0, receivers: 3, reviewed: false }
+  - { id: "21", backs: 2, tight_ends: 1, receivers: 2, reviewed: false }
+# Letters: X split end, Z flanker, H slot, Y tight end (or second slot in 10 personnel), R running back, F fullback.
+jersey_numbers: { QB: 4, LT: 77, LG: 64, C: 55, RG: 66, RT: 75, X: 1, Z: 11, H: 2, Y: 88, R: 22, F: 33 }

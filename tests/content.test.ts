@@ -16,9 +16,9 @@ describe('Football Bible content (batch 1)', () => {
 
   it('records the owner sign-off on batch 1 (defaults accepted)', () => {
     const r = validateContent(raw);
-    const g = raw.glossary as { terms: { reviewed: boolean; reviewer?: string }[] };
-    expect(g.terms.every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
-    expect(r.counts.needsReview).toBe(0);
+    const g = raw.glossary as { terms: { reviewed: boolean; reviewer?: string; batch?: number }[] };
+    expect(g.terms.filter((t) => (t.batch ?? 1) === 1).every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
+    expect(r.counts.batch1NeedsReview).toBe(0);
     expect(r.counts.toConfirm).toBe(0);
   });
 

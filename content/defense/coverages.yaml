@@ -1,0 +1,323 @@
+# Coverages: the shell before the snap, each defender's job after it, tells and rotations. Batch 2, not reviewed.
+# Sides (strong, weak) follow the defense's strength call (content/defense/fronts.yaml), set before any motion.
+version: 1
+batch: 2
+
+# Shell (glossary): a defender at least high_depth deep at the snap is a high safety.
+shells:
+  high_depth: 9.5
+  reviewed: false
+
+# Pre-snap alignments for defensive backs and anyone whose coverage job sets where he stands.
+#   cb alignments are measured from #1 on his side; leverage outside/inside puts him that many yards to that side.
+#   one-high: the deep safety in the middle of the field. two-high: each safety on the hash on his side.
+#   down: a safety 8 yd deep over the landmark (or man) of his job. over-man: on his receiver at depth, inside;
+#     while his man runs a motion that crosses the formation (travel_for: motion path kinds) he follows at
+#     travel_depth, behind the linebackers.
+#   apex: a linebacker or overhang at the apex on his side (content/field/geometry.yaml), whatever the front says.
+#   blitz: a defensive back with a rush job and no other alignment, this deep over his lane.
+alignments:
+  off-outside: { depth: 7, leverage: outside, offset: 1.0 }
+  off-inside: { depth: 6, leverage: inside, offset: 1.0 }
+  squat: { depth: 5, leverage: outside, offset: 1.5 }
+  quarters: { depth: 7.5, leverage: outside, offset: 0.5 }
+  press: { depth: 1.2, leverage: inside, offset: 0.7 }
+  one-high: { depth: 12, at: middle-of-field }
+  two-high: { depth: 12, at: hash }
+  two-high-low: { depth: 10, at: hash }
+  down: { depth: 8 }
+  over-man: { depth: 5, leverage: inside, offset: 1.0, travel_depth: 7, travel_for: [jet, orbit, out-to-slot] }
+  apex: { at: apex }
+  blitz: { depth: 6 }
+  reviewed: false
+
+# Zone landmarks after the snap. by: seconds after the snap by which the defender must be there (the speed
+# profiles have to make it reachable, or the play fails validation).
+#   from_sideline: yards in from his sideline, but no more than max_outside_1 yd outside #1's alignment (a corner
+#     over a tight #1 keeps him in front); middle-of-field: the centre between the sidelines;
+#   end_man_to_1: fraction of the way from the end man on the line out to #1 on that side;
+#   end_man_plus: yards outside the end man on the line.
+zones:
+  deep-third:   { term: deep-third, deep: true, depth: 14, by: 2.6, outside: { from_sideline: 8.9, max_outside_1: 5 }, middle: { at: middle-of-field } }
+  deep-middle:  { term: one-high, deep: true, depth: 15, by: 2.4, middle: { at: middle-of-field } }
+  deep-half:    { term: deep-half, deep: true, depth: 15, by: 2.6, outside: { from_sideline: 13.3 } }
+  deep-quarter: { term: deep-quarter, deep: true, depth: 12, by: 2.4, outside: { from_sideline: 6.7, max_outside_1: 4 }, inside: { from_sideline: 20 } }
+  curl-flat:    { term: curl-flat-zone, deep: false, depth: 7, by: 2.0, outside: { end_man_to_1: 0.65 } }
+  flat:         { term: flat-defender, deep: false, depth: 6, by: 1.6, outside: { end_man_to_1: 1.0 } }
+  hook:         { term: hook-zone, deep: false, depth: 9, by: 2.0, outside: { end_man_plus: 1.0 }, middle: { at: ball, depth: 10 } }
+  hole:         { term: robber, deep: false, depth: 9, by: 1.8, middle: { at: ball } }
+
+# Man coverage after the snap: he plays this far to the inside of his man, closing the cushion at close_rate yd/s
+# down to min_cushion. A man defender whose man stays in to block becomes a green dog and rushes.
+man:
+  leverage: 1.0
+  min_cushion: 1.0
+  close_rate: 2.5
+  green_dog: true
+  reviewed: false
+
+# Reaction to motion (PRD §6.6 tells): in man the defender on the motion man travels with him; in zone the
+# defenders keyed to receivers re-align as the formation changes (bump). Fronts do not move with motion.
+motion_response: { man: travel, zone: bump }
+
+# Each coverage lists, per front, every non-lineman's job, plus any lineman who does not rush. Jobs:
+#   { zone: <zone>, side: strong | weak | middle, part: outside | inside | middle }
+#   { man: [keys], spare: [hole | rush] }   keys: strong-1..3, weak-1..3 (receivers counted from outside),
+#                                           tight-end (an attached tight end), back (a back in the
+#                                           backfield). The first free key is his man;
+#                                           with none, he takes the first free spare job (one hole defender).
+#   { rush: a | b | c | edge }                a blitz lane on his side
+# align: an alignment above; default for linebackers and overhangs is the front's, for man defenders over-man.
+# safety-field / safety-boundary: the safety on that side at the snap (with the ball in the middle, field means
+#   the strong side). Use them where a job depends on field and boundary rather than strength.
+# counts: deep and under zone defenders the coverage must have; rush where it is fixed.
+# tells: before-snap movement { role, start (s before the snap), to: { depth } or { end_man_plus, depth } }.
+coverages:
+  - id: cover-0
+    name: Cover 0
+    tier: youth
+    terms: [cover-0, zero-high, man-coverage, blitz]
+    family: man
+    shell: { pre: zero-high, post: zero-high }
+    tells:
+      - { role: mike, start: 1.0, to: { depth: 3.0 }, honest: true }
+      - { role: will, start: 1.0, to: { depth: 3.0 }, honest: true }
+    fronts:
+      four-two-five-even:
+        cb-strong: { align: press, job: { man: [strong-1] } }
+        cb-weak: { align: press, job: { man: [weak-1] } }
+        nickel: { job: { man: [strong-2] } }
+        mike: { job: { man: [back], spare: [rush] } }
+        ss: { job: { man: [strong-3], spare: [rush] } }
+        fs: { job: { man: [weak-2], spare: [rush] } }
+        will: { job: { rush: a } }
+      three-three-stack:
+        cb-strong: { align: press, job: { man: [strong-1] } }
+        cb-weak: { align: press, job: { man: [weak-1] } }
+        sam: { job: { man: [tight-end, strong-3], spare: [rush] } }
+        oh-strong: { job: { man: [strong-2], spare: [rush] } }
+        oh-weak: { job: { man: [weak-2], spare: [rush] } }
+        will: { job: { man: [back], spare: [rush] } }
+        fs: { align: blitz, job: { rush: a } }
+        mike: { job: { rush: a } }
+    reviewed: false
+
+  - id: cover-1
+    name: Cover 1
+    tier: youth
+    terms: [cover-1, one-high, man-coverage, free-safety]
+    family: man
+    shell: { pre: one-high, post: one-high }
+    counts: { deep: 1 }
+    fronts:
+      four-three-over:
+        cb-strong: { align: off-inside, job: { man: [strong-1] } }
+        cb-weak: { align: off-inside, job: { man: [weak-1] } }
+        fs: { align: one-high, job: { zone: deep-middle, side: middle } }
+        ss: { align: down, job: { man: [strong-2] } }
+        sam: { job: { man: [strong-3, back], spare: [rush] } }
+        will: { job: { man: [weak-2, back], spare: [rush] } }
+        mike: { job: { man: [back], spare: [hole, rush] } }
+      four-two-five-even:
+        cb-strong: { align: off-inside, job: { man: [strong-1] } }
+        cb-weak: { align: off-inside, job: { man: [weak-1] } }
+        fs: { align: one-high, job: { zone: deep-middle, side: middle } }
+        nickel: { job: { man: [strong-2] } }
+        ss: { align: down, job: { man: [strong-3], spare: [hole, rush] } }
+        will: { job: { man: [weak-2, back], spare: [rush] } }
+        mike: { job: { man: [back], spare: [hole, rush] } }
+      three-three-stack:
+        cb-strong: { align: off-inside, job: { man: [strong-1] } }
+        cb-weak: { align: off-inside, job: { man: [weak-1] } }
+        fs: { align: one-high, job: { zone: deep-middle, side: middle } }
+        sam: { job: { man: [tight-end, strong-3, back], spare: [rush] } }
+        oh-strong: { job: { man: [strong-2], spare: [rush] } }
+        oh-weak: { job: { man: [weak-2], spare: [rush] } }
+        will: { job: { man: [back], spare: [hole, rush] } }
+        mike: { job: { man: [], spare: [hole, rush] } }
+    reviewed: false
+
+  - id: cover-2
+    name: Cover 2
+    tier: youth
+    terms: [cover-2, two-high, deep-half, hook-zone, flat-defender]
+    family: zone
+    shell: { pre: two-high, post: two-high }
+    counts: { deep: 2, under: 5, rush: 4 }
+    fronts:
+      four-three-over:
+        cb-strong: { align: squat, job: { zone: flat, side: strong } }
+        cb-weak: { align: squat, job: { zone: flat, side: weak } }
+        ss: { align: two-high, job: { zone: deep-half, side: strong } }
+        fs: { align: two-high, job: { zone: deep-half, side: weak } }
+        sam: { job: { zone: hook, side: strong } }
+        mike: { job: { zone: hook, side: middle } }
+        will: { job: { zone: hook, side: weak } }
+      four-two-five-over: &cover-2-nickel
+        cb-strong: { align: squat, job: { zone: flat, side: strong } }
+        cb-weak: { align: squat, job: { zone: flat, side: weak } }
+        ss: { align: two-high, job: { zone: deep-half, side: strong } }
+        fs: { align: two-high, job: { zone: deep-half, side: weak } }
+        nickel: { job: { zone: hook, side: strong } }
+        mike: { job: { zone: hook, side: middle } }
+        will: { job: { zone: hook, side: weak } }
+      four-two-five-even: *cover-2-nickel
+    reviewed: false
+
+  - id: cover-3
+    name: Cover 3
+    tier: youth
+    terms: [cover-3, one-high, deep-third, curl-flat-zone, hook-zone]
+    family: zone
+    shell: { pre: one-high, post: one-high }
+    counts: { deep: 3, under: 4 }
+    fronts:
+      four-three-over:
+        cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
+        cb-weak: { align: off-outside, job: { zone: deep-third, side: weak, part: outside } }
+        fs: { align: one-high, job: { zone: deep-third, side: middle, part: middle } }
+        ss: { align: down, job: { zone: curl-flat, side: strong } }
+        sam: { job: { zone: hook, side: strong } }
+        mike: { job: { zone: hook, side: weak } }
+        will: { align: apex, job: { zone: curl-flat, side: weak } }
+      four-two-five-even:
+        cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
+        cb-weak: { align: off-outside, job: { zone: deep-third, side: weak, part: outside } }
+        fs: { align: one-high, job: { zone: deep-third, side: middle, part: middle } }
+        nickel: { job: { zone: curl-flat, side: strong } }
+        ss: { align: down, job: { zone: hook, side: strong } }
+        mike: { job: { zone: hook, side: weak } }
+        will: { align: apex, job: { zone: curl-flat, side: weak } }
+      three-three-stack:
+        cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
+        cb-weak: { align: off-outside, job: { zone: deep-third, side: weak, part: outside } }
+        fs: { align: one-high, job: { zone: deep-third, side: middle, part: middle } }
+        oh-strong: { job: { zone: curl-flat, side: strong } }
+        oh-weak: { job: { zone: curl-flat, side: weak } }
+        sam: { job: { zone: hook, side: strong } }
+        will: { job: { zone: hook, side: weak } }
+        mike: { job: { rush: a } }
+    reviewed: false
+
+  - id: cover-4
+    name: Cover 4
+    tier: jv
+    terms: [cover-4, two-high, deep-quarter, curl-flat-zone, hook-zone]
+    family: zone
+    shell: { pre: two-high, post: two-high }
+    counts: { deep: 4, under: 3, rush: 4 }
+    fronts:
+      four-three-over:
+        cb-strong: { align: quarters, job: { zone: deep-quarter, side: strong, part: outside } }
+        cb-weak: { align: quarters, job: { zone: deep-quarter, side: weak, part: outside } }
+        ss: { align: two-high-low, job: { zone: deep-quarter, side: strong, part: inside } }
+        fs: { align: two-high-low, job: { zone: deep-quarter, side: weak, part: inside } }
+        sam: { align: apex, job: { zone: curl-flat, side: strong } }
+        mike: { job: { zone: hook, side: middle } }
+        will: { align: apex, job: { zone: curl-flat, side: weak } }
+      four-two-five-over:
+        cb-strong: { align: quarters, job: { zone: deep-quarter, side: strong, part: outside } }
+        cb-weak: { align: quarters, job: { zone: deep-quarter, side: weak, part: outside } }
+        ss: { align: two-high-low, job: { zone: deep-quarter, side: strong, part: inside } }
+        fs: { align: two-high-low, job: { zone: deep-quarter, side: weak, part: inside } }
+        nickel: { job: { zone: curl-flat, side: strong } }
+        mike: { job: { zone: hook, side: middle } }
+        will: { align: apex, job: { zone: curl-flat, side: weak } }
+    reviewed: false
+
+  - id: cover-3-sky
+    name: Cover 3 Sky
+    tier: jv
+    terms: [cover-3, sky-rotation, two-high, one-high, disguise, rotation]
+    family: zone
+    shell: { pre: two-high, post: one-high }
+    rotation: sky-rotation
+    counts: { deep: 3, under: 4, rush: 4 }
+    tells:
+      - { role: ss, start: 1.0, to: { depth: 10 }, honest: true }
+    fronts:
+      four-three-over:
+        cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
+        cb-weak: { align: off-outside, job: { zone: deep-third, side: weak, part: outside } }
+        ss: { align: two-high, job: { zone: curl-flat, side: strong } }
+        fs: { align: two-high, job: { zone: deep-third, side: middle, part: middle } }
+        sam: { job: { zone: hook, side: strong } }
+        mike: { job: { zone: hook, side: weak } }
+        will: { align: apex, job: { zone: curl-flat, side: weak } }
+      four-two-five-over:
+        cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
+        cb-weak: { align: off-outside, job: { zone: deep-third, side: weak, part: outside } }
+        ss: { align: two-high, job: { zone: curl-flat, side: strong } }
+        fs: { align: two-high, job: { zone: deep-third, side: middle, part: middle } }
+        nickel: { job: { zone: hook, side: strong } }
+        mike: { job: { zone: hook, side: weak } }
+        will: { align: apex, job: { zone: curl-flat, side: weak } }
+    reviewed: false
+
+  - id: cover-1-robber
+    name: Cover 1 Robber
+    tier: jv
+    terms: [cover-1, robber-rotation, robber, two-high, one-high, disguise, rotation]
+    family: man
+    shell: { pre: two-high, post: one-high }
+    rotation: robber-rotation
+    counts: { deep: 1 }
+    fronts:
+      four-three-over:
+        cb-strong: { align: off-inside, job: { man: [strong-1] } }
+        cb-weak: { align: off-inside, job: { man: [weak-1] } }
+        safety-field: { align: two-high, job: { zone: deep-middle, side: middle } }
+        safety-boundary: { align: two-high, job: { zone: hole, side: middle } }
+        sam: { job: { man: [strong-2] } }
+        mike: { job: { man: [strong-3, back], spare: [rush] } }
+        will: { job: { man: [weak-2, back], spare: [rush] } }
+      four-two-five-over:
+        cb-strong: { align: off-inside, job: { man: [strong-1] } }
+        cb-weak: { align: off-inside, job: { man: [weak-1] } }
+        safety-field: { align: two-high, job: { zone: deep-middle, side: middle } }
+        safety-boundary: { align: two-high, job: { zone: hole, side: middle } }
+        nickel: { job: { man: [strong-2] } }
+        mike: { job: { man: [strong-3, back], spare: [rush] } }
+        will: { job: { man: [weak-2, back], spare: [rush] } }
+    reviewed: false
+
+  - id: two-man
+    name: 2-Man
+    tier: jv
+    terms: [two-man, two-high, deep-half, man-coverage]
+    family: man
+    shell: { pre: two-high, post: two-high }
+    counts: { deep: 2 }
+    fronts:
+      four-two-five-over: &two-man-nickel
+        cb-strong: { align: off-inside, job: { man: [strong-1] } }
+        cb-weak: { align: off-inside, job: { man: [weak-1] } }
+        ss: { align: two-high, job: { zone: deep-half, side: strong } }
+        fs: { align: two-high, job: { zone: deep-half, side: weak } }
+        nickel: { job: { man: [strong-2] } }
+        mike: { job: { man: [strong-3, back], spare: [rush] } }
+        will: { job: { man: [weak-2, back], spare: [rush] } }
+      four-two-five-even: *two-man-nickel
+    reviewed: false
+
+  - id: fire-zone
+    name: Fire zone
+    tier: jv
+    terms: [fire-zone, blitz, deep-third, curl-flat-zone, hook-zone]
+    family: zone
+    shell: { pre: one-high, post: one-high }
+    counts: { deep: 3, under: 3, rush: 5 }
+    tells:
+      - { role: oh-weak, start: 1.2, to: { end_man_plus: 1.5, depth: 2.5 }, honest: true }
+    fronts:
+      three-three-stack:
+        cb-strong: { align: off-outside, job: { zone: deep-third, side: strong, part: outside } }
+        cb-weak: { align: off-outside, job: { zone: deep-third, side: weak, part: outside } }
+        fs: { align: one-high, job: { zone: deep-third, side: middle, part: middle } }
+        oh-strong: { job: { zone: curl-flat, side: strong } }
+        de-weak: { job: { zone: hook, side: weak } }
+        will: { job: { zone: hook, side: middle } }
+        oh-weak: { job: { rush: edge } }
+        mike: { job: { rush: a } }
+        sam: { job: { rush: b } }
+    reviewed: false
