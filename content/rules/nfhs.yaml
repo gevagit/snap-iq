@@ -1,0 +1,368 @@
+# NFHS (high school) rules that change a quarterback's decisions. California uses NFHS rules through the CIF.
+# Batch 1. Every entry starts reviewed: false and carries how it was checked.
+# check.status:
+#   search-summary  - checked against web search summaries of the listed pages; the pages themselves could not be
+#                     opened from this environment (network policy), and the NFHS rule book is not public.
+#   needs-confirm   - sources conflict or are missing; the owner or coach must confirm before sign-off.
+#   default         - the owner accepted the default shown in check.note (2026-10-26); confirm with a referee when convenient.
+# nfhs_ref_seen_in_source: true when the rule number appeared in a checked source; false when it is from memory.
+# Every rule number must be confirmed against the current NFHS Football Rules Book before sign-off.
+version: 1
+batch: 1
+rule_set: NFHS
+edition_checked: "Changes through the 2026 season (2026 changes: play cards on the belt, mouth-protector attachments, head-slap ban for all players; none change a QB decision rule)"
+
+rules:
+  - id: intentional-grounding
+    title: Intentional grounding
+    nfhs_ref: "7-5-2e"
+    nfhs_ref_seen_in_source: true
+    rule: An incomplete forward pass thrown on purpose to save yards or to stop the clock is a foul.
+    penalty: Loss of down plus yardage from the spot of the pass. Thrown from his own end zone, it is a safety.
+    qb_meaning: Under pressure inside the pocket there is no legal throwaway. Find a receiver, take the sack, or get outside the free-blocking zone first.
+    game_use: Bubble and Game Day grade a throwaway from inside the free-blocking zone as wrong; backed up, a sack or grounding in the end zone is a safety.
+    terms: [intentional-grounding, passer, free-blocking-zone, safety, backed-up]
+    check:
+      status: default
+      note: "Default in use: 5 yards from the spot of the pass and loss of down (NFHS illegal-pass penalty); a safety from the end zone. Confirm with a referee when convenient."
+      sources:
+        - { title: "Be the Referee: Safety in End Zone (MHSAA)", url: "https://www.mhsaa.com/sports/football/stories/be-referee-safety-end-zone?page=27" }
+        - { title: "Changes in basic spot for penalty enforcement headline 2023 rules changes (NFHS)", url: "https://nfhs.org/stories/changes-in-basic-spot-for-penalty-enforcement-headline-2023-high-school-football-rules-changes" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: grounding-exception-spike
+    title: Spike to stop the clock
+    nfhs_ref: "7-5-2 Exception"
+    nfhs_ref_seen_in_source: true
+    rule: The player directly behind the snapper may throw the ball forward into the ground immediately after a snap that was not muffed and did not touch the ground.
+    qb_meaning: A legal way to stop the clock without a timeout. It costs a down, so it is wrong on 4th down.
+    game_use: Two-minute and end-of-half reps offer the spike; it is graded against the down and the timeouts left.
+    terms: [spike, intentional-grounding, two-minute-drill, end-of-half]
+    check:
+      status: default
+      note: "Default in use: legal from the shotgun, since the QB is directly behind the snapper. Confirm with a referee when convenient."
+      sources:
+        - { title: "NFHS announces seven new rules for the 2022 season (NFL Play Football)", url: "https://playfootball.nfl.com/discover/news-and-features/nfhs-announces-seven-new-rules-for-the-2022-high-school-football-season" }
+        - { title: "Intentional grounding interpretation (OSAA)", url: "https://osaa.org/docs/fbl/21grounding.pdf" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: grounding-exception-outside-fbz
+    title: Throwaway from outside the free-blocking zone
+    nfhs_ref: "7-5-2 Exception (2022; clarified 2023)"
+    nfhs_ref_seen_in_source: true
+    rule: No grounding if the passer is outside the free-blocking zone when he throws and the pass reaches the neutral zone, or the neutral zone extended past the sideline. Since 2023 it applies only to the first and only player to have the ball after the snap.
+    qb_meaning: To throw it away legally he must first get outside the zone (4 yards from the ball) and then get it back to the line of scrimmage. A throwaway after a handoff or pitch back to him does not qualify.
+    game_use: Pocket reps track whether he is outside the zone at release; the throwaway button is legal only then.
+    terms: [throwaway, free-blocking-zone, intentional-grounding, neutral-zone]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Revised intentional grounding, chop block rules headline 2022 changes (NFHS)", url: "https://nfhs.org/articles/revised-intentional-grounding-chop-block-rules-headline-2022-high-school-football-rules-changes/" }
+        - { title: "Be the Referee: Intentional Grounding Change (MHSAA)", url: "https://www.mhsaa.com/sports/football/stories/be-referee-intentional-grounding-change" }
+        - { title: "Football Rules Changes 2023 (NFHS)", url: "https://nfhs.org/resources/sports/football-rules-changes-2023" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: illegal-forward-pass
+    title: Illegal forward pass
+    nfhs_ref: "7-5-2"
+    nfhs_ref_seen_in_source: true
+    rule: A forward pass is illegal if the passer's whole body is beyond the neutral zone, if it is the second forward pass of the down, or if it is thrown after the ball has changed teams.
+    penalty: 5 yards from the spot of the pass and loss of down.
+    qb_meaning: On a scramble he must throw before his whole body crosses the line. Once past it, he is a runner.
+    game_use: Scramble reps mark the line of scrimmage on the ground; a throw from past it is graded as a foul.
+    terms: [illegal-forward-pass, forward-pass, line-of-scrimmage, runner]
+    check:
+      status: default
+      note: "Default in use: 5 yards from the spot of the pass and loss of down."
+      sources:
+        - { title: "Intentional grounding interpretation, lists 7-5-2 (OSAA)", url: "https://osaa.org/docs/fbl/21grounding.pdf" }
+        - { title: "Officiating forum thread on 7-5-2", url: "https://forum.officiating.com/archive/index.php/t-54704.html" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: ineligible-downfield
+    title: Ineligible receivers downfield
+    nfhs_ref: "7-5-12"
+    nfhs_ref_seen_in_source: true
+    rule: An ineligible player may not be beyond the expanded neutral zone (2 yards past the defense's line) before a legal forward pass that crosses the neutral zone is thrown.
+    qb_meaning: On a run-pass option his linemen are run blocking, so a pass past the line must come out before they climb more than 2 yards. Late throws past the line are a foul; screens behind the line are fine.
+    game_use: RPO reps (Shell Game conflict reads) grade a late pass beyond the line as a foul.
+    terms: [ineligible-downfield, expanded-neutral-zone, ineligible-receiver]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Football memo on ineligibles downfield (IHSAA Iowa, 2022)", url: "https://www.iahsaa.org/wp-content/uploads/2022/09/Football-Memo-7-9.27.22.pdf" }
+        - { title: "Referee article on the expanded neutral zone", url: "https://www.referee.com/?p=15492" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: eligibility-by-number
+    title: Who can catch a pass
+    nfhs_ref: "7-5-6"
+    nfhs_ref_seen_in_source: false
+    rule: Eligible receivers are the players at either end of the line and the backs, wearing 1-49 or 80-99. Players numbered 50-79 are ineligible except in a scrimmage-kick formation.
+    qb_meaning: Only eligible players are targets; his reads never include an interior lineman.
+    game_use: Formation generator assigns legal numbers; targets are eligible players only.
+    terms: [eligible-receiver, ineligible-receiver]
+    check:
+      status: default
+      note: "Default in use; rule number from memory."
+      sources:
+        - { title: "Eligible receiver (Wikipedia)", url: "https://en.wikipedia.org/wiki/Eligible_receiver" }
+        - { title: "Men on the line of scrimmage (WIAA)", url: "https://www.wiaawi.org/about-wiaa/news/men-line-scrimmage" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: legal-formation
+    title: Legal offensive formation
+    nfhs_ref: "7-2-5"
+    nfhs_ref_seen_in_source: true
+    rule: At the snap at least 7 offensive players are on the line, at least 5 of them numbered 50-79 (except scrimmage-kick formations), and no more than 4 are backs.
+    qb_meaning: Part of his pre-snap check. An illegal formation is a 5-yard penalty, so he fixes it before the snap.
+    game_use: Formation invariant (PRD §6.11); every generated formation must pass.
+    terms: [legal-formation]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Formation consternation demands concentration (Referee)", url: "https://www.referee.com/formation-consternation-demands-concentration/" }
+        - { title: "Men on the line of scrimmage (WIAA)", url: "https://www.wiaawi.org/about-wiaa/news/men-line-scrimmage" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: motion-and-shift
+    title: Motion and shifts
+    nfhs_ref: "7-2-6, 7-2-7"
+    nfhs_ref_seen_in_source: false
+    rule: Only one player may be in motion at the snap, and not toward the opponent's goal line. After a shift, all players must be set for at least 1 second before the snap.
+    qb_meaning: The motion check (Elite) sends one player across; he snaps the ball only when the motion is legal.
+    game_use: Cadence motion beat and the formation generator respect both rules.
+    terms: [motion, shift]
+    check:
+      status: default
+      note: "Default in use: everyone set for 1 second after a shift."
+      sources:
+        - { title: "Formation consternation demands concentration (Referee)", url: "https://www.referee.com/formation-consternation-demands-concentration/" }
+        - { title: "False start thread quoting 7-2-7", url: "https://forum.officiating.com/archive/index.php/t-5957.html" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: false-start-hard-count
+    title: False start and the hard count
+    nfhs_ref: "7-1-7"
+    nfhs_ref_seen_in_source: true
+    rule: After the ready signal, a shift or feigned charge that imitates the snap, or any act clearly meant to make the defense encroach, is a false start. A quarterback jerking his head, arms or body while calling signals commits a false start.
+    penalty: 5 yards.
+    qb_meaning: His hard count must change only his voice. A head bob or shoulder jerk to sell it is a foul.
+    game_use: Cadence teaches the hard count as voice only.
+    terms: [false-start, hard-count, encroachment]
+    check:
+      status: search-summary
+      sources:
+        - { title: "False start thread quoting 7-1-7", url: "https://forum.officiating.com/archive/index.php/t-5957.html" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: pass-interference
+    title: Pass interference
+    nfhs_ref: "7-5-10"
+    nfhs_ref_seen_in_source: true
+    rule: Interference applies only to a legal forward pass that crosses the neutral zone.
+    penalty: Defensive - 15 yards from the previous spot, down replayed, no automatic first down (since 2013). Offensive - 15 yards, no loss of down.
+    qb_meaning: A defensive pass interference flag does not guarantee a first down on long yardage, so a throw "to draw a flag" is a poor choice on 3rd and long.
+    game_use: Game Day outcome model applies these yards to the series.
+    terms: [pass-interference]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Prep football season begins with nine NFHS rules changes (2013)", url: "https://www.athleticbusiness.com/operations/programming/news/15144897/prep-football-season-begins-with-nine-nfhs-rules-changes" }
+        - { title: "Pass interference general principles, Rule 7-5-10 (WIAA)", url: "https://www.wiaawi.org/Portals/0/PDF/Sports/Football/GeneralPrinciples-PassInterference-Rule7-5-10.pdf" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: roughing-the-passer
+    title: Roughing the passer
+    nfhs_ref: "9-4-4"
+    nfhs_ref_seen_in_source: false
+    rule: Unnecessary contact on the passer after the pass is thrown is a foul.
+    penalty: 15 yards and an automatic first down.
+    qb_meaning: He should finish his throw and protect himself; the rule protects him only while he is the passer.
+    game_use: Explanations only; the game does not simulate contact.
+    terms: [roughing-the-passer, passer]
+    check:
+      status: default
+      note: "Default in use; rule number from memory."
+      sources:
+        - { title: "Ask the official: pass interference enforcement (USA Football)", url: "https://blogs.usafootball.com/blog/4911/ask-the-official-pass-interference-enforcement" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: runner-down
+    title: When the runner is down
+    nfhs_ref: "4-2-2a"
+    nfhs_ref_seen_in_source: true
+    rule: The ball is dead when the runner allows any part of his body other than a hand or foot to touch the ground. No contact by a defender is needed.
+    qb_meaning: If his knee touches while he is ducking a rusher or picking up a bad snap, the play is over there - unlike the NFL.
+    game_use: Pocket reps end the play when the QB goes to a knee.
+    terms: [runner-down, runner, dead-ball]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Football Game Officials Manual points of emphasis (NFHS)", url: "https://nfhs.org/resources/sports/football-game-officials-manual-points-of-emphasis-2026-2027" }
+        - { title: "Officiating forum thread quoting 4-2-2a", url: "https://forum.officiating.com/archive/index.php/t-38594.html" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: backward-pass
+    title: Backward passes and fumbles
+    nfhs_ref: "to confirm"
+    nfhs_ref_seen_in_source: false
+    rule: A backward pass that hits the ground stays live, and either team may recover it. A grounded loose ball may not be batted in any direction.
+    qb_meaning: A pitch or a swing pass thrown backward that hits the ground is a loose ball, not an incomplete pass. He must fall on it, not leave it.
+    game_use: Swing, screen and pitch throws that are backward are scored as live balls when dropped.
+    terms: [backward-pass, fumble]
+    check:
+      status: default
+      note: "Default in use: either team may recover and advance a fumble or a grounded backward pass."
+      sources:
+        - { title: "Forward thinking on backward passes (Referee)", url: "https://www.referee.com/forward-thinking-on-backward-passes/" }
+        - { title: "2022 Major NFHS/NCAA football rules differences (SDCFOA)", url: "https://www.sdcfoa.org/_downloads/31b87e0b461b3bca3aafb48eb2af0d2e" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: forward-fumble-out-of-bounds
+    title: Forward fumble out of bounds (2025)
+    nfhs_ref: "4-3-1 Exception"
+    nfhs_ref_seen_in_source: true
+    rule: A forward fumble that goes out of bounds between the goal lines is spotted where the fumble happened, not where it went out.
+    qb_meaning: Fumbling forward out of bounds near the sideline gains nothing.
+    game_use: Scramble outcome model.
+    terms: [fumble]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Football Rules Changes 2025 (NFHS)", url: "https://nfhs.org/resources/sports/football-rules-changes-2025" }
+        - { title: "Eight football rule changes approved for 2025 (TSSAA)", url: "https://tssaa.org/article/eight-football-rule-changes-approved-for-2025-four-focus-on-player-equipment" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: safety
+    title: Safety
+    nfhs_ref: "8-5-2"
+    nfhs_ref_seen_in_source: false
+    rule: A safety is scored when the ball becomes dead in the offense's own end zone after the offense put it there, including a sack or an accepted foul enforced in the end zone.
+    penalty: 2 points to the defense; the offense free-kicks from its own 20.
+    qb_meaning: Backed up, a sack in the end zone or grounding from it costs 2 points and the ball. Get rid of it legally or get out of the end zone.
+    game_use: Situation rule for backed-up reps (PRD §6.12).
+    terms: [safety, backed-up, end-zone]
+    check:
+      status: default
+      note: "Default in use: 2 points and a free kick from the offense's 20."
+      sources:
+        - { title: "Be the Referee: Safety in End Zone (MHSAA)", url: "https://www.mhsaa.com/sports/football/stories/be-referee-safety-end-zone?page=27" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: game-clock
+    title: Game clock
+    nfhs_ref: "3-1, 3-4"
+    nfhs_ref_seen_in_source: false
+    rule: Four 12-minute quarters. The clock stops for incomplete passes, plays out of bounds, scores, penalties, timeouts, change of possession and first downs. After an incomplete pass or a play out of bounds it starts on the snap; after a first down that ends in bounds it restarts when the ball is spotted.
+    qb_meaning: To stop the clock without a timeout, get out of bounds or throw incomplete; a first down stops it only briefly.
+    game_use: Situation clock model for two-minute and protect-the-lead reps.
+    terms: [game-clock, two-minute-drill, protect-the-lead, clock-running]
+    check:
+      status: search-summary
+      sources:
+        - { title: "2024 NFHS general instructions for game and play clock operators (KHSAA)", url: "https://khsaa.org/common_documents/Rules-Football-Rules%20and%20NFHS%20Guidance/2024%20NFHS%20General%20Instructions%20for%20Football%20Game%20and%20Play%20Clock%20Operators%20-%20FINAL%20-%206-1-24.pdf" }
+        - { title: "American football rules (Wikipedia)", url: "https://en.wikipedia.org/wiki/American_football_rules" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: play-clock
+    title: Play clock (40/25)
+    nfhs_ref: "3-6-1"
+    nfhs_ref_seen_in_source: false
+    rule: 40 seconds from the moment the ball is dead; 25 seconds from the ready signal after administrative stoppages (a try after a score, the start of a period, timeouts, some officials' timeouts).
+    qb_meaning: His pre-snap routine has to fit in what is left after the huddle or signal. The Cadence default (12 seconds at JV) assumes a normal 40-second clock.
+    game_use: Cadence clock and Game Day delay-of-game risk.
+    terms: [play-clock, ready-for-play, delay-of-game]
+    check:
+      status: default
+      note: "Default in use: the NFHS 40/25-second play clock."
+      sources:
+        - { title: "40-second play clock among changes in high school football (Athletic Business)", url: "https://www.athleticbusiness.com/industry-press-room/article/15156669/40-second-play-clock-state-option-for-postseason-instant-replay-among-changes-in-high-school-football" }
+        - { title: "Additional timing changes on play clock approved (NFHS)", url: "https://nfhs.org/stories/additional-timing-changes-on-play-clock-approved-in-high-school-football-rules" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: timeouts-no-warning
+    title: Timeouts and no two-minute warning
+    nfhs_ref: "3-5"
+    nfhs_ref_seen_in_source: false
+    rule: Each team has 3 timeouts per half. High school has no two-minute warning (Texas is an exception; California is not).
+    qb_meaning: Late in a half he must count timeouts himself; nothing stops the clock for him at two minutes.
+    game_use: Situation strip always shows timeouts; two-minute reps never assume a warning.
+    terms: [timeout, two-minute-drill, end-of-half]
+    check:
+      status: search-summary
+      sources:
+        - { title: "American football rules (Wikipedia)", url: "https://en.wikipedia.org/wiki/American_football_rules" }
+        - { title: "Clock management (Wikipedia)", url: "https://en.wikipedia.org/wiki/Clock_management" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: running-clock-cif
+    title: Running clock (CIF mercy rule)
+    nfhs_ref: "CIF bylaw"
+    nfhs_ref_seen_in_source: false
+    rule: With a 35-point margin in the 4th quarter, the game clock runs except for timeouts, scores and injuries, and stays running even if the margin shrinks. Earlier in the game it may start by agreement of both coaches and the referee.
+    qb_meaning: Rarely a decision rule; it explains why the clock keeps running in blowouts.
+    game_use: Game Day drives in lopsided games.
+    terms: [running-clock]
+    check:
+      status: default
+      note: "Default in use: running clock at a 35-point margin in the 4th quarter."
+      sources:
+        - { title: "New football rules changes you need to know (CIF Southern Section, 2011)", url: "https://cifss.org/wp-content/uploads/2015/06/NEW-FOOTBALL-RULES-CHANGES-YOU-NEED-TO-KNOW1.pdf" }
+        - { title: "California high school apologizes for 106-0 victory (NBC News)", url: "https://www.nbcnews.com/news/amp/rcna4507" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: free-blocking-zone
+    title: Free-blocking zone
+    nfhs_ref: "2-17"
+    nfhs_ref_seen_in_source: false
+    rule: A rectangle set at the snap, 4 yards each side of the snap and 3 yards behind each team's line. It ends when the ball leaves it - almost at once in the shotgun.
+    qb_meaning: It defines where a throwaway becomes legal (outside it) and explains why linemen may not cut-block once the ball has left it.
+    game_use: Pocket rules and the throwaway exception use its edges.
+    terms: [free-blocking-zone, throwaway]
+    check:
+      status: search-summary
+      sources:
+        - { title: "Blocking below the waist in free-blocking zone addressed (NFHS)", url: "https://nfhs.org/stories/blocking-below-the-waist-in-free-blocking-zone-addressed-in-high-school-football-rules" }
+        - { title: "2019 NFHS football points of emphasis (GHSA)", url: "https://www.ghsa.net/sites/default/files/documents/football/2019_NFHS_FOOTBALL_POINTS_OF_EMPHASIS_-_May_2019.pdf" }
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

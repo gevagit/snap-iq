@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 688 288" role="img" aria-label="Top-down field, ball on the left hash">
+<rect x="0" y="0" width="688" height="288" fill="#C4CAD2"/>
+<rect x="24" y="0" width="640" height="288" fill="#D5DAE0"/>
+<line x1="24" x2="664" y1="276" y2="276" stroke="#FFFFFF" stroke-width="2"/>
+<line x1="24" x2="664" y1="216" y2="216" stroke="#FFFFFF" stroke-width="2"/>
+<text x="120" y="216" font-size="19.2" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle" transform="rotate(90 120 216)">40</text>
+<text x="568" y="216" font-size="19.2" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 568 216)">40</text>
+<line x1="24" x2="664" y1="156" y2="156" stroke="#FFFFFF" stroke-width="2"/>
+<line x1="24" x2="664" y1="96" y2="96" stroke="#FFFFFF" stroke-width="2"/>
+<text x="120" y="96" font-size="19.2" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle" transform="rotate(90 120 96)">50</text>
+<text x="568" y="96" font-size="19.2" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 568 96)">50</text>
+<line x1="24" x2="664" y1="36" y2="36" stroke="#FFFFFF" stroke-width="2"/>
+<path d="M233.3 288H241.3 M446.7 288H454.7 M233.3 264H241.3 M446.7 264H454.7 M233.3 252H241.3 M446.7 252H454.7 M233.3 240H241.3 M446.7 240H454.7 M233.3 228H241.3 M446.7 228H454.7 M233.3 204H241.3 M446.7 204H454.7 M233.3 192H241.3 M446.7 192H454.7 M233.3 180H241.3 M446.7 180H454.7 M233.3 168H241.3 M446.7 168H454.7 M233.3 144H241.3 M446.7 144H454.7 M233.3 132H241.3 M446.7 132H454.7 M233.3 120H241.3 M446.7 120H454.7 M233.3 108H241.3 M446.7 108H454.7 M233.3 84H241.3 M446.7 84H454.7 M233.3 72H241.3 M446.7 72H454.7 M233.3 60H241.3 M446.7 60H454.7 M233.3 48H241.3 M446.7 48H454.7 M233.3 24H241.3 M446.7 24H454.7 M233.3 12H241.3 M446.7 12H454.7 M233.3 0H241.3 M446.7 0H454.7" stroke="#FFFFFF" stroke-width="2"/>
+<line x1="24" x2="24" y1="0" y2="288" stroke="#FFFFFF" stroke-width="4"/>
+<line x1="664" x2="664" y1="0" y2="288" stroke="#FFFFFF" stroke-width="4"/>
+<line x1="24" x2="664" y1="192" y2="192" stroke="#1F5FD1" stroke-width="3"/>
+<line x1="24" x2="664" y1="120" y2="120" stroke="#1C2430" stroke-width="2" stroke-dasharray="8 6" opacity="0.6"/>
+<rect x="189.3" y="156" width="96" height="72" fill="none" stroke="#5B6573" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="193.3" y="152" font-size="11" font-family="Archivo, Arial, sans-serif" fill="#1C2430">Free-blocking zone</text>
+<rect x="191.7" y="120" width="108" height="72" fill="none" stroke="#5B6573" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="195.7" y="116" font-size="11" font-family="Archivo, Arial, sans-serif" fill="#1C2430">Box</text>
+<circle cx="237.3" cy="252" r="6.6" fill="#FFFFFF" stroke="#B88A00" stroke-width="2"/>
+<text x="237.3" y="256" font-size="11" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#1C2430" text-anchor="middle">4</text>
+<circle cx="287.7" cy="200.4" r="6.6" fill="#FFFFFF" stroke="#1F5FD1" stroke-width="2"/>
+<text x="287.7" y="204.4" font-size="11" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#1C2430" text-anchor="middle">Y</text>
+<circle cx="345.3" cy="206.4" r="6.6" fill="#FFFFFF" stroke="#1F5FD1" stroke-width="2"/>
+<text x="345.3" y="210.4" font-size="11" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#1C2430" text-anchor="middle">H</text>
+<circle cx="525.3" cy="206.4" r="6.6" fill="#FFFFFF" stroke="#1F5FD1" stroke-width="2"/>
+<text x="525.3" y="210.4" font-size="11" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#1C2430" text-anchor="middle">Z</text>
+<circle cx="93.3" cy="199.2" r="6.6" fill="#FFFFFF" stroke="#1F5FD1" stroke-width="2"/>
+<text x="93.3" y="203.2" font-size="11" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#1C2430" text-anchor="middle">X</text>
+<circle cx="316.5" cy="138" r="6.6" fill="#FFFFFF" stroke="#5B6573" stroke-width="2"/>
+<text x="316.5" y="142" font-size="11" font-family="Archivo, Arial, sans-serif" font-weight="700" fill="#1C2430" text-anchor="middle">apex</text>
+</svg>

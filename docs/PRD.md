@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Version** | 1.4 (positions and routes from a movement model; wireframes v4 in review) |
+| **Version** | 1.5 (Look B; puppet players; natural lens; his read sets his eyes) |
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
-| **Current phase** | Phase 0: Wireframes (in owner review). Next: Phase 1, Football Bible |
+| **Current phase** | Phase 1: Football Bible (batch 1 in owner review). Phase 0 wireframes signed off |
 
 ---
 
@@ -379,19 +379,26 @@ Shows:
 
 | View | What it is | Used in |
 |---|---|---|
-| **His eyes** (QB-eye) | Eye level from where he stands (shotgun, under center, or in the pocket as he moves). A wide panoramic view of about 140°, so wideouts near his shoulders stay in view. Stances show as front-view poses. | Every drill, every tier |
+| **His eyes** (QB-eye) | Eye level from where he stands (shotgun, under center, or in the pocket as he moves). A natural lens of about 100° with true perspective, so straight lines stay straight. The view turns with his head (below). Stances show as front-view poses. | Every drill, every tier |
 | **Top-down** | Overhead, with exact alignments and the tell glyphs. | Learn cards and Breakdown replays only (the Breakdown can switch to his eyes) |
 
 **Rules for his-eyes view:**
 - **His own players are see-through outlines,** so a lineman or receiver never hides a defender.
 - **Edge markers:** anyone outside the view gets a marker at the screen edge (e.g. "Z ›").
 - **Look left / look right in pre-snap drills** (Tell Spotter, Cadence), to practice the scan as a head turn.
-- **Live drills look straight downfield.** Pressure from outside the view (his blind side) is also cued by an edge flicker and directional audio.
+- **His read sets his eyes in live drills.** At the snap the view turns (in about 0.25 s, like a head turn) to the read defender he chose in the pre-snap routine (the Read beat; in drills without a Cadence step, the read on the call card). He can swipe on the field to look elsewhere. A wrong read turns his eyes the wrong way, and the Breakdown shows the cost.
+- **He always knows where he is looking:**
+  - the controls tutorial teaches "your read sets your eyes" before any live drill;
+  - in the Read beat, the defender he picks gets an eye mark: "Eyes go here after the snap";
+  - at the snap an "Eyes: #6" chip names where the view is turning;
+  - a look strip at the top of the screen always shows the view window, where his eyes point and where his read is;
+  - the Breakdown shows where he looked next to where he should have looked.
+- **Pressure from outside the view** (his blind side) is cued by an edge marker, an edge flicker and directional audio.
 - **The ball in his hands** shows at the bottom of the screen during live plays.
 
 ### 7.6 Readability rules (enforces P3)
 - Every defender is on screen, or marked at the edge and one look away, during the pre-snap look.
-- Minimum projected player height is **≥ 28 CSS px** in every view. To keep that at 140°, the view uses a panoramic (cylindrical) projection, and players are drawn slightly taller than true proportion. If a scenario still fails, the view adjusts (field of view, eye height) automatically. The check runs in automated tests (§6.11).
+- Minimum projected player height is **≥ 28 CSS px** in every view. The natural lens uses true perspective for the field; each player is drawn at his own scale, so nobody stretches at the screen edges. If a scenario still fails, the view adjusts (field of view, eye height) automatically. The check runs in automated tests (§6.11). A 140° panoramic lens was tried in Phase 0 and dropped because it curves straight lines.
 - **Sightline check:** from eye level, players line up behind each other, as on a real field (e.g. a 3-technique can hide most of a hook defender). At the decision moment the **key read defender and the intended target** must each be at least 60% visible. If not, the generator nudges timing within its jitter range or drops that instance (counted in tests). Other players may be partly hidden.
 - **Highlights by tier:**
   - Youth: exaggerated poses plus highlight glows on tells.
@@ -542,7 +549,7 @@ Every mode logs each rep fully (§14.7) and feeds mastery, spaced repetition and
 - **Cadence lessons:** each beat taught as a short animated card.
 
 ### 8.8 Controls tutorial
-About 2 minutes, the only place abstract shapes are allowed. Teaches the throw buttons, movement pad and Breakdown.
+About 2 minutes, the only place abstract shapes are allowed. Teaches the throw buttons, movement pad and Breakdown, plus one lesson on his eyes: **your read sets your eyes.** He picks a read, watches the view turn to it at the snap, then swipes to look the other way. He must complete it before his first live drill, and it comes back as a one-line reminder if his reads keep pointing the wrong way.
 
 ---
 
@@ -560,6 +567,7 @@ About 2 minutes, the only place abstract shapes are allowed. Teaches the throw b
    - the read defender ringed;
    - pressure paths drawn;
    - his pocket path vs. the ideal path;
+   - **where he looked** (his read and any swipes) vs. where he should have looked;
    - the open window highlighted.
 2. **His answer vs. the best answer,** with timing (where time was lost).
 3. **The why,** spoken (on-device text-to-speech) and captioned. It opens with what the situation changes (§6.12), then always runs as a **cue → meaning → decision** chain.
@@ -773,7 +781,7 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 ### 14.1 Stack
 - **Language and build:** TypeScript (strict), Vite.
 - **UI:** React for menus, HUD and overlays.
-- **Field rendering:** a 2D WebGL renderer (PixiJS) that draws the scene through our own panoramic projection (§7.5–7.6). It feels 3D without a 3D engine and stays light on the older iPad. The same renderer draws the top-down view for Learn and Breakdown.
+- **Field rendering:** a 2D WebGL renderer (PixiJS) that draws the scene through our own natural-lens projection (§7.5–7.6). It feels 3D without a 3D engine and stays light on the older iPad. The same renderer draws the top-down view for Learn and Breakdown.
   - True 3D (three.js / WebXR) only if a VR mode is built later.
 - **Engine:** pure TypeScript with no rendering or DOM dependencies, fully unit-testable.
 - **Libraries:** Zod (content schemas); Dexie / IndexedDB (offline store); Supabase JS (sync, auth); vite-plugin-pwa (service worker, manifest).
@@ -796,8 +804,8 @@ Each entry carries `reviewed: true|false`, `reviewer`, `reviewed_at`. Unreviewed
 - **Replays:** same seed + inputs ⇒ identical timeline. Golden tests enforce this.
 
 ### 14.3 Rendering
-- **Projection:** cylindrical panoramic projection from his eye point. Horizontal position comes from the angle to the player; size and height come from distance. Players are sorted far to near; his own players are drawn see-through.
-- **Pose library:** front-view silhouette sprites per position group and pose (§15.2) for his-eyes view, plus back views of his own players. Top-down glyphs for Learn and Breakdown.
+- **Projection:** true perspective (about 100° wide) from his eye point, turned by his head direction (yaw); the horizon sits about a quarter of the way down the screen without tilting the view, so vertical lines stay vertical. Each player is projected at his root and drawn at that scale (no edge stretching). Players are sorted far to near; his own players are drawn see-through.
+- **Players are 3D puppets drawn flat:** about 15 joints in 3D (hips, knees, feet, shoulders, elbows, hands, chest, head), projected with the same camera and drawn as simple shapes (helmet, pads, jersey with number, limbs). One rig gives every viewing angle, so a player can face him, run away or turn his hips with no sprite sheets. Poses (§15.2) are joint targets stored in `/content`; gait, arm swing and leaning come from the movement model's speed, driven by game time (no physics). The head is posed on its own, because eyes are a tell. Top-down glyphs for Learn and Breakdown.
 - **Legibility check** (§7.6) computes projected sizes per scenario. It runs in tests and adjusts the view at runtime.
 - **HUD:** an HTML/React overlay (call card, beat track, clocks, buttons) above the canvas.
 
@@ -868,8 +876,10 @@ tools/     content compiler, diagram renderer (SVG), bible doc generator, flags 
 ## 15. Art, audio and accessibility
 
 ### 15.1 Visual direction
-- **Style:** clean, high-contrast "night game" stylized vector. Readability beats realism.
-- **Palette:** dark turf; offense blue, defense orange, Sahar gold. Positive/open states use white or mint plus a shape.
+- **Look B, "coaching board"** (chosen from the Phase 0 style frame as the simplest): flat, high-contrast shapes on a muted field. Readability beats realism.
+- **Field:** muted grey-green turf with light 5-yard mow stripes, white lines and NFHS hashes, yard numbers on the ground, a blue line of scrimmage and a dashed dark line to gain; a plain light horizon, no stadium or crowd.
+- **Players:** defenders in white jerseys with orange outlines, orange helmets and numbers; his own players see-through in blue; Sahar gold where he appears (Learn, Breakdown). Soft contact shadows under every player and the ball.
+- **Palette:** offense blue, defense orange, Sahar gold. Positive/open states use white or mint plus a shape.
 - **Contrast:** text meets WCAG AA contrast.
 
 ### 15.2 Pose library (per position group, front view for his-eyes view)
@@ -913,7 +923,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 
 ### Phase 2: Playable slice (feel first)
 **Deliverables:**
-- Engine core (field, generator, sim, grading, replays) and the panoramic his-eyes renderer.
+- Engine core (field, generator, sim, grading, replays) and the his-eyes renderer.
 - **Bubble** (Youth and JV pressure types) playable end to end on the iPad, with Breakdown.
 - Progress saved on the device only; no backend yet.
 - Netlify deploy to the free subdomain; installable to the Home Screen.
@@ -972,7 +982,7 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Football content is subtly wrong | Phase 1 Bible, controlled vocabulary, invariants, owner review gate (coach as needed), flag flow, `reviewed` gating |
 | Game feel is "off" (Claude can't play it) | Playable slice early (Phase 2); playtest checkpoint every phase; all feel constants in `/content/tuning` for fast iteration |
 | Older iPad struggles with the 3D scene | Performance budget (§14.5), light rendering, device test scene at every checkpoint |
-| Stances not readable | Pose library, per-tier exaggeration, panoramic projection, look left / right, automated legibility check, view auto-adjust |
+| Stances not readable | Pose library, per-tier exaggeration, natural lens with per-player scale, look left / right, automated legibility check, view auto-adjust |
 | iPad Safari quirks (audio unlock, storage eviction, PWA limits) | Offline store + cloud sync, audio unlock on first tap, on-device testing each phase |
 | Learns the engine instead of football | Jitter, coordinator profiles, hold-out Combines and Tryouts |
 | Weak transfer to the field | Representative visuals, say-it-aloud habit, throw-as-answer, Field Mode, Combines |
@@ -1000,9 +1010,12 @@ Every phase ends with an **owner playtest checkpoint on the iPad** (via the Netl
 | Cadence | 4 chunks (Know, See, Threats, Plan); defaults per tier; custom builder with aliases |
 | Situational awareness | Shown in every drill and part of every answer key and Breakdown (§6.12) |
 | Bubble | From his eyes, rushers coming at him; 9 rep types; protection modes Good / Bad / Unpredictable |
-| Views | His eyes (panoramic, about 140°) in every drill at every tier; top-down only in Learn and Breakdown |
+| Views | His eyes (natural lens, about 100°, true perspective) in every drill at every tier; top-down only in Learn and Breakdown |
+| Eyes | Pre-snap scan by look left / right; at the snap the view turns to his chosen read; swipe to look elsewhere; always shown and taught (§7.5) |
 | Movement | Every post-snap position computed from alignment + path + speed profile + time; routes as waypoints; no hand placement (§6.13) |
-| Renderer | 2D WebGL (PixiJS) with a custom panoramic projection; true 3D only for a future VR mode |
+| Renderer | 2D WebGL (PixiJS) with a custom natural-lens projection; true 3D only for a future VR mode |
+| Look | B, coaching board: muted field, orange-outlined defenders, see-through blue offense (§15.1) |
+| Players | 3D puppets of about 15 joints drawn as flat shapes; poses stored as content (§14.3) |
 | Information policy | Difficulty never removes information |
 | AI | No live AI. Claude used only for authoring and rule maintenance via Claude Code. |
 | Explanations | Breakdown for every rep, assembled from reviewed snippets |

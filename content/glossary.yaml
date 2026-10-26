@@ -1,0 +1,685 @@
+# SNAP IQ glossary: the controlled vocabulary for all content, explanations and UI text.
+# Batch 1: field, rules and situation terms. Defense, offense, pocket and cadence terms arrive in later batches.
+# Owner accepted batch 1 with defaults on 2026-10-26 (reviewed: true). `notes` records the default in use;
+# `confirm` marks a detail still open (none in batch 1).
+version: 1
+batch: 1
+categories:
+  field: Field, lines and landmarks
+  rules: NFHS rules words
+  situation: Game situation (down, distance, field zone, clock, score)
+
+terms:
+  # ---------------------------------------------------------------- field
+  - id: field-of-play
+    term: Field of play
+    category: field
+    definition: The area inside the sidelines and between the two goal lines. The sidelines and end lines themselves are out of bounds.
+    aliases: [the field]
+    see: [sideline, end-zone]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: sideline
+    term: Sideline
+    category: field
+    definition: The line along each long side of the field. Touching it means out of bounds.
+    aliases: [boundary line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: goal-line
+    term: Goal line
+    category: field
+    definition: The line at the front of each end zone, 100 yards apart. It belongs to the end zone, so the ball reaching it in a runner's possession is a touchdown.
+    aliases: [the goal]
+    see: [end-zone]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: end-zone
+    term: End zone
+    category: field
+    definition: The 10-yard area between the goal line and the end line at each end of the field.
+    aliases: []
+    see: [end-line, safety]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: end-line
+    term: End line
+    category: field
+    definition: The line at the back of each end zone. Touching it means out of bounds.
+    aliases: [back line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: yard-line
+    term: Yard line
+    category: field
+    definition: A line across the field every 5 yards, counted from each goal line up to the 50.
+    aliases: [five-yard line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: yard-line-numbers
+    term: Yard-line numbers
+    category: field
+    definition: The numbers painted at every 10-yard line, standing on their bottoms toward the nearer sideline. Optional on high school fields; when used they are about 6 feet tall with their tops 9 yards from the sideline.
+    aliases: [the numbers]
+    notes: Default in use - 6 ft numbers with tops 9 yd from the sideline (field-builder guides).
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: hash-marks
+    term: Hash marks
+    category: field
+    definition: Short lines at every yard, 53 feet 4 inches (17.8 yards) in from each sideline, so they split the field into thirds. Every play starts with the ball on or between them. High school hashes are farther apart than college or NFL hashes, so a hash puts more room on the field side.
+    aliases: [hashes, inbounds lines]
+    see: [ball-spot]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: ball-spot
+    term: Ball spot
+    category: field
+    definition: Where the ball sits across the field before the snap, seen from the offense - on the left hash, on the right hash, or in the middle.
+    aliases: [hash, ball placement]
+    see: [field-side, boundary-side, ball-in-the-middle]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: field-side
+    term: Field side
+    category: field
+    definition: With the ball on a hash, the side with more room to the far sideline (about 35.6 yards).
+    aliases: [wide side, field]
+    see: [boundary-side]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: boundary-side
+    term: Boundary side
+    category: field
+    definition: With the ball on a hash, the side with less room to the near sideline (about 17.8 yards).
+    aliases: [short side, boundary]
+    see: [field-side]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: ball-in-the-middle
+    term: Ball in the middle
+    category: field
+    definition: The ball spotted between the hashes, about 26.7 yards from each sideline, so there is no field or boundary side.
+    aliases: [middle of the field (ball spot)]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: line-of-scrimmage
+    term: Line of scrimmage
+    category: field
+    definition: The yard line where a play starts. Each team has its own line at its end of the ball, so the two lines are one ball-length apart.
+    aliases: [LOS, scrimmage line, the line]
+    see: [neutral-zone]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: neutral-zone
+    term: Neutral zone
+    category: field
+    definition: The space between the two lines of scrimmage, as long as the ball. Before the snap only the snapper may be in it.
+    aliases: [NZ]
+    see: [expanded-neutral-zone, encroachment]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: expanded-neutral-zone
+    term: Expanded neutral zone
+    category: field
+    definition: After the snap on a pass play, the neutral zone stretches up to 2 yards past the defense's line. Offensive linemen may block in it but may not go past it before a pass that crosses the line is thrown.
+    aliases: [ENZ]
+    see: [ineligible-downfield]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: line-to-gain
+    term: Line to gain
+    category: field
+    definition: The yard line the offense must reach for a first down - 10 yards from where the series started, or the goal line if that is closer.
+    aliases: [first-down line, the sticks, the chains]
+    see: [first-down, goal-to-go]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: end-man-on-the-line
+    term: End man on the line
+    category: field
+    definition: The last offensive player on the line of scrimmage on one side - a tackle, or a tight end attached to him.
+    aliases: [EMOL, EMLOS]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: tackle-box
+    term: Tackle box
+    category: field
+    definition: Coaching word for the area between the two offensive tackles, from the line of scrimmage back. High school rules use the free-blocking zone instead.
+    aliases: []
+    see: [free-blocking-zone]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: free-blocking-zone
+    term: Free-blocking zone
+    category: field
+    definition: A rectangle set at the snap, 4 yards to each side of the ball and 3 yards behind each team's line. It ends once the ball leaves it. A passer outside it may throw the ball away if the throw reaches the line of scrimmage.
+    aliases: [FBZ]
+    see: [throwaway, intentional-grounding]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: box
+    term: Box
+    category: field
+    definition: The area in front of the offensive line where defenders can stop the run - from 1 yard outside the end man on the line on each side, 6 yards deep. "Count the box" means count the defenders standing in it.
+    aliases: [the box, run box]
+    notes: Owner 2026-10-26 - Sahar's coach does not count the box, but Sahar should; the game uses this definition.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: apex
+    term: Apex
+    category: field
+    definition: The spot halfway between the end man on the line and the next receiver out (#2), at linebacker depth. A defender there can help on the run or cover to that side.
+    aliases: [apexed]
+    see: [receiver-numbering, end-man-on-the-line]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: receiver-numbering
+    term: Receiver numbering
+    category: field
+    definition: "Counting the receivers on each side of the ball from the sideline in - #1 is the widest, then #2, then #3. Reads and coverages are described with these numbers."
+    aliases: ["#1", "#2", "#3", number one receiver, number two receiver, number three receiver]
+    notes: Default in use - a back directly behind the ball counts to neither side until he releases.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  # ---------------------------------------------------------------- rules
+  - id: snap
+    term: Snap
+    category: rules
+    definition: The center handing or passing the ball back between his legs to start the play. Before the snap the ball is ready for play; after it, the ball is live.
+    aliases: [hike]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: down
+    term: Down
+    category: rules
+    definition: One play, from the snap until the ball is dead. The offense has 4 downs to reach the line to gain.
+    aliases: [play]
+    see: [first-down, down-and-distance]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: first-down
+    term: First down
+    category: rules
+    definition: Reaching the line to gain, which gives the offense a new set of 4 downs.
+    aliases: [move the chains, moving the sticks]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: dead-ball
+    term: Dead ball
+    category: rules
+    definition: The ball after the play is over - the runner is down or out of bounds, a pass is incomplete, a team scores, or an official blows the whistle.
+    aliases: [whistle, play over]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: runner
+    term: Runner
+    category: rules
+    definition: The player holding a live ball. The quarterback is a runner from the moment he has the snap until he hands off or throws.
+    aliases: [ball carrier]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: runner-down
+    term: Runner down
+    category: rules
+    definition: In high school a runner is down as soon as any part of his body other than a hand or foot touches the ground, even if no defender touched him. A quarterback whose knee touches the ground is down there.
+    aliases: [knee down]
+    notes: Default in use - a slide ends the play because his seat or leg touches the ground (the any-part rule); no separate slide rule.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: passer
+    term: Passer
+    category: rules
+    definition: The player who throws a legal forward pass. He stays the passer until the pass ends or he moves to take part in the play; the rules protect him in that time.
+    aliases: []
+    see: [roughing-the-passer]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: forward-pass
+    term: Forward pass
+    category: rules
+    definition: A throw that first moves toward the opponent's goal line. One legal forward pass per down, thrown from behind the line of scrimmage.
+    aliases: [pass]
+    see: [illegal-forward-pass, backward-pass]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: illegal-forward-pass
+    term: Illegal forward pass
+    category: rules
+    definition: A forward pass thrown with the passer's whole body past the line of scrimmage, a second forward pass in the same down, or a pass after the ball has changed teams.
+    aliases: []
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: backward-pass
+    term: Backward pass
+    category: rules
+    definition: A pass or pitch that does not go forward; sideways counts as backward. If it hits the ground it is still a live ball, and either team can recover it.
+    aliases: [lateral, pitch]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: fumble
+    term: Fumble
+    category: rules
+    definition: Losing possession of the ball other than by a pass or kick. A fumbled ball is live and either team can recover it.
+    aliases: [loose ball]
+    notes: Default in use - either team may recover and advance a fumble.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: eligible-receiver
+    term: Eligible receiver
+    category: rules
+    definition: An offensive player who may catch a forward pass - one at either end of the line or in the backfield, wearing a number 1-49 or 80-99.
+    aliases: [eligible]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: ineligible-receiver
+    term: Ineligible receiver
+    category: rules
+    definition: An offensive player who may not catch a forward pass - interior linemen and anyone numbered 50-79 (except in kick formations).
+    aliases: [ineligible]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: ineligible-downfield
+    term: Ineligible downfield
+    category: rules
+    definition: An ineligible player more than 2 yards past the line of scrimmage when a pass that crosses the line is thrown. It matters on screens and run-pass options.
+    aliases: [illegal man downfield, linemen downfield]
+    see: [expanded-neutral-zone]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: intentional-grounding
+    term: Intentional grounding
+    category: rules
+    definition: Throwing an incomplete forward pass on purpose to avoid losing yards or to stop the clock. Two exceptions - the spike, and the throwaway from outside the free-blocking zone.
+    aliases: [grounding]
+    see: [spike, throwaway]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: spike
+    term: Spike
+    category: rules
+    definition: Throwing the ball straight into the ground right after the snap to stop the clock. Legal for the player directly behind the snapper, immediately after a clean snap.
+    aliases: [spike the ball, clock play]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: throwaway
+    term: Throwaway
+    category: rules
+    definition: Throwing the ball where no one can catch it to avoid a sack. In high school it is legal only if the passer is outside the free-blocking zone and the ball reaches the line of scrimmage (or that line extended out of bounds).
+    aliases: [throw it away]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: sack
+    term: Sack
+    category: rules
+    definition: The quarterback tackled behind the line of scrimmage before he throws. Not a rule-book word, but the game counts it.
+    aliases: []
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: safety
+    term: Safety
+    category: rules
+    definition: The offense is downed, or commits certain fouls, in its own end zone after putting the ball there. The defense scores 2 points and the offense must kick to them from its own 20.
+    aliases: []
+    see: [backed-up]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: pass-interference
+    term: Pass interference
+    category: rules
+    definition: Illegal contact that keeps a player from catching a legal forward pass that crosses the line. In high school it is 15 yards either way; for the defense it is not an automatic first down.
+    aliases: [PI, DPI, OPI]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: roughing-the-passer
+    term: Roughing the passer
+    category: rules
+    definition: A defender hitting the passer late or illegally after the throw. In high school it is 15 yards and an automatic first down.
+    aliases: [roughing]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: false-start
+    term: False start
+    category: rules
+    definition: An offensive movement before the snap that imitates the snap or is meant to pull the defense offside - including a quarterback's sudden head, arm or body jerk while calling the count. A hard count with the voice alone is legal.
+    aliases: [flinch]
+    see: [hard-count]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: hard-count
+    term: Hard count
+    category: rules
+    definition: The quarterback stressing a word in the cadence to draw the defense offside. Legal when only the voice changes; moving the head or body to imitate the snap is a false start.
+    aliases: []
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: encroachment
+    term: Encroachment
+    category: rules
+    definition: A player in the neutral zone before the snap when the rules forbid it - any offensive player except the snapper once the ball is ready, or a defender who touches an opponent or the ball there.
+    aliases: [neutral zone infraction, offside]
+    notes: Default in use - this wording; the game calls every neutral-zone foul by the defense offside.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: legal-formation
+    term: Legal formation
+    category: rules
+    definition: At the snap - at least 7 offensive players on the line, at least 5 of them numbered 50-79, and no more than 4 in the backfield.
+    aliases: [formation]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: motion
+    term: Motion
+    category: rules
+    definition: One offensive back moving before the snap. Only one player may be moving at the snap, and not toward the opponent's goal line.
+    aliases: [man in motion]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: shift
+    term: Shift
+    category: rules
+    definition: Two or more offensive players changing position before the snap. After a shift, all 11 must be set for 1 second before the snap.
+    aliases: []
+    notes: Default in use - everyone set for 1 second after a shift.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: delay-of-game
+    term: Delay of game
+    category: rules
+    definition: Not snapping the ball before the play clock runs out. A 5-yard penalty.
+    aliases: [delay]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: game-clock
+    term: Game clock
+    category: rules
+    definition: The clock for each 12-minute quarter. It stops after incomplete passes, plays out of bounds, scores, penalties, timeouts and first downs.
+    aliases: [clock, scoreboard clock]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: play-clock
+    term: Play clock
+    category: rules
+    definition: The countdown to snap the ball - 40 seconds from the end of the previous play, or 25 seconds after stoppages such as timeouts and scores.
+    aliases: [40-second clock, 25-second clock]
+    notes: Default in use - the NFHS 40/25-second play clock.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: ready-for-play
+    term: Ready for play
+    category: rules
+    definition: The referee's signal that the ball is set. After it the offense may snap, and on 25-second plays the play clock starts.
+    aliases: [ready signal]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: timeout
+    term: Timeout
+    category: rules
+    definition: A stop in play called by a team (3 per half for each team) or by an official.
+    aliases: [TO]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: running-clock
+    term: Running clock
+    category: rules
+    definition: The CIF mercy rule - when one team leads by 35 points or more in the 4th quarter, the game clock keeps running except for timeouts, scores and injuries.
+    aliases: [mercy rule]
+    notes: Default in use - CIF running clock at a 35-point margin in the 4th quarter.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  # ---------------------------------------------------------------- situation
+  - id: down-and-distance
+    term: Down and distance
+    category: situation
+    definition: Which down it is and how many yards to the line to gain - "3rd and 6" is third down with 6 yards to go.
+    aliases: [D and D]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: short-yardage
+    term: Short yardage
+    category: situation
+    definition: 1 or 2 yards to the line to gain.
+    aliases: [and short]
+    notes: Default in use - short 1-2, medium 3-6, long 7 or more yards.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: medium-yardage
+    term: Medium yardage
+    category: situation
+    definition: 3 to 6 yards to the line to gain.
+    aliases: [and medium]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: long-yardage
+    term: Long yardage
+    category: situation
+    definition: 7 or more yards to the line to gain.
+    aliases: [and long]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: goal-to-go
+    term: Goal to go
+    category: situation
+    definition: The line to gain is the goal line, as in "1st and goal".
+    aliases: [and goal]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: field-zone
+    term: Field zone
+    category: situation
+    definition: Where the ball is on the field, named for what it changes - backed up, open field, plus territory, field-goal range, red zone, goal line.
+    aliases: [field position]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: backed-up
+    term: Backed up
+    category: situation
+    definition: Ball inside your own 10-yard line. A sack or grounding in your end zone is a safety.
+    aliases: [coming out]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: open-field
+    term: Open field
+    category: situation
+    definition: Ball between your own 10 and midfield, where normal play calling applies.
+    aliases: [own territory]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: plus-territory
+    term: Plus territory
+    category: situation
+    definition: Ball past midfield, in the opponent's half.
+    aliases: [plus side, their side of the field]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: field-goal-range
+    term: Field-goal range
+    category: situation
+    definition: Close enough for your kicker to make a field goal. It depends on the kicker, so each team sets it; the default is the opponent's 20-yard line or closer.
+    aliases: [FG range]
+    notes: Default in use - the opponent's 20-yard line or closer; each team can change it.
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: red-zone
+    term: Red zone
+    category: situation
+    definition: Inside the opponent's 20-yard line, where the field is short and windows are tight.
+    aliases: [scoring zone]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: goal-line-area
+    term: Goal line (situation)
+    category: situation
+    definition: Inside the opponent's 5-yard line.
+    aliases: [inside the 5]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: two-minute-drill
+    term: Two-minute drill
+    category: situation
+    definition: The hurry-up offense near the end of a half when behind or tied - sideline throws, timeouts and spikes manage the clock. High school has no two-minute warning.
+    aliases: [two-minute, hurry-up]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: protect-the-lead
+    term: Protecting the lead
+    category: situation
+    definition: Ahead late in the game - keep the clock running, protect the ball, avoid incomplete passes and sacks.
+    aliases: [four-minute offense, four-minute]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: end-of-half
+    term: End of half
+    category: situation
+    definition: The last plays before halftime or the end of the game, when the clock and timeouts decide between a shot downfield, a sideline throw and a spike.
+    aliases: [end of game]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
+
+  - id: clock-running
+    term: Clock running
+    category: situation
+    definition: Whether the game clock is running at the snap. A running clock in the last minutes changes whether to spike, hurry or let time run.
+    aliases: [clock stopped]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
