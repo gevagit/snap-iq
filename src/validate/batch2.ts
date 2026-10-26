@@ -7,7 +7,7 @@ export interface Batch2Counts { formations: number; motions: number; routes: num
 
 const FILES: Partial<Record<ContentKey, string>> = {
   personnel: 'offense/personnel.yaml', formations: 'offense/formations.yaml', motions: 'offense/motions.yaml', routes: 'offense/routes.yaml',
-  concepts: 'offense/concepts.yaml', protections: 'offense/protections.yaml', fronts: 'defense/fronts.yaml', coverages: 'defense/coverages.yaml', speeds: 'tuning/speeds.yaml',
+  concepts: 'offense/concepts.yaml', protections: 'offense/protections.yaml', fronts: 'defense/fronts.yaml', coverages: 'defense/coverages.yaml', speeds: 'tuning/speeds.yaml', drills: 'tuning/drills.yaml',
 };
 
 function parse<T>(schema: ZodType<T>, data: unknown, key: ContentKey, errors: string[]): T | null {
@@ -32,6 +32,7 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
   const fronts = parse(S.Fronts, raw.fronts, 'fronts', errors);
   const coverages = parse(S.Coverages, raw.coverages, 'coverages', errors);
   const speeds = parse(S.Speeds, raw.speeds, 'speeds', errors);
+  const drills = parse(S.Drills, raw.drills, 'drills', errors);
 
   const term = (file: string, owner: string, id: string) => {
     if (glossary.success && !terms.has(id)) errors.push(`${file}: ${owner} uses term ${id}, which is not in the glossary`);
@@ -156,6 +157,21 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     if (zr.react_after > zr.read_by) errors.push(`defense/coverages.yaml: zone defenders react at ${zr.react_after} s, after read_by (${zr.read_by} s)`);
     for (const z of zoneIds) if (!zr.zones[z]) errors.push(`defense/coverages.yaml: zone ${z} has no zone_reaction rule`);
   }
+  if (drills && coverages && fronts && motions) {
+    const file = 'tuning/drills.yaml';
+    for (const [name, tier] of Object.entries(drills.shell_game.tiers)) {
+      for (const id of tier.coverages) if (!coverages.coverages.some((c) => c.id === id)) errors.push(`${file}: ${name} uses unknown coverage ${id}`);
+      for (const id of tier.fronts) if (!fronts.fronts.some((f) => f.id === id)) errors.push(`${file}: ${name} uses unknown front ${id}`);
+      for (const id of tier.motions) if (!motions.motions.some((m) => m.id === id)) errors.push(`${file}: ${name} uses unknown motion ${id}`);
+      for (const id of [...tier.answers.shell, ...tier.answers.coverage]) term(file, `${name} answers`, id);
+      for (const id of tier.coverages) {
+        const cv = coverages.coverages.find((c) => c.id === id);
+        if (cv && !tier.answers.coverage.includes(cv.answer)) errors.push(`${file}: ${name} has no answer button for ${cv.answer} (${id})`);
+        if (cv && !tier.answers.shell.includes(cv.shell.pre)) errors.push(`${file}: ${name} has no answer button for ${cv.shell.pre}`);
+      }
+    }
+  }
+  if (coverages) for (const cv of coverages.coverages) term('defense/coverages.yaml', `${cv.id} answer`, cv.answer);
   if (speeds) for (const [job, prof] of Object.entries(speeds.jobs)) if (!speeds.profiles[prof]) errors.push(`tuning/speeds.yaml: job ${job} uses unknown profile ${prof}`);
 
   const entries: { reviewed: boolean }[] = [
@@ -168,6 +184,7 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     ...(fronts ? [fronts.alignment, fronts.rush, ...fronts.fronts] : []),
     ...(coverages ? [coverages.shells, coverages.alignments, coverages.man, ...coverages.coverages] : []),
     ...(speeds ? [speeds] : []),
+    ...(drills ? [drills] : []),
   ];
   return {
     formations: formations?.formations.length ?? 0,

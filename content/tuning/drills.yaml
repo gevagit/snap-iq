@@ -1,0 +1,43 @@
+# Drill tuning (PRD §8, §10). Signed off by the owner with defaults (2026-10-26); every number is a feel constant to tune in playtests.
+version: 1
+batch: 2
+
+# The throw (youth quarterback): ball speed and how long after the decision the ball leaves his hand.
+ball: { speed: 17, release_delay: 0.15, release_height: 1.95 }
+
+# Where the ball goes: at the catch, a receiver with at least open_separation yards to the nearest defender
+# is open. The answer is the first open receiver in the concept's progression (content/offense/concepts.yaml);
+# when no one is open, the receiver with the most room. Any other open receiver earns part credit.
+reads: { open_separation: 2.5 }
+
+# Shell Game (PRD §8.3): the look shows for `look` seconds (longer when a motion needs it), the snap, then
+# everyone moves at real speed until `decision` seconds after the snap, when the play freezes for his answers.
+shell_game:
+  reps: 8
+  tiers:
+    youth:
+      look: 2.0
+      decision: 1.2
+      coverages: [cover-0, cover-1, cover-2, cover-3]
+      fronts: [four-two-five-even, three-three-stack, four-three-over]
+      motions: [none, short-motion, return-motion]
+      answers: { shell: [zero-high, one-high, two-high], coverage: [cover-0, cover-1, cover-2, cover-3] }
+    jv:
+      look: 1.2
+      decision: 1.2
+      coverages: [cover-0, cover-1, cover-2, cover-3, cover-4, cover-3-sky, cover-1-robber, two-man, fire-zone]
+      fronts: [four-two-five-even, three-three-stack, four-three-over, four-two-five-over]
+      motions: [none, short-motion, return-motion, jet-motion, orbit-motion, back-motion]
+      answers: { shell: [zero-high, one-high, two-high], coverage: [cover-0, cover-1, cover-2, cover-3, cover-4, two-man, fire-zone] }
+
+# Points and progress (PRD §11): XP per correct answer, the rank ladder by total XP.
+scoring:
+  shell: 10
+  coverage: 10
+  throw: 20
+  open_not_read: 10
+  workout_bonus: 25
+ranks: [[0, Rookie], [150, Scout Team], [400, Backup], [800, Starter], [1500, Captain], [2500, All-League]]
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-26"

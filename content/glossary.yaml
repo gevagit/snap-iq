@@ -686,7 +686,7 @@ terms:
     reviewer: owner
     reviewed_at: "2026-10-26"
 
-  # ================================================================ batch 2: offense (not yet reviewed)
+  # ================================================================ batch 2: offense
   - id: personnel-group
     term: Personnel group
     category: offense
@@ -1173,7 +1173,7 @@ terms:
     reviewed: true
     reviewer: owner
     reviewed_at: "2026-10-26"
-  # ================================================================ batch 2: defense (not yet reviewed)
+  # ================================================================ batch 2: defense
   - id: defensive-front
     term: Front
     category: defense

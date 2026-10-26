@@ -110,6 +110,7 @@ coverages:
     name: Cover 0
     tier: youth
     terms: [cover-0, zero-high, man-coverage, blitz]
+    answer: cover-0          # the coverage he names after the snap
     family: man
     shell: { pre: zero-high, post: zero-high }
     tells:
@@ -140,6 +141,7 @@ coverages:
     name: Cover 1
     tier: youth
     terms: [cover-1, one-high, man-coverage, free-safety]
+    answer: cover-1          # the coverage he names after the snap
     family: man
     shell: { pre: one-high, post: one-high }
     counts: { deep: 1 }
@@ -176,6 +178,7 @@ coverages:
     name: Cover 2
     tier: youth
     terms: [cover-2, two-high, deep-half, hook-zone, flat-defender]
+    answer: cover-2          # the coverage he names after the snap
     family: zone
     shell: { pre: two-high, post: two-high }
     counts: { deep: 2, under: 5, rush: 4 }
@@ -204,6 +207,7 @@ coverages:
     name: Cover 3
     tier: youth
     terms: [cover-3, one-high, deep-third, curl-flat-zone, hook-zone]
+    answer: cover-3          # the coverage he names after the snap
     family: zone
     shell: { pre: one-high, post: one-high }
     counts: { deep: 3, under: 4 }
@@ -240,6 +244,7 @@ coverages:
     name: Cover 4
     tier: jv
     terms: [cover-4, two-high, deep-quarter, curl-flat-zone, hook-zone]
+    answer: cover-4          # the coverage he names after the snap
     family: zone
     shell: { pre: two-high, post: two-high }
     counts: { deep: 4, under: 3, rush: 4 }
@@ -267,6 +272,7 @@ coverages:
     name: Cover 3 Sky
     tier: jv
     terms: [cover-3, sky-rotation, two-high, one-high, disguise, rotation]
+    answer: cover-3          # the coverage he names after the snap
     family: zone
     shell: { pre: two-high, post: one-high }
     rotation: sky-rotation
@@ -297,6 +303,7 @@ coverages:
     name: Cover 1 Robber
     tier: jv
     terms: [cover-1, robber-rotation, robber, two-high, one-high, disguise, rotation]
+    answer: cover-1          # the coverage he names after the snap
     family: man
     shell: { pre: two-high, post: one-high }
     rotation: robber-rotation
@@ -325,6 +332,7 @@ coverages:
     name: 2-Man
     tier: jv
     terms: [two-man, two-high, deep-half, man-coverage]
+    answer: two-man          # the coverage he names after the snap
     family: man
     shell: { pre: two-high, post: two-high }
     counts: { deep: 2 }
@@ -345,6 +353,7 @@ coverages:
     name: Fire zone
     tier: jv
     terms: [fire-zone, blitz, deep-third, curl-flat-zone, hook-zone]
+    answer: fire-zone          # the coverage he names after the snap
     family: zone
     shell: { pre: one-high, post: one-high }
     counts: { deep: 3, under: 3, rush: 5 }

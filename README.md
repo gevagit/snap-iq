@@ -4,9 +4,11 @@ A quarterback cognition training game for iPad: pre-snap routine, defensive read
 
 - Spec: [`docs/PRD.md`](docs/PRD.md)
 - Instructions for Claude Code: [`CLAUDE.md`](CLAUDE.md)
-- Status: Phase 1 (Football Bible). Batches 1 (glossary, NFHS rules, field geometry) and 2 (offense, defense, speed profiles and the play engine that turns them into plays) signed off by the owner with defaults on 2026-10-26.
+- Status: Phase 2, playable slice. The game runs the Shell Game workout from Sahar's eyes (`src/game`). Football Bible batches 1 and 2 are signed off by the owner with defaults, so every drill uses reviewed content.
 
 ## Commands
+
+- `npm run build:game` - build the game into `dist/game` (Netlify publishes this folder) and `dist/snap-iq-game.html` (the same game as one page)
 
 - `npm run check` - lint, typecheck, unit tests and content validation (run before every push)
 - `npm run validate` - football invariants on `/content`, then every play call built and checked (PRD §6.11)

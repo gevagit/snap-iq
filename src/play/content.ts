@@ -16,6 +16,7 @@ export interface PlayContent {
   fronts: S.Fronts;
   coverages: S.Coverages;
   speeds: S.Speeds;
+  drills: S.Drills;
 }
 
 export function parsePlayContent(raw: Record<ContentKey, unknown>): PlayContent {
@@ -33,6 +34,7 @@ export function parsePlayContent(raw: Record<ContentKey, unknown>): PlayContent 
     fronts: S.Fronts.parse(raw.fronts),
     coverages: S.Coverages.parse(raw.coverages),
     speeds: S.Speeds.parse(raw.speeds),
+    drills: S.Drills.parse(raw.drills),
   };
 }
 

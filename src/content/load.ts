@@ -19,6 +19,7 @@ export const CONTENT_FILES = {
   fronts: 'content/defense/fronts.yaml',
   coverages: 'content/defense/coverages.yaml',
   speeds: 'content/tuning/speeds.yaml',
+  drills: 'content/tuning/drills.yaml',
 } as const;
 export type ContentKey = keyof typeof CONTENT_FILES;
 
