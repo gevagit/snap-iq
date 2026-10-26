@@ -1,4 +1,4 @@
-# Sahar as a quarterback, and his pocket rules for the routine's Plan step. Batch 3, not yet reviewed.
+# Sahar as a quarterback, and his pocket rules for the routine's Plan step. Batch 3, signed off by the owner with defaults (2026-10-26).
 version: 1
 batch: 3
 throwing_hand: left
@@ -16,4 +16,6 @@ drops:
 escape:
   prefer: throwing-hand
   edge_threat: { outside_tackle: 0.5, within_depth: 3.0 }
-reviewed: false
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-26"

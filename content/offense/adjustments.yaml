@@ -1,5 +1,5 @@
 # Route adjustments at the line (PRD §8.2 Plan). He may change up to max_changes routes before the snap; each
-# receiver may switch only to a route on his menu. Menus by where he lines up. Batch 3, not yet reviewed.
+# receiver may switch only to a route on his menu. Menus by where he lines up. Batch 3, signed off by the owner with defaults (2026-10-26).
 version: 1
 batch: 3
 max_changes: 2
@@ -8,4 +8,6 @@ menus:
   slot: [seam-route, stick-route, flat-route, slant-route, out-route, curl-route, corner-route]
   tight-end: [seam-route, stick-route, flat-route, out-route, corner-route]
   back: [flat-route, swing-route, check-release]
-reviewed: false
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-26"

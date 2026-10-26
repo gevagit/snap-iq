@@ -135,7 +135,9 @@ coverages:
         will: { job: { man: [back], spare: [rush] } }
         fs: { align: blitz, job: { rush: a } }
         mike: { job: { rush: a } }
-    reviewed: false   # tell kinds added (batch 3); back to the owner for review
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-1
     name: Cover 1
     tier: youth
@@ -295,7 +297,9 @@ coverages:
         nickel: { job: { zone: hook, side: strong } }
         mike: { job: { zone: hook, side: weak } }
         will: { align: apex, job: { zone: curl-flat, side: weak } }
-    reviewed: false   # tell kinds added (batch 3); back to the owner for review
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
   - id: cover-1-robber
     name: Cover 1 Robber
     tier: jv
@@ -367,4 +371,6 @@ coverages:
         oh-weak: { job: { rush: edge } }
         mike: { job: { rush: a } }
         sam: { job: { rush: b } }
-    reviewed: false   # tell kinds added (batch 3); back to the owner for review
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"

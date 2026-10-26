@@ -1680,7 +1680,9 @@ terms:
     definition: "The checks a quarterback makes at the line before the snap, in order: Know (his own alignment), See (the shell, the box, the corners and any tells), Threats (rushers against blockers and his hot route), Plan (route changes, his read, his drop and his escape lane)."
     aliases: [routine, pre-snap checks]
     see: [shell, box, hot-route]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: covered-receiver
     term: Covered receiver
@@ -1689,7 +1691,9 @@ terms:
     definition: A player on the line of scrimmage with a teammate on the line outside him. He is not an end, so he may not catch a forward pass.
     aliases: [covered, covered up]
     see: [eligible-receiver, legal-formation]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: tell
     term: Tell
@@ -1698,7 +1702,9 @@ terms:
     definition: "A clue in a defender's alignment, stance or movement before the snap that gives away his job."
     aliases: [tells, give-away]
     see: [creep, disguise]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: blitz-tell
     term: Blitz tell
@@ -1707,7 +1713,9 @@ terms:
     definition: A tell that a defender will rush the quarterback, such as a linebacker or defensive back creeping toward the line or an edge before the snap.
     aliases: [blitz look]
     see: [tell, blitz, creep]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: rotation-tell
     term: Rotation tell
@@ -1716,7 +1724,9 @@ terms:
     definition: A tell that the shell will change at the snap, such as one safety creeping down while the other stays deep.
     aliases: [spin tell, roll tell]
     see: [tell, rotation]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: catch-and-throw
     term: Catch and throw
@@ -1725,7 +1735,9 @@ terms:
     definition: Gun footwork with no drop - he catches the snap and throws.
     aliases: [no-step]
     see: [shotgun]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: one-step-drop
     term: One-step drop
@@ -1734,7 +1746,9 @@ terms:
     definition: Gun footwork - one step back after the catch, then throw. Used on quick routes.
     aliases: [one-step, 1-step]
     see: [shotgun]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: three-step-drop
     term: Three-step drop
@@ -1743,7 +1757,9 @@ terms:
     definition: Three steps back after the snap (in the gun, after the catch), then throw on time. In the gun it fits routes about 8 to 12 yards deep; under center it is the quick game.
     aliases: [three-step, 3-step]
     see: [under-center]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: five-step-drop
     term: Five-step drop
@@ -1752,7 +1768,9 @@ terms:
     definition: Five steps back after the snap, then throw. Under center it fits routes about 10 to 15 yards deep.
     aliases: [five-step, 5-step]
     see: [under-center]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: escape-lane
     term: Escape lane
@@ -1761,7 +1779,9 @@ terms:
     definition: "The way out of a breaking pocket. For a left-handed quarterback usually to his left (his throwing hand), unless the rush threat is greater on that side."
     aliases: [escape route]
     see: [throwaway]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: quarterback-run
     term: Quarterback run
@@ -1770,7 +1790,9 @@ terms:
     definition: The quarterback keeps the ball and runs when no receiver is open and there is room in front of him.
     aliases: [keep, scramble, QB run]
     see: [runner]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: route-adjustment
     term: Route adjustment
@@ -1779,7 +1801,9 @@ terms:
     definition: Changing a receiver's route at the line before the snap. In SNAP IQ he may change up to two routes per play.
     aliases: [route change, route tag]
     see: [progression]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   # ---------------------------------------------------------------- the play call (batch 3)
   - id: play-call
@@ -1789,7 +1813,9 @@ terms:
     definition: "The play the quarterback calls in the huddle: the formation, the pass concept and the protection. Every player's job comes from it."
     aliases: [call, the call]
     see: [offensive-formation, pass-concept, pass-protection]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: offensive-formation
     term: Offensive formation
@@ -1798,7 +1824,9 @@ terms:
     definition: Where each offensive player lines up before the snap, named in the play call (for example Gun Trips or I-formation).
     aliases: [set]
     see: [formation-strength, legal-formation]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: pass-concept
     term: Pass concept
@@ -1807,7 +1835,9 @@ terms:
     definition: The set of routes the receivers run together on a pass play, with the quarterback's read and progression.
     aliases: [concept, pass play]
     see: [progression]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: pass-protection
     term: Pass protection
@@ -1816,7 +1846,9 @@ terms:
     definition: Which players stay in to block on a pass play and whom each one blocks.
     aliases: [protection, pass pro]
     see: [five-man-protection, slide-protection, check-release]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: offensive-line
     term: Offensive line
@@ -1825,7 +1857,9 @@ terms:
     definition: The five linemen on the line of scrimmage (left tackle, left guard, center, right guard, right tackle). They block and are ineligible receivers.
     aliases: [OL, line, linemen, O-line]
     see: [ineligible-receiver]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: center
     term: Center
@@ -1834,7 +1868,9 @@ terms:
     definition: The lineman in the middle who snaps the ball to the quarterback, then blocks.
     aliases: [C]
     see: [offensive-line]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: guard
     term: Guard
@@ -1843,7 +1879,9 @@ terms:
     definition: The linemen on each side of the center, the left guard and the right guard.
     aliases: [LG, RG, left guard, right guard]
     see: [offensive-line]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: offensive-tackle
     term: Tackle
@@ -1852,7 +1890,9 @@ terms:
     definition: The linemen outside each guard, the left tackle and the right tackle; the end men of the offensive line.
     aliases: [LT, RT, left tackle, right tackle, OT]
     see: [offensive-line]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
 
   - id: quarterback
     term: Quarterback
@@ -1861,4 +1901,6 @@ terms:
     definition: The player who takes the snap, calls the play in the huddle, and passes, hands off or runs.
     aliases: [QB]
     see: [play-call, pre-snap-routine]
-    reviewed: false
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-26"
