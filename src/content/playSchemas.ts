@@ -392,3 +392,49 @@ export const Quarterback = z
   .strict()
   .refine(reviewComplete, reviewMessage);
 export type Quarterback = z.infer<typeof Quarterback>;
+
+// ---------------------------------------------------------------- pocket (batch 4): content/pocket/rules.yaml
+const MoveProfile = z.object({ top: z.number().positive(), tau: z.number().positive() }).strict();
+export const POCKET_RESPONSES = ['stand', 'climb', 'pocket-slide', 'pocket-escape', 'ball-out'] as const;
+const PocketTier = z.object({
+  types: z.array(Id).min(1), rush_speed: z.number().positive(), hints: z.boolean(), coverages: z.array(Id).min(1), fronts: z.array(Id).min(1),
+}).strict();
+const Window = z.tuple([z.number().positive(), z.number().positive()]);
+export const Pocket = z
+  .object({
+    ...Header,
+    movement: z.object({ shuffle: MoveProfile, run: MoveProfile, run_at: z.number().min(0).max(1), offhand_reset: z.object({ above: z.number().positive(), seconds: z.number().min(0) }).strict() }).strict(),
+    rush: z.object({
+      hold_drift: z.number().min(0), push_speed: z.number().positive(), shed_reach: z.number().positive(), edge_lane: z.number().positive(),
+      edge_aim_behind: z.number().min(0), turn: z.object({ edge: z.number().positive(), interior: z.number().positive(), free: z.number().positive() }).strict(),
+      sack_reach: z.number().positive(), break_down: z.number().positive(), blocker_gap: z.number().positive(), ride_wide: z.number().min(0), ride_deep: z.number().min(0), real_within: z.number().positive(),
+    }).strict(),
+    moves: z.object({
+      climb: z.object({ forward: z.number().positive(), lateral_max: z.number().positive() }).strict(),
+      'pocket-slide': z.object({ lateral: z.number().positive() }).strict(),
+      'pocket-escape': z.object({ outside_tackle: z.number().min(0) }).strict(),
+      'happy-feet': z.object({ lateral: z.number().positive(), forward: z.number().positive(), back: z.number().positive() }).strict(),
+      timing: z.object({ moving: z.number().positive(), early: z.number().min(0), late: z.number().min(0) }).strict(),
+    }).strict(),
+    rep_types: z.array(z.object({
+      id: Id, holds: z.boolean(), pressure: z.enum(['holds', 'edge', 'push', 'collapse', 'free']), response: z.enum(POCKET_RESPONSES),
+      also: z.enum(POCKET_RESPONSES).optional(), blitz: z.enum(['picked-up', 'free']).optional(), terms: z.array(Id).min(1),
+    }).strict()).min(1),
+    hold_until: z.number().positive(),
+    open_late: z.number().min(0),
+    on_time: z.number().positive(),
+    max_time: z.number().positive(),
+    tiers: z.object({ youth: PocketTier, jv: PocketTier }).strict(),
+    modes: z.object({
+      good: z.object({ hold: z.number().min(0).max(1), arrive: Window }).strict(),
+      bad: z.object({ hold: z.number().min(0).max(1), arrive: Window }).strict(),
+      unpredictable: z.object({ hold: Window, arrive: Window }).strict(),
+    }).strict(),
+    reps: z.number().int().positive(),
+    points: z.object({ move: z.number(), timing: z.number(), no_sack: z.number(), ball_out: z.number(), on_time: z.number(), completion: z.number(), admissible_move: z.number() }).strict(),
+    ...Review,
+  })
+  .strict()
+  .refine(reviewComplete, reviewMessage);
+export type Pocket = z.infer<typeof Pocket>;
+export type PocketType = Pocket['rep_types'][number];
