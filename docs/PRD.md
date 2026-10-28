@@ -6,7 +6,7 @@
 | **Date** | 2026-10-25 |
 | **Owner / admin** | gevagit (parent) |
 | **Player** | Sahar, #4, 11, left-handed QB (plays SYFL youth; trains to NFHS high-school rules) |
-| **Current phase** | Phase 2: Playable slice. The pre-snap routine game is playable first (owner, 2026-10-26); Bubble next. Bible batches 1, 2 and 3 signed off by the owner with defaults |
+| **Current phase** | Phase 2: Playable slice. The pre-snap routine game is playable first (owner, 2026-10-26); Bubble next. Bible batches 1-4 signed off by the owner with defaults (batch 4, the pocket, 2026-10-28) |
 
 ---
 

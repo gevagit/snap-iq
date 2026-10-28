@@ -1,4 +1,4 @@
-# Pocket rules and the Bubble rep types (PRD §6.7, §8.4). Batch 4, not yet reviewed.
+# Pocket rules and the Bubble rep types (PRD §6.7, §8.4). Batch 4, signed off by the owner with defaults (2026-10-28).
 # Sides are by his throwing hand (content/offense/quarterback.yaml); nothing here says left or right.
 # Distances in yards, times in seconds after the snap, speeds in yards per second.
 version: 1
@@ -89,4 +89,6 @@ modes:
 
 reps: 8
 points: { move: 20, timing: 10, no_sack: 20, ball_out: 15, on_time: 10, completion: 10, admissible_move: 10 }
-reviewed: false
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-28"

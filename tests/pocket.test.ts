@@ -6,7 +6,7 @@ import { PocketSim, gradePocket, idealPolicy, makePocketRep, runPolicy, type Inp
 const raw = loadRawContent();
 const c = parsePlayContent(raw);
 
-/** The first rep of a type for a tier (playtest on: batch 4 is not signed off yet). */
+/** The first rep of a type for a tier. */
 function repOf(type: string, tier: 'youth' | 'jv' = 'jv', mode: 'good' | 'bad' | 'unpredictable' = 'good'): PocketRep {
   for (let i = 0; i < 400; i++) {
     const rep = makePocketRep(c, tier, mode, 7 + i, i, true);
@@ -19,9 +19,8 @@ const idle = () => ({ mx: 0, my: 0 });
 const hold = (from: number, until: number, u: Input) => (sim: PocketSim) => (sim.t >= from && sim.t < until ? u : idle());
 
 describe('Bubble: the pocket engine', () => {
-  it('waits for the owner to sign off batch 4: no reps without playtest', () => {
-    expect(makePocketRep(c, 'youth', 'good', 1, 0, false)).toBeNull();
-    expect(makePocketRep(c, 'youth', 'good', 1, 0, true)).not.toBeNull();
+  it('runs on the signed-off Football Bible without playtest (batch 4 signed off)', () => {
+    expect(makePocketRep(c, 'youth', 'good', 1, 0, false)!.reviewed).toBe(true);
   });
 
   it('is deterministic: the same rep and the same inputs give the same play (golden replay)', () => {
