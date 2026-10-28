@@ -212,7 +212,7 @@ export interface PocketResult {
   release?: V;
 }
 
-interface Rusher { s: RushScript; x: number; y: number; vx: number; vy: number; speed: number; heading: number; phase: 'approach' | 'engaged' | 'free'; meet: number; aimed: boolean; top: number; tau: number; turn: number; relT: number | null }
+interface Rusher { s: RushScript; x: number; y: number; vx: number; vy: number; speed: number; heading: number; phase: 'approach' | 'engaged' | 'free'; meet: number; cornered: boolean; aimed: boolean; top: number; tau: number; turn: number; relT: number | null }
 
 export class PocketSim {
   readonly c: PlayContent;
@@ -251,7 +251,7 @@ export class PocketSim {
       const blitzer = !play.sim.rushers.find((x) => x.role === s.role)!.dl;
       const pr = prof[blitzer ? c.speeds.jobs.blitz : c.speeds.jobs.rush]!;
       const turn = s.kind === 'edge' ? c.pocket.rush.turn.edge : s.kind === 'free' ? c.pocket.rush.turn.free : c.pocket.rush.turn.interior;
-      return { s, x: p.x, y: p.y, vx: 0, vy: 0, speed: 0, heading: Math.atan2(-p.x, q0.y - p.y), phase: s.blocker ? 'approach' : 'free', meet: s.blocker ? meetTime(play, s.role) : 0, aimed: false, top: pr.top * rep.speedMul, tau: pr.tau, turn, relT: null };
+      return { s, x: p.x, y: p.y, vx: 0, vy: 0, speed: 0, heading: Math.atan2(-p.x, q0.y - p.y), phase: s.blocker ? 'approach' : 'free', meet: s.blocker ? meetTime(play, s.role) : 0, cornered: false, aimed: false, top: pr.top * rep.speedMul, tau: pr.tau, turn, relT: null };
     });
     this.live.add('QB');
     for (const r of this.rushers) { this.live.add(r.s.role); if (r.s.blocker) this.live.add(r.s.blocker); }
@@ -303,8 +303,12 @@ export class PocketSim {
     this.pending = { action, release: this.t + this.c.drills.ball.release_delay + reset };
   }
 
+  /** After the rep is decided, keep moving everyone (for the picture) without changing the result. */
+  coast = false;
+
   step(input: Input) {
-    if (this.result) return;
+    if (this.result && !this.coast) return;
+    if (this.result) input = { mx: 0, my: 0 };
     const c = this.c, P = c.pocket, play = this.rep.play;
     this.t += STEP;
     const t = this.t;
@@ -328,6 +332,8 @@ export class PocketSim {
       const fr = play.offense.frame;
       this.qb.x = Math.min(fr.rightSideline - 0.5, Math.max(fr.leftSideline + 0.5, this.qb.x + this.qb.vx * STEP));
       this.qb.y += this.qb.vy * STEP;
+      // his linemen are in front of him: inside the tackles he stops short of them unless he runs
+      if (!this.running && Math.abs(this.qb.x) < tackleX(c) + 0.5 && this.qb.y > -P.pocket_front) { this.qb.y = -P.pocket_front; this.qb.vy = Math.min(0, this.qb.vy); }
       if (this.moveStart === null && (t >= this.setT || this.broke) && Math.hypot(input.mx, input.my) > 0.15) this.moveStart = t;
     }
     // the rush
@@ -352,11 +358,17 @@ export class PocketSim {
         const dx = tx - r.x, dy = ty - r.y, d = Math.hypot(dx, dy);
         if (d > 0.05 && r.phase === 'engaged') { r.x += (dx / d) * Math.min(d, v * STEP); r.y += (dy / d) * Math.min(d, v * STEP); }
       }
+      if (r.phase === 'free' && this.result?.kind === 'sack' && this.result.by === r.s.role) { r.speed = 0; continue; }
       if (r.phase === 'free') {
         // he chases: toward the top of the rush first (a speed rusher), then at the quarterback, turning only so fast
         let tx = this.qb.x, ty = this.qb.y;
-        if (r.s.kind === 'edge' && !r.aimed) {
-          // the top of the rush: the spot just behind his set point, until he gets there
+        if (r.s.kind === 'edge' && !r.cornered) {
+          // around the tackle first: the corner of his arc, outside the tackle at the depth of the set point
+          const cx = r.s.side * (tackleX(c) + R.edge_lane), cy = this.set.y + R.edge_corner;
+          if (Math.hypot(cx - r.x, cy - r.y) < 1.0 || r.y < cy) r.cornered = true; else { tx = cx; ty = cy; }
+        }
+        if (r.s.kind === 'edge' && r.cornered && !r.aimed) {
+          // then the top of the rush: the spot just behind his set point, until he gets there
           const ax = this.set.x + r.s.side * 0.3, ay = this.set.y - R.edge_aim_behind;
           if (Math.hypot(ax - r.x, ay - r.y) < 1.0 || r.y < ay) r.aimed = true; else { tx = ax; ty = ay; }
         }
@@ -372,7 +384,7 @@ export class PocketSim {
         r.x += Math.sin(r.heading) * r.speed * STEP;
         r.y += Math.cos(r.heading) * r.speed * STEP;
         if (this.real === null && Math.hypot(r.x - this.set.x, r.y - this.set.y) < P.rush.real_within) this.real = t;
-        if (!this.ballGone(t) && Math.hypot(r.x - this.qb.x, r.y - this.qb.y) < R.sack_reach && this.qb.y < 0) {
+        if (!this.result && !this.ballGone(t) && Math.hypot(r.x - this.qb.x, r.y - this.qb.y) < R.sack_reach && this.qb.y < 0) {
           this.result = { kind: 'sack', t, by: r.s.role };
         }
       } else if (r.phase === 'engaged' && r.s.kind === 'push' && t >= r.s.win && this.real === null && Math.hypot(r.x - this.set.x, r.y - this.set.y) < P.rush.real_within) this.real = t;
@@ -389,7 +401,7 @@ export class PocketSim {
   private release(r: Rusher) {
     r.phase = 'free'; r.relT = this.t;
     r.heading = Math.atan2(this.qb.x - r.x, this.qb.y - r.y);
-    if (r.s.kind === 'edge') r.heading = Math.atan2(this.set.x + r.s.side * 0.3 - r.x, this.set.y - this.c.pocket.rush.edge_aim_behind - r.y);
+    if (r.s.kind === 'edge') r.heading = Math.atan2(r.s.side * (tackleX(this.c) + this.c.pocket.rush.edge_lane) - r.x, this.set.y + this.c.pocket.rush.edge_corner - r.y);
     r.speed = 1.5;
   }
 

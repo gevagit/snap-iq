@@ -405,7 +405,7 @@ export const Pocket = z
     ...Header,
     movement: z.object({ shuffle: MoveProfile, run: MoveProfile, run_at: z.number().min(0).max(1), offhand_reset: z.object({ above: z.number().positive(), seconds: z.number().min(0) }).strict() }).strict(),
     rush: z.object({
-      hold_drift: z.number().min(0), push_speed: z.number().positive(), shed_reach: z.number().positive(), edge_lane: z.number().positive(),
+      hold_drift: z.number().min(0), push_speed: z.number().positive(), shed_reach: z.number().positive(), edge_lane: z.number().positive(), edge_corner: z.number(),
       edge_aim_behind: z.number().min(0), turn: z.object({ edge: z.number().positive(), interior: z.number().positive(), free: z.number().positive() }).strict(),
       sack_reach: z.number().positive(), break_down: z.number().positive(), blocker_gap: z.number().positive(), ride_wide: z.number().min(0), ride_deep: z.number().min(0), real_within: z.number().positive(),
     }).strict(),
@@ -420,6 +420,8 @@ export const Pocket = z
       id: Id, holds: z.boolean(), pressure: z.enum(['holds', 'edge', 'push', 'collapse', 'free']), response: z.enum(POCKET_RESPONSES),
       also: z.enum(POCKET_RESPONSES).optional(), blitz: z.enum(['picked-up', 'free']).optional(), terms: z.array(Id).min(1),
     }).strict()).min(1),
+    pocket_edge: z.number().positive(),
+    pocket_front: z.number().positive(),
     hold_until: z.number().positive(),
     open_late: z.number().min(0),
     on_time: z.number().positive(),

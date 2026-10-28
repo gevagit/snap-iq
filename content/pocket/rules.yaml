@@ -19,6 +19,7 @@ rush:
   push_speed: 1.8             # a bull rusher drives his blocker back toward him
   shed_reach: 1.7             # a pushing rusher sheds his blocker once he is this close to the quarterback
   edge_lane: 1.6              # a speed rusher runs his arc this far outside the tackle
+  edge_corner: 1.0            # ...turning the corner level with this far in front of the set point
   edge_aim_behind: 0.3        # ...aiming at the spot this far behind the set point (the top of the rush)
   turn: { edge: 2.0, interior: 4.0, free: 3.2 }   # how fast a rusher can turn toward him at top speed (radians/s)
   break_down: 1.2             # facing more than this far away from him (radians), a rusher slows down to turn back
@@ -26,7 +27,14 @@ rush:
   blocker_gap: 0.85           # a blocker on a rusher stays this far in front of him, between him and the quarterback
   ride_wide: 1.5              # on the open side of a collapse the tackle rides his edge rusher this much wider...
   ride_deep: 3.5              # ...and this far past his set point, which opens the lane up and out
-  real_within: 3.0            # the pressure turns real when a rusher who has won (or is driving his man back) is this close to his set point
+  real_within: 4.0            # the pressure turns real when a rusher who has won (or is driving his man back) is this close to his set point
+
+# Inside the tackles he cannot climb closer than this to the line of scrimmage: his linemen are there. Outside
+# the tackles, or running, he can.
+pocket_front: 3.0
+
+# The pocket edge he sees on the ground (PRD §8.4): this far around his set point, bending in where a rusher is closer.
+pocket_edge: 2.8
 
 # What counts as each move (PRD §6.7), measured from his set point.
 moves:
@@ -36,7 +44,7 @@ moves:
   happy-feet: { lateral: 1.4, forward: 2.2, back: 1.2 }
   # he starts to move when his speed passes `moving`; the move is on time from `early` before the pressure turns
   # real to `late` after it
-  timing: { moving: 0.7, early: 0.6, late: 0.7 }
+  timing: { moving: 0.7, early: 0.9, late: 0.7 }
 
 # The rep types (PRD §8.4). response: the move that is right; pressure: what the rush does.
 #   holds: every rusher stays blocked until hold_until, then the edge rusher on the off-hand side wins
