@@ -13,8 +13,8 @@ export const SHAPES = { X: '◆', Y: '●', Z: '▲', H: '■', R: '★', F: '�
 const STYLE = {
   sky: ['#E3E7EB', '#E3E7EB'], oob: '#BAC3BA', turf: ['#CAD4C7', '#C2CDBF'], endzone: '#BFC9BB', line: '#FFFFFF', num: 'rgba(255,255,255,0.95)',
   los: '#1F5FD1', goal: '#5B6573', shadow: 'rgba(28,36,48,0.17)', edgeW: 1.5, ownAlpha: 0.6,
-  D: { jersey: '#FFFFFF', edge: '#C94A16', num: '#C94A16', pants: '#F3E7E0', socks: '#C94A16', shoe: '#1C2430', under: '#F0DDD3', glove: '#C94A16', helmet: '#C94A16', helmetHi: 'rgba(255,255,255,0.22)', mask: '#1C2430' },
-  O: { jersey: '#E3ECFB', edge: '#1F5FD1', num: '#1F5FD1', pants: '#EEF3FC', socks: '#1F5FD1', shoe: '#1C2430', under: '#D6E2F7', glove: '#1F5FD1', helmet: '#1F5FD1', helmetHi: 'rgba(255,255,255,0.22)', mask: '#1C2430' },
+  D: { jersey: '#FFFFFF', edge: '#C94A16', num: '#C94A16', pants: '#F3E7E0', socks: '#C94A16', shoe: '#1C2430', under: '#F0DDD3', glove: '#C94A16', helmet: '#C94A16', helmetHi: 'rgba(255,255,255,0.22)', mask: '#1C2430', stripe: '#FFFFFF' },
+  O: { jersey: '#E3ECFB', edge: '#1F5FD1', num: '#1F5FD1', pants: '#EEF3FC', socks: '#1F5FD1', shoe: '#1C2430', under: '#D6E2F7', glove: '#1F5FD1', helmet: '#1F5FD1', helmetHi: 'rgba(255,255,255,0.22)', mask: '#1C2430', stripe: '#FFFFFF' },
   tag: { bg: '#FFFFFF', fg: '#8A2E0A', ofg: '#173F8F', obg: '#FFFFFF', border: '#C94A16', oborder: '#1F5FD1' },
   hands: { glove: '#FFFFFF', sleeve: 'rgba(31,95,209,0.30)', edge: '#1F5FD1' }, ball: '#8A5A3C', lace: '#FFFFFF'
 };
@@ -51,25 +51,17 @@ export function sceneFor(rep, opts = {}) {
     const f = clamp((t - sim.tStart) / sim.dt, 0, sim.steps), k = Math.floor(f), k2 = Math.min(sim.steps, k + 1), u = f - k;
     return [tr.xs[k] + (tr.xs[k2] - tr.xs[k]) * u, tr.ys[k] + (tr.ys[k2] - tr.ys[k]) * u];
   };
-  const live = opts.live || null;
-  const qb = live ? (t) => { const q = live.pos('QB', t); return [q.x, q.y]; } : posFn(track('QB'));
+  const qb = posFn(track('QB'));
   const fault = opts.fault || null;
   const withFault = (t, f) => (fault && t.id === fault.id ? (tt) => { const q = f(tt); return tt < 0 ? [q[0], fault.y] : q; } : f);
   const players = sim.tracks.filter((t) => t.id !== 'QB').map((t) => ({
     id: t.id, side: t.team, role: poseRole(play, t), num: t.number, label: t.team === 'O' ? (SHAPES[t.id] ? SHAPES[t.id] + ' ' + t.id : '') : String(t.number),
-    pos: live ? (tt) => { const q = live.pos(t.id, tt); return [q.x, q.y]; } : withFault(t, posFn(t)),
+    pos: withFault(t, posFn(t)),
     lookT: 0.9, engT: null, mate: null,
   }));
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
   // blocks: a rusher and his blocker lock up when the rusher stops at the meeting point
-  if (live) {
-    // blocks: the pocket simulation knows when each rusher meets his blocker
-    for (const r of live.rushers) {
-      if (!r.s.blocker || !byId[r.s.blocker] || !byId[r.s.role]) continue;
-      byId[r.s.role].engT = r.meet; byId[r.s.role].mate = r.s.blocker; byId[r.s.blocker].engT = r.meet; byId[r.s.blocker].mate = r.s.role;
-    }
-  }
-  for (const r of live ? [] : sim.rushers) {
+  for (const r of sim.rushers) {
     if (!r.blocker || !byId[r.blocker] || !byId[r.role]) continue;
     const p = byId[r.role];
     let te = 0.7;
@@ -102,25 +94,47 @@ export function sceneFor(rep, opts = {}) {
     if (t < S.Tt) return ease(S.yawHold ?? (S.yawPre || 0), read, t, S.turnAt, S.turnAt + 0.45);
     return ease(read, S.yawThrow, t, S.Tt, S.Tt + 0.45);
   };
-  if (live) {
-    // frames come as the simulation runs; the rep lasts at most max_time (plus the ball in the air)
-    S.live = true; S.sim = live; S.T1 = live.c.pocket.max_time + 2;
-    initFrames(S);
-  } else precompute(S);
+  precompute(S);
   return S;
 }
 
 /**
- * A live scene for Bubble: the same players and poses, but their positions come from the pocket simulation as it
- * runs (sim.pos), and the frames are filled in as it advances (extendLive). His eyes start on his first read.
+ * A live scene for Pocket Instinct (src/instinct): his line, the rushers, the allies and their shadows, with their
+ * positions from the snap simulation as it runs (frames are filled in by extendInstinct). His eyes look straight
+ * downfield unless he turns his head.
  */
-export function liveScene(rep, sim) {
-  return sceneFor({ ...rep, freeze2: 0 }, { readId: rep.firstRead, turnAt: sim.catchT, aimAt: sim.catchT + 1.2, live: sim });
+export function instinctScene(sim) {
+  const c = sim.c, snap = sim.snap, fr = snap.frame;
+  const at = (id) => (t) => { const q = sim.pos(id, t); return [q.x, q.y]; };
+  const players = [];
+  for (const id of ['LT', 'LG', 'C', 'RG', 'RT']) players.push({ id, side: 'O', role: id === 'C' ? 'C' : 'OL', num: { LT: 77, LG: 64, C: 55, RG: 66, RT: 75 }[id], label: '', pos: at(id), lookT: 0.9 });
+  for (const a of snap.allies) {
+    players.push({ id: a.id, side: 'O', role: 'WR', num: { X: 1, Y: 88, Z: 11, H: 2, R: 22 }[a.id], label: SHAPES[a.id] + ' ' + a.id, pos: at(a.id), lookT: 0.4 });
+    players.push({ id: 'S-' + a.id, side: 'D', role: 'CB', num: 20 + snap.allies.indexOf(a), label: '', pos: at('S-' + a.id), lookT: 0 });
+  }
+  for (const h of snap.hitters) {
+    const p = { id: h.id, side: 'D', role: h.kind === 'free' ? 'BLZ' : h.kind === 'drop' ? 'LB' : 'DL', num: h.number, label: String(h.number), pos: at(h.id), lookT: 0 };
+    if (h.blocker) { p.engT = c.instinct.rush.meet; p.mate = h.blocker; }
+    players.push(p);
+  }
+  const byId = {}; players.forEach((p) => { byId[p.id] = p; });
+  for (const h of snap.hitters) if (h.blocker && byId[h.blocker]) { byId[h.blocker].engT = c.instinct.rush.meet; byId[h.blocker].mate = h.id; }
+  const S = {
+    players, byId, live: true, isim: sim,
+    field: { xl: fr.leftSideline, xr: fr.rightSideline, hashes: [fr.leftHash, fr.rightHash], los: 35 },
+    T0: -0.6, T1: c.instinct.snap.max_time + 2,
+    cam: (t) => { const q = sim.pos('QB', t); return { x: q.x, y: q.y, eye: 1.64 }; },
+    Tt: Infinity, Tc: Infinity, target: null, catchPt: null, release: null, runFrom: null, yawOverride: null,
+    readId: null, readText: '', turnAt: Infinity, yawPre: 0, yaw: () => 0,
+  };
+  initFrames(S);
+  return S;
 }
-export function extendLive(S, t) {
-  for (const r of S.sim.rushers) {
-    const p = S.byId[r.s.role];
-    if (p && r.relT != null) { p.relT = r.relT; if (r.s.blocker && S.byId[r.s.blocker]) S.byId[r.s.blocker].relT = r.relT; }
+export function extendInstinct(S, t) {
+  for (const l of S.isim.hitters) {
+    if (l.relT == null) continue;
+    const p = S.byId[l.h.id]; if (p) p.relT = l.relT;
+    if (l.h.blocker && S.byId[l.h.blocker]) S.byId[l.h.blocker].relT = l.relT;
   }
   extendFrames(S, t);
 }
@@ -258,7 +272,7 @@ function precompute(S) {
   initFrames(S);
   extendFrames(S, S.T1);
 }
-/** Frames are filled in order; a live scene (Bubble) fills them as its simulation advances. */
+/** Frames are filled in order; a live scene (Pocket Instinct) fills them as its simulation advances. */
 function initFrames(S) {
   const N = Math.round((S.T1 - S.T0) / DT) + 1;
   S.data = S.players.map(() => new Float32Array(N * NF));
@@ -475,6 +489,10 @@ export function createEyes(canvas) {
         const hp = hull(J.torso.map(pp));
         c.beginPath(); hp.forEach((q, i) => { if (i) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y); }); c.closePath();
         c.fillStyle = team.jersey; c.fill(); c.lineJoin = 'round'; c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke();
+        // shoulder pads (a cap over each shoulder) and the belt
+        for (const sh of [Pj.shL, Pj.shR]) { c.beginPath(); c.arc(sh.x, sh.y, Math.max(2, 0.12 * k * sh.sc), Math.PI, 0); c.closePath(); c.fillStyle = team.jersey; c.fill(); c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke(); }
+        c.strokeStyle = team.edge; c.lineWidth = Math.max(1, 0.035 * k * Pj.chest.sc); c.beginPath();
+        c.moveTo(Pj.hiL.x + (Pj.shL.x - Pj.hiL.x) * 0.12, Pj.hiL.y + (Pj.shL.y - Pj.hiL.y) * 0.12); c.lineTo(Pj.hiR.x + (Pj.shR.x - Pj.hiR.x) * 0.12, Pj.hiR.y + (Pj.shR.y - Pj.hiR.y) * 0.12); c.stroke();
         const cxp = (Pj.shL.x + Pj.shR.x + Pj.hiL.x + Pj.hiR.x) / 4, cyp = (Pj.shL.y + Pj.shR.y) / 2 * 0.55 + (Pj.hiL.y + Pj.hiR.y) / 2 * 0.45;
         const fs = Math.abs((Pj.hiL.y + Pj.hiR.y) / 2 - (Pj.shL.y + Pj.shR.y) / 2) * 0.55;
         if (fs > 5 && p.num != null) {
@@ -487,10 +505,16 @@ export function createEyes(canvas) {
       { r: Pj.head.r, d: () => {
         const hr = 0.165 * k * Pj.head.sc, hx = Pj.head.x, hy = Pj.head.y;
         const fdot = (J.faceDir[0] * toCam[0] + J.faceDir[1] * toCam[1]) / tl;
-        const mask = () => { const mx = Pj.facePt.x, my = Pj.facePt.y, mw = hr * (0.55 + 0.45 * Math.abs(fdot)); c.strokeStyle = team.mask; c.lineCap = 'round'; c.lineWidth = Math.max(1.2, hr * 0.22); c.beginPath(); c.moveTo(mx - mw * 0.5, my - hr * 0.05); c.lineTo(mx + mw * 0.5, my - hr * 0.05); c.moveTo(mx - mw * 0.42, my + hr * 0.3); c.lineTo(mx + mw * 0.42, my + hr * 0.3); c.stroke(); };
+        const mask = () => {
+          const mx = Pj.facePt.x, my = Pj.facePt.y, mw = hr * (0.55 + 0.45 * Math.abs(fdot)); c.strokeStyle = team.mask; c.lineCap = 'round'; c.lineWidth = Math.max(1.2, hr * 0.2); c.beginPath();
+          c.moveTo(mx - mw * 0.5, my - hr * 0.05); c.lineTo(mx + mw * 0.5, my - hr * 0.05); c.moveTo(mx - mw * 0.42, my + hr * 0.3); c.lineTo(mx + mw * 0.42, my + hr * 0.3);
+          c.moveTo(mx, my - hr * 0.05); c.lineTo(mx, my + hr * 0.42); c.stroke();
+        };
         if (fdot < -0.15) mask();
         c.beginPath(); c.arc(hx, hy, hr, 0, Math.PI * 2); c.fillStyle = team.helmet; c.fill(); c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke();
         c.beginPath(); c.arc(hx - hr * 0.3, hy - hr * 0.35, hr * 0.38, 0, Math.PI * 2); c.fillStyle = team.helmetHi; c.fill();
+        // the helmet stripe, seen from the front or the back
+        if (Math.abs(fdot) > 0.35) { c.strokeStyle = team.stripe; c.lineCap = 'butt'; c.lineWidth = Math.max(1, hr * 0.2); c.beginPath(); c.moveTo(hx, hy - hr * 0.97); c.lineTo(hx, hy + hr * (fdot < 0 ? -0.1 : 0.6)); c.stroke(); }
         if (fdot >= -0.15) mask();
       } }
     ];
@@ -565,6 +589,8 @@ export function createEyes(canvas) {
     order.filter((o) => o.p.side === 'D').forEach((o) => { info[o.p.id] = drawFigure(ctx, o.p, o.s, st); });
     lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, layer.width, layer.height); lctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     order.filter((o) => o.p.side === 'O' && o.r >= 2.2).forEach((o) => { info[o.p.id] = drawFigure(lctx, o.p, o.s, st); });
+    S.screen = {};
+    for (const [id, inf] of Object.entries(info)) if (inf && inf.head) S.screen[id] = { x: inf.head.x, y: inf.head.y + inf.hr * 4, r: Math.max(28, inf.hr * 6) };
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = st.ownAlpha; ctx.drawImage(layer, 0, 0); ctx.restore();
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     if (ball.mode === 'ground' || ball.mode === 'air') drawBall(ctx, ball.p, st);
@@ -575,7 +601,7 @@ export function createEyes(canvas) {
       const p = o.p, s = o.s, inf = info[p.id], lab = p.label; if (!lab) return;
       const g = proj(s[F_X], s[F_Y], 0), xc = (s[F_X] - cam.x) * cam.cv - (s[F_Y] - cam.y) * cam.sv;
       const off = g.dy < 0.6 || g.x < -4 || g.x > W + 4 || (p.side === 'O' && o.r < 2.2);
-      const def = p.side === 'D', look = [def ? st.tag.bg : st.tag.obg, def ? st.tag.fg : st.tag.ofg, def ? st.tag.border : st.tag.oborder];
+      const def = p.side === 'D', look = p.glow ? ['#2F7D4F', '#FFFFFF', '#2F7D4F'] : [def ? st.tag.bg : st.tag.obg, def ? st.tag.fg : st.tag.ofg, def ? st.tag.border : st.tag.oborder];
       if (off) (xc > 0 ? edge.right : edge.left).push({ lab, y: clamp(g.dy > 0.6 ? Math.min(g.y, H * 0.8) : H * 0.6, HY + 40, H - 110), look });
       else if (view.labels && inf && inf.head) chip(lab, inf.head.x, inf.head.y - inf.hr - 6, look[0], look[1], look[2], null, def ? 12 : 13);
     });
