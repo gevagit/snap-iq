@@ -11,6 +11,7 @@ categories:
   offense: Offense (batch 2) - personnel, formations, motion, routes, concepts, protections
   defense: Defense (batch 2) - fronts, positions, shells, coverages, rotations, pressures
   quarterback: Quarterback play (batch 3) - the pre-snap routine, drops, escape and decisions
+  pocket: Pocket movement (batch 4) - the pocket, the pass rush and how he moves against it
 
 terms:
   # ---------------------------------------------------------------- field
@@ -1927,3 +1928,147 @@ terms:
     reviewed: true
     reviewer: owner
     reviewed_at: "2026-10-26"
+
+  # ================================================================ batch 4: pocket movement
+  - id: pocket
+    term: Pocket
+    category: pocket
+    batch: 4
+    definition: "The protected area behind the offensive line where the quarterback sets up to throw, roughly tackle to tackle and a few yards deep."
+    aliases: [the pocket]
+    see: [set-point, tackle-box]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: set-point
+    term: Set point
+    category: pocket
+    batch: 4
+    definition: "The spot where the quarterback's drop ends and he sets his feet to throw."
+    aliases: [launch point, set spot]
+    see: [pocket]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: clean-pocket
+    term: Clean pocket
+    category: pocket
+    batch: 4
+    definition: "Every rusher is blocked and the pocket holds: he stays in it and throws on time."
+    aliases: [clean]
+    see: [happy-feet]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: happy-feet
+    term: Happy feet
+    category: pocket
+    batch: 4
+    definition: "Moving around or leaving the pocket when it is clean, which throws off the timing of the play."
+    aliases: []
+    see: [clean-pocket]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: speed-rush
+    term: Speed rush
+    category: pocket
+    batch: 4
+    definition: "An edge rusher running around the tackle toward the spot behind the quarterback's set point."
+    aliases: [edge rush, edge speed rush]
+    see: [climb]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: bull-rush
+    term: Bull rush
+    category: pocket
+    batch: 4
+    definition: "A rusher driving his blocker straight back toward the quarterback, shrinking the pocket from the inside."
+    aliases: [interior push, push]
+    see: [pocket-slide]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: free-rusher
+    term: Free rusher
+    category: pocket
+    batch: 4
+    definition: "A rusher no one blocks. The ball has to come out before he gets there (hot route)."
+    aliases: [unblocked rusher]
+    see: [hot-route, blitz]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: blitz-pickup
+    term: Blitz pickup
+    category: pocket
+    batch: 4
+    definition: "A blitzer blocked by a back or a lineman, so the quarterback can stay in the pocket and keep reading."
+    aliases: [picked up]
+    see: [blitz, check-release]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: pocket-collapse
+    term: Pocket collapse
+    category: pocket
+    batch: 4
+    definition: "Pressure breaking through from more than one point, so no spot in the pocket is safe."
+    aliases: [collapse, full collapse]
+    see: [pocket-escape]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: climb
+    term: Climb
+    category: pocket
+    batch: 4
+    definition: "Stepping up in the pocket toward the line of scrimmage so edge rushers run past behind him."
+    aliases: [step up]
+    see: [speed-rush, pocket]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: pocket-slide
+    term: Pocket slide
+    category: pocket
+    batch: 4
+    definition: "Short shuffle steps sideways in the pocket, base kept and eyes downfield, away from pressure inside."
+    aliases: [slide away, shuffle]
+    see: [bull-rush, pocket]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: pocket-escape
+    term: Escape
+    category: pocket
+    batch: 4
+    definition: "Leaving the pocket outside the tackle box when it collapses, toward the side with room (his throwing-hand side when both are open)."
+    aliases: [escape the pocket]
+    see: [escape-lane, pocket-collapse, throwaway]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"
+
+  - id: off-hand-reset
+    term: Off-hand reset
+    category: pocket
+    batch: 4
+    definition: "After moving toward his off-hand side, the quarterback turns his hips and shoulders back before he can throw, which costs time."
+    aliases: [reset, flip the hips]
+    see: [pocket-escape]
+    reviewed: true
+    reviewer: owner
+    reviewed_at: "2026-10-28"

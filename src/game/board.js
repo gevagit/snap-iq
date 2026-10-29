@@ -122,3 +122,45 @@ export function drawBoard(canvas, rep, t, opts) {
     if (p.label) { ctx.fillStyle = o ? B.oText : B.dText; ctx.font = '700 ' + Math.max(8, Math.round(s * (p.label.length > 2 ? 0.62 : 0.78))) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.label, X(q.x), Y(q.y) + 0.5); }
   });
 }
+
+/**
+ * The pocket Breakdown (PRD §8.4): his path against the right move (the ghost line), the rushers' paths, the pocket
+ * edge, and everyone where they were at time t.
+ */
+export function drawPocketBoard(canvas, rep, sim, ideal, t) {
+  const fr = rep.play.offense.frame, P = sim.c.pocket;
+  // the pocket and the rush, close up
+  const lo = Math.max(fr.leftSideline - 1, -12), hi = Math.min(fr.rightSideline + 1, 12);
+  const { ctx, s, X, Y } = field(canvas, fr, lo, hi, -10, 5);
+  const tt = Math.min(t, sim.t);
+  const path = (h, upTo, color, width, dash) => {
+    if (!h) return;
+    const n = Math.min(h.xs.length, Math.floor(upTo / (1 / 120)) + 1);
+    if (n < 2) return;
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []);
+    ctx.beginPath(); ctx.moveTo(X(h.xs[0]), Y(h.ys[0])); for (let k = 1; k < n; k += 2) ctx.lineTo(X(h.xs[k]), Y(h.ys[k])); ctx.stroke(); ctx.setLineDash([]);
+  };
+  // the pocket edge around his set point
+  ctx.strokeStyle = 'rgba(242,193,78,0.9)'; ctx.lineWidth = Math.max(1.5, s * 0.12); ctx.setLineDash([s * 0.4, s * 0.25]);
+  ctx.beginPath(); ctx.arc(X(sim.set.x), Y(sim.set.y), P.pocket_edge * s, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  // the rushers' paths, the right move (ghost) and his path
+  for (const r of sim.rushers) path(sim.hist.get(r.s.role), tt, 'rgba(201,74,22,0.75)', Math.max(1.5, s * 0.12));
+  path(ideal.hist.get('QB'), ideal.t, '#2F7D4F', Math.max(2, s * 0.2), [s * 0.5, s * 0.3]);
+  path(sim.hist.get('QB'), tt, '#1C2430', Math.max(2.5, s * 0.22));
+  // where the pressure turned real, and where he started to move
+  const dot = (q, color, label) => {
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), s * 0.35, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '700 ' + Math.max(10, Math.round(s * 0.6)) + 'px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(label, X(q.x) + s * 0.6, Y(q.y));
+  };
+  if (Number.isFinite(rep.real) && rep.real <= sim.t) dot(sim.pos('QB', rep.real), '#C94A16', `pressure real ${rep.real.toFixed(1)} s`);
+  if (sim.moveStart !== null) dot(sim.pos('QB', sim.moveStart), '#1C2430', `you moved ${sim.moveStart.toFixed(1)} s`);
+  // everyone at time t
+  const rad = s * 0.62;
+  for (const tr of rep.play.sim.tracks) {
+    const q = sim.pos(tr.id, tt), o = tr.team === 'O';
+    ctx.fillStyle = tr.id === 'QB' ? B.oEdge : o ? B.oFill : B.dFill; ctx.strokeStyle = o ? B.oEdge : B.dEdge; ctx.lineWidth = Math.max(1.2, s * 0.14);
+    ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), rad, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    const lab = o ? tr.id : tr.label;
+    if (lab) { ctx.fillStyle = tr.id === 'QB' ? '#fff' : o ? B.oText : B.dText; ctx.font = '800 ' + Math.max(8, Math.round(s * (lab.length > 1 ? 0.55 : 0.8))) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, X(q.x), Y(q.y) + 0.5); }
+  }
+}

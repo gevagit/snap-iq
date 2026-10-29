@@ -8,6 +8,7 @@ export interface Batch2Counts { formations: number; motions: number; routes: num
 const FILES: Partial<Record<ContentKey, string>> = {
   personnel: 'offense/personnel.yaml', formations: 'offense/formations.yaml', motions: 'offense/motions.yaml', routes: 'offense/routes.yaml',
   concepts: 'offense/concepts.yaml', protections: 'offense/protections.yaml', fronts: 'defense/fronts.yaml', coverages: 'defense/coverages.yaml', speeds: 'tuning/speeds.yaml', drills: 'tuning/drills.yaml', adjustments: 'offense/adjustments.yaml', quarterback: 'offense/quarterback.yaml',
+  pocket: 'pocket/rules.yaml',
 };
 
 function parse<T>(schema: ZodType<T>, data: unknown, key: ContentKey, errors: string[]): T | null {
@@ -35,6 +36,7 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
   const drills = parse(S.Drills, raw.drills, 'drills', errors);
   const adjustments = parse(S.Adjustments, raw.adjustments, 'adjustments', errors);
   const quarterback = parse(S.Quarterback, raw.quarterback, 'quarterback', errors);
+  const pocket = parse(S.Pocket, raw.pocket, 'pocket', errors);
 
   const term = (file: string, owner: string, id: string) => {
     if (glossary.success && !terms.has(id)) errors.push(`${file}: ${owner} uses term ${id}, which is not in the glossary`);
@@ -187,6 +189,26 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     for (const [cid, d] of Object.entries(quarterback.drops)) for (const id of Object.values(d)) term('offense/quarterback.yaml', cid, id);
     term('offense/quarterback.yaml', 'escape', 'escape-lane');
   }
+  if (pocket) {
+    const file = 'pocket/rules.yaml';
+    const types = new Set(pocket.rep_types.map((t) => t.id));
+    if (types.size !== pocket.rep_types.length) errors.push(`${file}: duplicate rep type`);
+    for (const t of pocket.rep_types) {
+      for (const id of t.terms) term(file, t.id, id);
+      for (const r of [t.response, t.also]) if (r && r !== 'stand' && r !== 'ball-out') term(file, t.id, r);
+      if (t.holds !== (t.pressure === 'holds')) errors.push(`${file}: ${t.id} holds must match pressure: holds`);
+      if ((t.pressure === 'free') !== (t.blitz === 'free')) errors.push(`${file}: ${t.id} a free rusher comes only from an unblocked blitz`);
+    }
+    for (const [name, tier] of Object.entries(pocket.tiers)) {
+      for (const id of tier.types) if (!types.has(id)) errors.push(`${file}: ${name} uses unknown rep type ${id}`);
+      if (!tier.types.some((id) => pocket.rep_types.find((t) => t.id === id)?.holds)) errors.push(`${file}: ${name} has no rep type where the pocket holds`);
+      if (!tier.types.some((id) => !pocket.rep_types.find((t) => t.id === id)?.holds)) errors.push(`${file}: ${name} has no pressure rep type`);
+      if (coverages) for (const id of tier.coverages) if (!coverages.coverages.some((c) => c.id === id)) errors.push(`${file}: ${name} uses unknown coverage ${id}`);
+      if (fronts) for (const id of tier.fronts) if (!fronts.fronts.some((f) => f.id === id)) errors.push(`${file}: ${name} uses unknown front ${id}`);
+    }
+    for (const [name, m] of Object.entries(pocket.modes)) if (m.arrive[0] > m.arrive[1]) errors.push(`${file}: mode ${name} arrive window is backwards`);
+    for (const id of ['pocket', 'set-point', 'off-hand-reset', 'throwaway', 'free-blocking-zone', 'sack', 'quarterback-run']) term(file, 'pocket', id);
+  }
   if (coverages) for (const cv of coverages.coverages) for (const tl of cv.tells ?? []) if (tl.kind) term('defense/coverages.yaml', `${cv.id} tell`, tl.kind);
   if (coverages) for (const cv of coverages.coverages) term('defense/coverages.yaml', `${cv.id} answer`, cv.answer);
   if (speeds) for (const [job, prof] of Object.entries(speeds.jobs)) if (!speeds.profiles[prof]) errors.push(`tuning/speeds.yaml: job ${job} uses unknown profile ${prof}`);
@@ -204,6 +226,7 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     ...(drills ? [drills] : []),
     ...(adjustments ? [adjustments] : []),
     ...(quarterback ? [quarterback] : []),
+    ...(pocket ? [pocket] : []),
   ];
   return {
     formations: formations?.formations.length ?? 0,

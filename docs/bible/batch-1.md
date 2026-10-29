@@ -231,6 +231,24 @@
 | **Look-off** | The quarterback looks one way after the snap to pull a safety toward that side, then throws to the other side. | look off the safety, look him off |
 | **Roll-out** | The quarterback leaves the pocket toward his escape lane to buy time and find a receiver, run, or throw it away from outside the free-blocking zone. | roll out, rollout, scramble drill |
 
+### Pocket movement (batch 4) - the pocket, the pass rush and how he moves against it (13)
+
+| Term | Meaning | Also called |
+| --- | --- | --- |
+| **Pocket** | The protected area behind the offensive line where the quarterback sets up to throw, roughly tackle to tackle and a few yards deep. | the pocket |
+| **Set point** | The spot where the quarterback's drop ends and he sets his feet to throw. | launch point, set spot |
+| **Clean pocket** | Every rusher is blocked and the pocket holds: he stays in it and throws on time. | clean |
+| **Happy feet** | Moving around or leaving the pocket when it is clean, which throws off the timing of the play. |  |
+| **Speed rush** | An edge rusher running around the tackle toward the spot behind the quarterback's set point. | edge rush, edge speed rush |
+| **Bull rush** | A rusher driving his blocker straight back toward the quarterback, shrinking the pocket from the inside. | interior push, push |
+| **Free rusher** | A rusher no one blocks. The ball has to come out before he gets there (hot route). | unblocked rusher |
+| **Blitz pickup** | A blitzer blocked by a back or a lineman, so the quarterback can stay in the pocket and keep reading. | picked up |
+| **Pocket collapse** | Pressure breaking through from more than one point, so no spot in the pocket is safe. | collapse, full collapse |
+| **Climb** | Stepping up in the pocket toward the line of scrimmage so edge rushers run past behind him. | step up |
+| **Pocket slide** | Short shuffle steps sideways in the pocket, base kept and eyes downfield, away from pressure inside. | slide away, shuffle |
+| **Escape** | Leaving the pocket outside the tackle box when it collapses, toward the side with room (his throwing-hand side when both are open). | escape the pocket |
+| **Off-hand reset** | After moving toward his off-hand side, the quarterback turns his hips and shoulders back before he can throw, which costs time. | reset, flip the hips |
+
 ---
 
 | Rule | NFHS | What it says | Penalty | What it means for Sahar | Check |

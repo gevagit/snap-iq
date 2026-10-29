@@ -51,16 +51,25 @@ export function sceneFor(rep, opts = {}) {
     const f = clamp((t - sim.tStart) / sim.dt, 0, sim.steps), k = Math.floor(f), k2 = Math.min(sim.steps, k + 1), u = f - k;
     return [tr.xs[k] + (tr.xs[k2] - tr.xs[k]) * u, tr.ys[k] + (tr.ys[k2] - tr.ys[k]) * u];
   };
-  const qb = posFn(track('QB'));
+  const live = opts.live || null;
+  const qb = live ? (t) => { const q = live.pos('QB', t); return [q.x, q.y]; } : posFn(track('QB'));
   const fault = opts.fault || null;
   const withFault = (t, f) => (fault && t.id === fault.id ? (tt) => { const q = f(tt); return tt < 0 ? [q[0], fault.y] : q; } : f);
   const players = sim.tracks.filter((t) => t.id !== 'QB').map((t) => ({
-    id: t.id, side: t.team, role: poseRole(play, t), num: t.number, label: t.team === 'O' ? (SHAPES[t.id] ? SHAPES[t.id] + ' ' + t.id : '') : String(t.number), pos: withFault(t, posFn(t)),
+    id: t.id, side: t.team, role: poseRole(play, t), num: t.number, label: t.team === 'O' ? (SHAPES[t.id] ? SHAPES[t.id] + ' ' + t.id : '') : String(t.number),
+    pos: live ? (tt) => { const q = live.pos(t.id, tt); return [q.x, q.y]; } : withFault(t, posFn(t)),
     lookT: 0.9, engT: null, mate: null,
   }));
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
   // blocks: a rusher and his blocker lock up when the rusher stops at the meeting point
-  for (const r of sim.rushers) {
+  if (live) {
+    // blocks: the pocket simulation knows when each rusher meets his blocker
+    for (const r of live.rushers) {
+      if (!r.s.blocker || !byId[r.s.blocker] || !byId[r.s.role]) continue;
+      byId[r.s.role].engT = r.meet; byId[r.s.role].mate = r.s.blocker; byId[r.s.blocker].engT = r.meet; byId[r.s.blocker].mate = r.s.role;
+    }
+  }
+  for (const r of live ? [] : sim.rushers) {
     if (!r.blocker || !byId[r.blocker] || !byId[r.role]) continue;
     const p = byId[r.role];
     let te = 0.7;
@@ -93,8 +102,27 @@ export function sceneFor(rep, opts = {}) {
     if (t < S.Tt) return ease(S.yawHold ?? (S.yawPre || 0), read, t, S.turnAt, S.turnAt + 0.45);
     return ease(read, S.yawThrow, t, S.Tt, S.Tt + 0.45);
   };
-  precompute(S);
+  if (live) {
+    // frames come as the simulation runs; the rep lasts at most max_time (plus the ball in the air)
+    S.live = true; S.sim = live; S.T1 = live.c.pocket.max_time + 2;
+    initFrames(S);
+  } else precompute(S);
   return S;
+}
+
+/**
+ * A live scene for Bubble: the same players and poses, but their positions come from the pocket simulation as it
+ * runs (sim.pos), and the frames are filled in as it advances (extendLive). His eyes start on his first read.
+ */
+export function liveScene(rep, sim) {
+  return sceneFor({ ...rep, freeze2: 0 }, { readId: rep.firstRead, turnAt: sim.catchT, aimAt: sim.catchT + 1.2, live: sim });
+}
+export function extendLive(S, t) {
+  for (const r of S.sim.rushers) {
+    const p = S.byId[r.s.role];
+    if (p && r.relT != null) { p.relT = r.relT; if (r.s.blocker && S.byId[r.s.blocker]) S.byId[r.s.blocker].relT = r.relT; }
+  }
+  extendFrames(S, t);
 }
 
 /** He keeps it and runs from time t. */
@@ -118,6 +146,7 @@ export function setThrow(S, id, release, catchT, catchAt) {
   S.Tt = release; S.Tc = catchT; S.target = id; S.catchPt = [catchAt.x, catchAt.y];
   S.release = [c.x - 0.3, c.y + 0.3, 1.95];
   S.yawThrow = Math.atan2(S.catchPt[0] - S.release[0], S.catchPt[1] - S.release[1]) * 0.85;
+  if (S.live) return; // live frames pick the throw up as they are filled in
   S.T1 = Math.max(S.T1, Math.min(catchT + 0.7, S.rep.play.sim.steps * S.rep.play.sim.dt + S.rep.play.sim.tStart));
   precompute(S);
 }
@@ -165,7 +194,7 @@ function rules(S, p, t, q, v, cam, posNow, ball) {
     const o = posNow[e]; return o ? angTo(q[0], q[1], o[0], o[1]) : toQB;
   };
   const thrown = t > S.Tt + 0.12, caught = t > S.Tc;
-  const engaged = p.engT != null && t >= p.engT;
+  const engaged = p.engT != null && t >= p.engT && (p.relT == null || t < p.relT);
   const o = { face: 0, eye: null, crouch: 0.3, lean: 0.3, sit: 0, stagger: 0, hands: 'ready', run: 0 };
   const runArms = () => clamp((sp - 0.5) / 1.5, 0, 1);
   const pre = t < 0;
@@ -226,16 +255,27 @@ function rules(S, p, t, q, v, cam, posNow, ball) {
 
 const F_X = 0, F_Y = 1, F_PSI = 2, F_HEAD = 3, F_PH = 4, F_VX = 5, F_VY = 6, F_CR = 7, F_LE = 8, F_SIT = 9, F_ST = 10, F_RUN = 11, F_H = 12, NF = 18;
 function precompute(S) {
-  const N = Math.round((S.T1 - S.T0) / DT) + 1, ps = S.players, n = ps.length;
-  const data = ps.map(() => new Float32Array(N * NF));
-  const st = ps.map(() => null);
+  initFrames(S);
+  extendFrames(S, S.T1);
+}
+/** Frames are filled in order; a live scene (Bubble) fills them as its simulation advances. */
+function initFrames(S) {
+  const N = Math.round((S.T1 - S.T0) / DT) + 1;
+  S.data = S.players.map(() => new Float32Array(N * NF));
+  S.st = S.players.map(() => null);
+  S.cap = N; S.N = 0;
+}
+function extendFrames(S, upTo) {
+  const ps = S.players, n = ps.length, data = S.data, st = S.st;
   const h = 1 / 240;
-  for (let k = 0; k < N; k++) {
+  const last = Math.min(S.cap - 1, Math.floor((upTo - S.T0) / DT + 1e-6));
+  for (let k = S.N; k <= last; k++) {
     const t = S.T0 + k * DT, cam = S.cam(t), ball = ballAt(S, t);
     const posNow = {}; ps.forEach((p) => { posNow[p.id] = p.pos(t); });
     for (let i = 0; i < n; i++) {
       const p = ps[i], q = posNow[p.id];
-      const a = p.pos(t - h), b = p.pos(t + h), v = [(b[0] - a[0]) / (2 * h), (b[1] - a[1]) / (2 * h)];
+      // live: the future is not known yet, so the velocity looks back
+      const a = p.pos(S.live ? t - 2 * h : t - h), b = S.live ? q : p.pos(t + h), v = [(b[0] - a[0]) / (2 * h), (b[1] - a[1]) / (2 * h)];
       const r = rules(S, p, t, q, v, cam, posNow, ball);
       let s = st[i];
       if (!s) s = st[i] = { psi: r.face, head: r.eye == null ? r.face : r.eye, ph: (i * 0.37) % 1, cr: r.crouch, le: r.lean, sit: r.sit, stg: r.stagger, run: r.run, hd: resolveHands(r.hands, r.crouch, r.lean, r.sit) };
@@ -259,7 +299,7 @@ function precompute(S) {
       for (let j = 0; j < 6; j++) d[o + F_H + j] = s.hd[j];
     }
   }
-  S.N = N; S.data = data;
+  S.N = Math.max(S.N, last + 1);
 }
 function stateAt(S, i, t) {
   const kf = clamp((t - S.T0) / DT, 0, S.N - 1), k0 = Math.floor(kf), k1 = Math.min(S.N - 1, k0 + 1), u = kf - k0, d = S.data[i];
@@ -515,6 +555,7 @@ export function createEyes(canvas) {
     cam = S.cam(t); cam.yaw = S.yawOverride != null ? S.yawOverride : S.yaw(t); cam.sv = Math.sin(cam.yaw); cam.cv = Math.cos(cam.yaw);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     drawField(st);
+    if (S.overlay) S.overlay({ ctx, proj, cam, t, W, H });
     const states = S.players.map((p, i) => stateAt(S, i, t));
     ctx.fillStyle = st.shadow;
     states.forEach((s) => { const c = proj(s[F_X], s[F_Y], 0); if (c.dy < 0.3) return; const a = proj(s[F_X], s[F_Y] - 0.45, 0), b = proj(s[F_X], s[F_Y] + 0.45, 0); ctx.beginPath(); ctx.ellipse(c.x, c.y, 0.48 * c.sc, Math.max(1.5, Math.abs(a.y - b.y) / 2), 0, 0, Math.PI * 2); ctx.fill(); });
@@ -544,6 +585,7 @@ export function createEyes(canvas) {
     }
     drawHands(t, st);
     drawLookStrip(t, states);
+    if (S.hud) S.hud({ ctx, proj, cam, t, W, H, FOV: FOVN });
   }
 
   return {

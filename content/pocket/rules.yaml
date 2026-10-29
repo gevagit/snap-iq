@@ -1,0 +1,94 @@
+# Pocket rules and the Bubble rep types (PRD §6.7, §8.4). Batch 4, signed off by the owner with defaults (2026-10-28).
+# Sides are by his throwing hand (content/offense/quarterback.yaml); nothing here says left or right.
+# Distances in yards, times in seconds after the snap, speeds in yards per second.
+version: 1
+batch: 4
+
+# His feet after his drop. Inside the pocket he shuffles (base kept); pushing the pad past run_at he runs.
+# A speed profile as in tuning/speeds.yaml: distance after t seconds is top*(t - tau*(1 - e^(-t/tau))).
+movement:
+  shuffle: { top: 2.6, tau: 0.15 }
+  run: { top: 6.2, tau: 0.4 }
+  run_at: 0.7
+  # moving toward his off-hand side faster than this, he must reset before throwing (glossary off-hand-reset)
+  offhand_reset: { above: 1.2, seconds: 0.35 }
+
+# The rush after the snap. Rushers and blockers come out of the play engine; this is what happens once they meet.
+rush:
+  hold_drift: 0.15            # a held block still gives ground toward him slowly
+  push_speed: 1.8             # a bull rusher drives his blocker back toward him
+  shed_reach: 1.7             # a pushing rusher sheds his blocker once he is this close to the quarterback
+  edge_lane: 1.6              # a speed rusher runs his arc this far outside the tackle
+  edge_corner: 1.0            # ...turning the corner level with this far in front of the set point
+  edge_aim_behind: 0.3        # ...aiming at the spot this far behind the set point (the top of the rush)
+  turn: { edge: 2.0, interior: 4.0, free: 3.2 }   # how fast a rusher can turn toward him at top speed (radians/s)
+  break_down: 1.2             # facing more than this far away from him (radians), a rusher slows down to turn back
+  sack_reach: 0.9             # a free rusher this close to him while he has the ball: sack
+  blocker_gap: 0.85           # a blocker on a rusher stays this far in front of him, between him and the quarterback
+  ride_wide: 1.5              # on the open side of a collapse the tackle rides his edge rusher this much wider...
+  ride_deep: 3.5              # ...and this far past his set point, which opens the lane up and out
+  real_within: 4.0            # the pressure turns real when a rusher who has won (or is driving his man back) is this close to his set point
+
+# Inside the tackles he cannot climb closer than this to the line of scrimmage: his linemen are there. Outside
+# the tackles, or running, he can.
+pocket_front: 3.0
+
+# The pocket edge he sees on the ground (PRD §8.4): this far around his set point, bending in where a rusher is closer.
+pocket_edge: 2.8
+
+# What counts as each move (PRD §6.7), measured from his set point.
+moves:
+  climb: { forward: 1.4, lateral_max: 1.6 }
+  pocket-slide: { lateral: 1.0 }
+  pocket-escape: { outside_tackle: 1.0 }
+  happy-feet: { lateral: 1.4, forward: 2.2, back: 1.2 }
+  # he starts to move when his speed passes `moving`; the move is on time from `early` before the pressure turns
+  # real to `late` after it
+  timing: { moving: 0.7, early: 0.9, late: 0.7 }
+
+# The rep types (PRD §8.4). response: the move that is right; pressure: what the rush does.
+#   holds: every rusher stays blocked until hold_until, then the edge rusher on the off-hand side wins
+#   edge: one speed rusher wins outside on a side; push: one interior rusher bull rushes on a side;
+#   collapse: both edges win and an interior rusher pushes; the edge on the open side is late by open_late
+#   free: a blitzer no one blocks (from the play: a call with more rushers than blockers)
+rep_types:
+  - { id: clean-pocket, holds: true, pressure: holds, response: stand, terms: [clean-pocket, happy-feet] }
+  - { id: edge-speed-rush, holds: false, pressure: edge, response: climb, terms: [speed-rush, climb] }
+  - { id: interior-push, holds: false, pressure: push, response: pocket-slide, also: pocket-escape, terms: [bull-rush, pocket-slide] }
+  - { id: full-collapse, holds: false, pressure: collapse, response: pocket-escape, terms: [pocket-collapse, pocket-escape] }
+  - { id: blitz-picked-up, holds: true, pressure: holds, response: stand, blitz: picked-up, terms: [blitz-pickup, blitz] }
+  - { id: blitz-not-picked-up, holds: false, pressure: free, response: ball-out, blitz: free, terms: [free-rusher, hot-route] }
+hold_until: 4.2
+open_late: 1.2
+# a clean pocket: the ball out by on_time after the snap
+on_time: 3.0
+# the rep ends this long after the snap if nothing else ends it
+max_time: 5.5
+
+# Youth: one pressure source at a time, a slower rush, lane hints. JV adds the collapse and blitzes.
+tiers:
+  youth:
+    types: [clean-pocket, edge-speed-rush, interior-push]
+    rush_speed: 0.85
+    hints: true
+    coverages: [cover-1, cover-2, cover-3]
+    fronts: [four-two-five-even, four-three-over]
+  jv:
+    types: [clean-pocket, edge-speed-rush, interior-push, full-collapse, blitz-picked-up, blitz-not-picked-up]
+    rush_speed: 1.0
+    hints: false
+    coverages: [cover-0, cover-1, cover-2, cover-3, cover-4, fire-zone]
+    fronts: [four-two-five-even, three-three-stack, four-three-over, four-two-five-over]
+
+# Protection modes (PRD §8.4): how often the pocket holds, and when pressure would reach his set point if he
+# stood still. Unpredictable moves its hold rate between the two values across the drill.
+modes:
+  good: { hold: 0.7, arrive: [2.8, 3.4] }
+  bad: { hold: 0.3, arrive: [1.6, 2.4] }
+  unpredictable: { hold: [0.3, 0.7], arrive: [1.4, 3.2] }
+
+reps: 8
+points: { move: 20, timing: 10, no_sack: 20, ball_out: 15, on_time: 10, completion: 10, admissible_move: 10 }
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-28"

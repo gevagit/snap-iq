@@ -7,6 +7,8 @@ import { explain, CORNER_LABEL } from './explain';
 import { createEyes, sceneFor, setThrow, setRun, setRollOut, SHAPES } from './eyes.js';
 import { drawBoard, drawCall } from './board.js';
 import { callSheet } from './call';
+import { initPocket } from './pocket.js';
+import { makePocketRep } from '../pocket';
 
 const C = parsePlayContent(raw);
 const R = C.drills.routine;
@@ -42,8 +44,11 @@ function renderHome() {
   $('playtest').checked = progress.playtest;
   const anyReviewed = makeRep(C, progress.tier, 1, 0, false) !== null;
   const b = $('playtestBanner');
-  b.hidden = anyReviewed && !progress.playtest;
-  b.innerHTML = anyReviewed
+  const pocketWaits = makePocketRep(C, progress.tier, 'good', 1, 0, false) === null;
+  b.hidden = anyReviewed && !progress.playtest && !pocketWaits;
+  b.innerHTML = anyReviewed && pocketWaits && !progress.playtest
+    ? '<b>The Pocket workout is waiting for sign-off.</b><span>Its football content (batch 4) is new and in owner review. To playtest it now, turn on playtest in Parent settings.</span><button class="plain" id="ptQuick" type="button">Playtest now</button>'
+    : anyReviewed
     ? '<b>Playtest is on.</b><span>Content the owner hasn\'t signed off can appear. Turn it off in Parent settings.</span>'
     : progress.playtest
       ? '<b>Playtest: some of this isn\'t signed off yet.</b><span>Content changed after the owner\'s playtest is back in review until it is signed off.</span>'
@@ -51,14 +56,24 @@ function renderHome() {
   const q = $('ptQuick'); if (q) q.addEventListener('click', () => { progress.playtest = true; save(); renderHome(); });
   $('startBtn').disabled = !anyReviewed && !progress.playtest;
   $('startBtn').style.opacity = $('startBtn').disabled ? 0.45 : 1;
+  // Bubble: the Pocket workout (batch 4 content; playtest until the owner signs it off)
+  const pocketReady = makePocketRep(C, progress.tier, 'good', 1, 0, false) !== null;
+  $('pocketBtn').disabled = !pocketReady && !progress.playtest;
+  $('pocketBtn').style.opacity = $('pocketBtn').disabled ? 0.45 : 1;
+  $('pocketSub').textContent = pocketReady || progress.playtest ? `${C.pocket.reps} plays · feel the rush, move, get the ball out${pocketReady ? '' : ' · playtest'}` : 'Waiting for sign-off (batch 4). Turn on playtest in Parent settings to try it.';
+  $('protMode').value = progress.pocketMode || 'auto';
+  $('protNote').textContent = `How the line protects in the Pocket workout. The planner picks from how you play: now ${pocket ? pocket.plannedMode() : 'good'}.`;
 }
 $('tierSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; progress.tier = b.dataset.tier; save(); renderHome(); });
 $('playtest').addEventListener('change', () => { progress.playtest = $('playtest').checked; save(); renderHome(); });
+$('protMode').addEventListener('change', () => { progress.pocketMode = $('protMode').value; save(); renderHome(); });
 $('resetBtn').addEventListener('click', () => { const keep = { tier: progress.tier, playtest: progress.playtest }; progress = { ...newProgress(), ...keep }; save(); renderHome(); });
 
 // ---------------------------------------------------------------- the workout
 const canvas = $('view');
 const eyes = createEyes(canvas);
+const pocket = initPocket({ C, eyes, $, show, term, def, esc, progress: () => progress, save, renderHome, finishWorkout, today });
+$('pocketBtn').addEventListener('click', () => pocket.start());
 let session = null;
 let rep = null; // as dealt (with any alignment fault)
 let played = null; // with his route changes
@@ -75,7 +90,7 @@ function startWorkout() {
   requestAnimationFrame(() => { eyes.resize(); nextRep(); });
 }
 $('startBtn').addEventListener('click', startWorkout);
-$('quitBtn').addEventListener('click', () => endWorkout());
+$('quitBtn').addEventListener('click', () => (pocket.isOn() ? pocket.end() : endWorkout()));
 
 function nextRep() {
   hide('result'); hide('ask'); $('cue').classList.remove('on');
