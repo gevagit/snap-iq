@@ -396,10 +396,6 @@ export type Quarterback = z.infer<typeof Quarterback>;
 // ---------------------------------------------------------------- pocket (batch 4): content/pocket/rules.yaml
 const MoveProfile = z.object({ top: z.number().positive(), tau: z.number().positive() }).strict();
 export const POCKET_RESPONSES = ['stand', 'climb', 'pocket-slide', 'pocket-escape', 'ball-out'] as const;
-const PocketTier = z.object({
-  types: z.array(Id).min(1), rush_speed: z.number().positive(), hints: z.boolean(), coverages: z.array(Id).min(1), fronts: z.array(Id).min(1),
-}).strict();
-const Window = z.tuple([z.number().positive(), z.number().positive()]);
 export const Pocket = z
   .object({
     ...Header,
@@ -416,27 +412,49 @@ export const Pocket = z
       'happy-feet': z.object({ lateral: z.number().positive(), forward: z.number().positive(), back: z.number().positive() }).strict(),
       timing: z.object({ moving: z.number().positive(), early: z.number().min(0), late: z.number().min(0) }).strict(),
     }).strict(),
-    rep_types: z.array(z.object({
-      id: Id, holds: z.boolean(), pressure: z.enum(['holds', 'edge', 'push', 'collapse', 'free']), response: z.enum(POCKET_RESPONSES),
-      also: z.enum(POCKET_RESPONSES).optional(), blitz: z.enum(['picked-up', 'free']).optional(), terms: z.array(Id).min(1),
-    }).strict()).min(1),
-    pocket_edge: z.number().positive(),
     pocket_front: z.number().positive(),
-    hold_until: z.number().positive(),
-    open_late: z.number().min(0),
-    on_time: z.number().positive(),
-    max_time: z.number().positive(),
-    tiers: z.object({ youth: PocketTier, jv: PocketTier }).strict(),
-    modes: z.object({
-      good: z.object({ hold: z.number().min(0).max(1), arrive: Window }).strict(),
-      bad: z.object({ hold: z.number().min(0).max(1), arrive: Window }).strict(),
-      unpredictable: z.object({ hold: Window, arrive: Window }).strict(),
-    }).strict(),
-    reps: z.number().int().positive(),
-    points: z.object({ move: z.number(), timing: z.number(), no_sack: z.number(), ball_out: z.number(), on_time: z.number(), completion: z.number(), admissible_move: z.number() }).strict(),
+    pocket_edge: z.number().positive(),
     ...Review,
   })
   .strict()
   .refine(reviewComplete, reviewMessage);
 export type Pocket = z.infer<typeof Pocket>;
-export type PocketType = Pocket['rep_types'][number];
+
+// ---------------------------------------------------------------- Pocket Instinct (batch 5): content/instinct/rules.yaml
+const Range = z.tuple([z.number(), z.number()]).refine((r) => r[0] <= r[1], 'a range runs low to high');
+const StartEnd = z.object({ start: z.number(), end: z.number() }).strict();
+export const Instinct = z
+  .object({
+    ...Header,
+    snap: z.object({ set_depth: z.number().positive(), catch: z.number().min(0), max_time: z.number().positive(), between: z.number().min(0) }).strict(),
+    rush: z.object({
+      edge_start: z.object({ outside_tackle: z.number(), depth: z.number() }).strict(),
+      inside_start: z.object({ x: z.number(), depth: z.number() }).strict(),
+      blitz_start: z.object({ x: z.number(), depth: z.number() }).strict(),
+      meet: z.number().positive(),
+      open_late: z.number().min(0),
+      ride_speed: z.number().positive(),
+      late: StartEnd,
+    }).strict(),
+    patterns: z.array(z.object({
+      id: Id, from: z.number().int().positive(), weight: z.number().positive(), response: z.enum(POCKET_RESPONSES), terms: z.array(Id).min(1),
+    }).strict()).min(1),
+    arrive: z.object({ start: Range, end: Range }).strict(),
+    allies: z.object({
+      count: z.array(z.number().int().min(1).max(5)).min(1),
+      depth: Range,
+      margin: z.number().min(0),
+      weave: z.object({ amplitude: Range, period: Range, depth: z.number().min(0) }).strict(),
+      shadow: z.object({ tight: z.number().positive(), open: z.number().positive(), change: z.number().positive() }).strict(),
+      window: z.object({ first: Range, after_pressure: Range, hot: Range, length: StartEnd, more: z.tuple([z.number().int().min(0), z.number().int().min(0)]) }).strict(),
+      pick_reach: z.number().positive(),
+    }).strict(),
+    ramp: z.object({
+      snaps_per_level: z.number().int().positive(), levels: z.number().int().positive(), rush_speed: StartEnd, blind_side: StartEnd, restart_below: z.number().int().min(0),
+    }).strict(),
+    scoring: z.object({ hot_clock: z.number().positive(), multiplier_step: z.number().min(0) }).strict(),
+    ...Review,
+  })
+  .strict()
+  .refine(reviewComplete, reviewMessage);
+export type Instinct = z.infer<typeof Instinct>;
