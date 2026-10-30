@@ -5,7 +5,7 @@ import { parsePlayContent } from '../src/play/content';
 import { allCalls } from '../src/play';
 import { validateContent } from '../src/validate';
 import { type SweepResult, describeCall, mergeSweeps, sweepPlays } from '../src/validate/plays';
-import { sweepPocket } from '../src/validate/pocket';
+import { sweepInstinct } from '../src/validate/instinct';
 
 /** Validation step: coarser than the game's, fine enough for every invariant (speeds are checked per step). */
 const DT = 1 / 15;
@@ -46,11 +46,11 @@ if (!isMainThread) {
     for (const f of sweep.failures.slice(0, 25)) console.error(`  - ${f.check}: ${f.detail}\n      ${describeCall(f.call)}`);
     process.exit(1);
   }
-  const pocket = sweepPocket(parsePlayContent(raw));
-  console.log(`Pocket sweep: ${pocket.reps} Bubble reps (${Object.entries(pocket.byType).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
-  if (pocket.failures.length) {
-    console.error(`\n${pocket.failures.length} pocket invariant failure(s):`);
-    for (const f of pocket.failures.slice(0, 25)) console.error(`  - ${f}`);
+  const instinct = sweepInstinct(parsePlayContent(raw));
+  console.log(`Instinct sweep: ${instinct.snaps} snaps (${Object.entries(instinct.byPattern).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
+  if (instinct.failures.length) {
+    console.error(`\n${instinct.failures.length} instinct invariant failure(s):`);
+    for (const f of instinct.failures.slice(0, 25)) console.error(`  - ${f}`);
     process.exit(1);
   }
   console.log('All football invariants pass.');

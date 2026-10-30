@@ -23,6 +23,7 @@ export const CONTENT_FILES = {
   adjustments: 'content/offense/adjustments.yaml',
   quarterback: 'content/offense/quarterback.yaml',
   pocket: 'content/pocket/rules.yaml',
+  instinct: 'content/instinct/rules.yaml',
 } as const;
 export type ContentKey = keyof typeof CONTENT_FILES;
 

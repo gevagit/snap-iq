@@ -4,7 +4,7 @@ A quarterback cognition training game for iPad: pre-snap routine, defensive read
 
 - Spec: [`docs/PRD.md`](docs/PRD.md)
 - Instructions for Claude Code: [`CLAUDE.md`](CLAUDE.md)
-- Status: Phase 2, playable slice. The game runs the pre-snap routine workout from Sahar's eyes (`src/game`): play call, routine at the line, snap, freeze and decision. The Pocket workout (Bubble, `src/pocket`) is live from his eyes with a movement pad; its football content is batch 4 (`content/pocket/`). Football Bible batches 1-4 are signed off by the owner with defaults, so every drill uses reviewed content.
+- Status: Phase 2, playable slice. The game runs the pre-snap routine workout from Sahar's eyes (`src/game`): play call, routine at the line, snap, freeze and decision. The Pocket workout is Pocket Instinct (`src/instinct`): an endless run of snaps, dodging hitters and throwing to allies who come open, scored by hang time. Its settings (batch 5, `content/instinct/`) are signed off by the owner with defaults, like batches 1-4. Football Bible batches 1-4 are signed off by the owner with defaults, so every drill uses reviewed content.
 
 ## Commands
 
