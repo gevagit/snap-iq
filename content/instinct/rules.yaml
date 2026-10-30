@@ -1,6 +1,6 @@
 # Pocket Instinct: the Pocket workout as the owner reworked it (2026-10-29, docs/plans/instinct.md). An endless
 # run of snaps: he dodges hitters and throws to allies who come open, faster and harder each level, until a hitter
-# gets him. Batch 5, not yet reviewed. His feet, the rush and what each move is come from content/pocket/rules.yaml
+# gets him. Batch 5, signed off by the owner with defaults (2026-10-30). His feet, the rush and what each move is come from content/pocket/rules.yaml
 # (signed off); the free-blocking zone from content/field/geometry.yaml; the ball from content/tuning/drills.yaml.
 # Distances in yards from the ball (x across, + = his right; y downfield), times in seconds after the snap.
 version: 1
@@ -62,4 +62,6 @@ ramp:
 scoring:
   hot_clock: 3.0                     # per ball, only this much of his time with it counts as hang time
   multiplier_step: 0.5               # each completion in a row adds this to the multiplier
-reviewed: false
+reviewed: true
+reviewer: owner
+reviewed_at: "2026-10-30"

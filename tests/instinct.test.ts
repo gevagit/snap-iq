@@ -23,8 +23,8 @@ function snapOf(pattern: string, level = 6) {
 }
 
 describe('Pocket Instinct', () => {
-  it('waits for the owner to sign off batch 5', () => {
-    expect(c.instinct.reviewed).toBe(false);
+  it('runs on signed-off content (batch 5 signed off by the owner)', () => {
+    expect(c.instinct.reviewed).toBe(true);
   });
 
   it('is deterministic: the same seed and inputs give the same run (golden replay)', () => {
