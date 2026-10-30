@@ -15,6 +15,17 @@ export type Pattern = Instinct['patterns'][number];
 
 /** Allies in button order; each always wears the same shape (◆ ● ▲ ■ ★). */
 export const ALLY_IDS = ['X', 'Y', 'Z', 'H', 'R'] as const;
+
+/** The throw keys on a computer, left to right across the field. */
+export const THROW_KEYS = ['y', 'u', 'i', 'o', 'p'] as const;
+/** Which keys a snap uses for its receivers: the outside keys always go to the outside receivers (Y the leftmost,
+ * P the rightmost at the snap), the inside keys fill in between. */
+const KEYS_FOR: Record<number, readonly string[]> = { 1: ['i'], 2: ['y', 'p'], 3: ['y', 'i', 'p'], 4: ['y', 'u', 'o', 'p'], 5: THROW_KEYS };
+export function throwKeys(snap: Snap): Map<string, string> {
+  const order = [...snap.allies].sort((a, b) => allyAt(a, 0, snap.frame, 0).x - allyAt(b, 0, snap.frame, 0).x);
+  const keys = KEYS_FOR[order.length]!;
+  return new Map(order.map((a, k) => [keys[k]!, a.id]));
+}
 const LINE = ['LT', 'LG', 'C', 'RG', 'RT'] as const;
 
 // ------------------------------------------------------------------ one snap
@@ -269,6 +280,8 @@ export class SnapSim {
 
   act(a: Action) {
     if (!this.canThrow) return;
+    // a throw to a receiver who is not on the field this snap does nothing
+    if (a.kind === 'throw' && !this.snap.allies.some((x) => x.id === a.target)) return;
     const M = this.c.pocket.movement, off = -throwSign(this.c);
     const reset = this.qb.vx * off > M.offhand_reset.above ? M.offhand_reset.seconds : 0;
     this.pending = { action: a, release: this.t + this.c.drills.ball.release_delay + reset };

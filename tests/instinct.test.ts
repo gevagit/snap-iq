@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
 import { parsePlayContent } from '../src/play/content';
-import { Run, SnapSim, STEP, idealPolicy, makeSnap, runSnap, separation, type Action, type Input } from '../src/instinct';
+import { Run, SnapSim, STEP, allyAt, idealPolicy, makeSnap, runSnap, separation, throwKeys, type Action, type Input } from '../src/instinct';
 
 const c = parsePlayContent(loadRawContent());
 const idle = () => ({ mx: 0, my: 0 });
@@ -109,5 +109,24 @@ describe('Pocket Instinct', () => {
     };
     expect(release(off) - release(-off)).toBeCloseTo(c.pocket.movement.offhand_reset.seconds, 5);
     expect(STEP).toBeGreaterThan(0);
+  });
+
+  it('a throw to a receiver who is not on the field this snap does nothing', () => {
+    const snap = makeSnap(c, 1, 5, 0);
+    const missing = ['X', 'Y', 'Z', 'H', 'R'].find((id) => !snap.allies.some((a) => a.id === id))!;
+    const s = new SnapSim(c, snap);
+    while (s.t < 1) s.step(idle());
+    s.act({ kind: 'throw', target: missing });
+    expect(s.pending).toBeNull();
+  });
+
+  it('Y U I O P go left to right by where the receivers line up: Y the leftmost, P the rightmost', () => {
+    const want: Record<number, string> = { 1: 'i', 2: 'yp', 3: 'yip', 4: 'yuop', 5: 'yuiop' };
+    for (let level = 1; level <= 8; level++) for (let i = 0; i < 4; i++) {
+      const snap = makeSnap(c, level, 300 + level, i), keys = throwKeys(snap);
+      expect([...keys.keys()].join('')).toBe(want[snap.allies.length]);
+      const xs = [...keys.values()].map((id) => allyAt(snap.allies.find((a) => a.id === id)!, 0, snap.frame, 0).x);
+      expect([...xs].sort((a, b) => a - b)).toEqual(xs);
+    }
   });
 });

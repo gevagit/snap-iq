@@ -2,12 +2,11 @@
 // hitters with the pad (right thumb), throw to an ally the moment he comes open (fixed buttons, left thumb), and hang
 // as long as you can. All football and every number come from content through src/instinct; this file draws, takes
 // input (touch, keyboard, mouse, game controller) and keeps score.
-import { ALLY_IDS, STEP, Run, SnapSim, idealPolicy, isOpen, rampAt } from '../instinct';
+import { ALLY_IDS, STEP, Run, SnapSim, idealPolicy, isOpen, rampAt, throwKeys } from '../instinct';
 import { instinctScene, extendInstinct, setThrow, SHAPES } from './eyes.js';
 import { drawInstinctBoard } from './board.js';
 
 const PAD_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, 1], s: [0, -1], a: [-1, 0], d: [1, 0] };
-const THROW_KEYS = { j: 'X', k: 'Y', l: 'Z', ';': 'H', ' ': 'R' };
 // game controller (standard mapping): A B X Y RB throw to ◆ ● ▲ ■ ★, LB throws it away, Start snaps
 const PAD_BUTTONS = { 0: 'X', 1: 'Y', 2: 'Z', 3: 'H', 5: 'R' };
 
@@ -16,6 +15,8 @@ export function initInstinct(ctx) {
   const I = C.instinct;
   let run = null, S = null, simShown = null, raf = 0, last = 0, acc = 0, input = { mx: 0, my: 0 };
   const keys = new Set();
+  // a computer (mouse or trackpad): show the throw keys on the receivers
+  const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
   // ?autoplay=1 plays the right moves (a demo of a good run, and how the browser tests reach later levels)
   const autoplay = new URLSearchParams(location.search).get('autoplay') === '1';
   let gpPrev = [];
@@ -41,6 +42,8 @@ export function initInstinct(ctx) {
     });
   }
   function go() {
+    if ($('pReady').hidden) return;
+    $('pSnap').blur();
     $('pReady').hidden = true;
     last = performance.now(); acc = 0;
     cue('HUT!', 0.5);
@@ -50,6 +53,7 @@ export function initInstinct(ctx) {
 
   function newScene() {
     S = instinctScene(run.sim);
+    if (fine) for (const [key, id] of throwKeys(run.sim.snap)) if (S.byId[id]) S.byId[id].label += ` [${key.toUpperCase()}]`;
     S.overlay = ground; S.hud = screen;
     eyes.setScene(S);
     extendInstinct(S, 0);
@@ -145,12 +149,15 @@ export function initInstinct(ctx) {
   pad.addEventListener('pointerup', padUp); pad.addEventListener('pointercancel', padUp);
 
   // desktop: the keyboard, and a mouse click on an ally
+  // W A S D (or the arrows) move him, Shift runs; Y U I O P throw, left to right by where the receivers line up at
+  // the snap (Y the leftmost, P the rightmost); T throws it away; Space snaps
   window.addEventListener('keydown', (e) => {
     if (!run || !document.body.classList.contains('pocket')) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (PAD_KEYS[k] || k === 'Shift') { keys.add(k); e.preventDefault(); }
-    if (THROW_KEYS[k] && !$('pReady').hidden) { if (k === ' ') { go(); e.preventDefault(); } return; }
-    if (THROW_KEYS[k]) { act({ kind: 'throw', target: THROW_KEYS[k] }); e.preventDefault(); }
+    if (k === ' ') { e.preventDefault(); if (!$('pReady').hidden) go(); return; }
+    const target = run.phase === 'snap' ? throwKeys(run.sim.snap).get(k) : undefined;
+    if (target) { act({ kind: 'throw', target }); e.preventDefault(); }
     if (k === 't') act({ kind: 'throw-away' });
   });
   window.addEventListener('keyup', (e) => { keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
