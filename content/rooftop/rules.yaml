@@ -1,0 +1,95 @@
+# Rooftop Run (docs/plans/rooftop.md): the Pocket workout, owner's call 2026-10-31. Not football: a courier on neon
+# rooftops at night dodges hunter drones and tosses packages to friends whose lanterns light up. The game's every
+# number lives here, so the owner can tune it without touching code. Distances in metres, times in seconds.
+# x runs across the view (+ to the right), z away from him (+ ahead).
+version: 1
+
+roof:
+  half_width: 5        # his roof runs from -half_width to +half_width across
+  back: -3             # and from back to front (z)
+  gap: 7               # the jump to the next roof
+
+courier:
+  eye: 1.55            # eye height above his roof
+  walk: 4.2            # pad inside the ring
+  sprint: 6.4          # pad past the ring (or Shift)
+  accel: 40            # how fast he reaches that speed (he cuts almost at once)
+  start: [0, -0.8]
+
+drones:
+  speed: { start: 8.5, end: 13.5 }   # by level
+  spawn: 20            # how far out a drone launches
+  height: 1.35         # they fly at chest height
+  turn: 2.4            # how hard they steer (radians a second) before they commit
+  commit: 3.4          # inside this a drone locks on and flies straight: the moment to cut
+  hit: 0.65            # closer than this, it gets him
+  near: 1.8            # closer than this but not a hit: a near miss
+  first: [0.6, 1.0]    # the first drone launches this long into a round
+  gap: [0.45, 0.85]    # between drones in a wave
+
+friends:
+  count: [3, 3, 4, 4, 5]   # by level (the last one holds)
+  depth: [13, 27]
+  bearing: 46          # friends stand from -bearing to +bearing degrees across his view (all inside it)
+  spacing: 16          # degrees between two friends at least
+  rise: [-4, 3]        # their roofs sit this much below or above his
+  watcher: { tight: 0.6, open: 3.4, change: 0.22 }   # each friend's watcher drone: on him, off him, how fast it moves
+  lit: 0.8             # his lantern is lit once the watcher is this far (share of tight to open) off him
+  snatch: 1.1          # a toss while the watcher is closer than this gets snatched: the run ends
+  window:
+    after: [0.15, 0.45]    # the first lantern lights this long after the last drone of the wave passes
+    early: [0.45, 0.8]     # early rounds: it lights before the drones get there
+    length: { start: 1.7, end: 0.9 }
+    more: [1, 2]           # more lanterns later in the round, on other friends
+    later: [0.5, 2.2]
+  blind: { start: 0.35, end: 0.7 }   # how often the first lantern lights on his off-hand side
+
+toss:
+  release: 0.12        # from the button to the package leaving his hand
+  speed: 24
+
+# Each round is a wave. from: ahead, side (either side), throwing (his throwing-hand side), off (his off-hand side),
+# behind (from behind, off his off-hand shoulder: the screen edge flickers).
+patterns:
+  - { id: dive, from: 1, weight: 3, early: false, drones: [ahead] }
+  - { id: swoop, from: 1, weight: 3, early: false, drones: [side] }
+  - { id: early, from: 2, weight: 1.5, early: true, drones: [ahead] }
+  - { id: pincer, from: 3, weight: 2, early: false, drones: [throwing, off] }
+  - { id: blind, from: 4, weight: 2, early: false, drones: [behind] }
+  - { id: double, from: 5, weight: 1.5, early: false, drones: [ahead, side] }
+  - { id: swarm, from: 7, weight: 1.5, early: false, drones: [ahead, side, behind] }
+
+ramp:
+  rounds_per_level: 3
+  levels: 12
+  restart_below: 2     # the next run starts this many levels below where the last one ended
+
+scoring:
+  delivery: 100        # a catch, times the streak
+  quick: 40            # plus this much for each second left on the hot clock when he lets it go
+  hot_clock: 5         # hold the package past this and more drones come (one every swarm_every seconds)
+  swarm_every: 1.4
+  near_miss: 25        # a drone that just misses him, times the streak
+  streak_step: 0.25    # each catch in a row adds this to the streak multiplier
+  streak_cap: 4
+
+beats:
+  result: 0.55         # after a catch, before the jump
+  jump: 1.25           # the run and leap to the next roof
+  over: 0.9            # after a hit or a snatch, before the run report
+
+# Looks he earns with his best run (score). All drawn in code.
+unlocks:
+  jackets:
+    - { id: street, name: Street, color: '#2B3242', at: 0 }
+    - { id: volt, name: Volt, color: '#1E8F6E', at: 1500 }
+    - { id: ember, name: Ember, color: '#B8432F', at: 4000 }
+    - { id: royal, name: Royal, color: '#3D3FB0', at: 8000 }
+    - { id: gold, name: Gold Rush, color: '#B98A1E', at: 15000 }
+  trails:
+    - { id: cyan, name: Cyan, color: '#3FE0FF', at: 0 }
+    - { id: pink, name: Hot Pink, color: '#FF4FB8', at: 2500 }
+    - { id: lime, name: Lime, color: '#A8FF3E', at: 6000 }
+    - { id: white, name: White Heat, color: '#FFFFFF', at: 12000 }
+
+reviewed: false        # the owner tunes these numbers by playing; nothing here is football

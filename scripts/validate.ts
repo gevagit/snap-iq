@@ -5,7 +5,7 @@ import { parsePlayContent } from '../src/play/content';
 import { allCalls } from '../src/play';
 import { validateContent } from '../src/validate';
 import { type SweepResult, describeCall, mergeSweeps, sweepPlays } from '../src/validate/plays';
-import { sweepInstinct } from '../src/validate/instinct';
+import { makeGame, sweepRooftop } from '../src/rooftop';
 
 /** Validation step: coarser than the game's, fine enough for every invariant (speeds are checked per step). */
 const DT = 1 / 15;
@@ -46,12 +46,13 @@ if (!isMainThread) {
     for (const f of sweep.failures.slice(0, 25)) console.error(`  - ${f.check}: ${f.detail}\n      ${describeCall(f.call)}`);
     process.exit(1);
   }
-  const instinct = sweepInstinct(parsePlayContent(raw));
-  console.log(`Instinct sweep: ${instinct.snaps} snaps (${Object.entries(instinct.byPattern).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
-  if (instinct.failures.length) {
-    console.error(`\n${instinct.failures.length} instinct invariant failure(s):`);
-    for (const f of instinct.failures.slice(0, 25)) console.error(`  - ${f}`);
+  console.log('All football invariants pass.');
+  // Rooftop Run (not football): its settings and that every round at every level is fair
+  const roof = sweepRooftop(makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand));
+  console.log(`Rooftop Run sweep: ${roof.rounds} rounds (${Object.entries(roof.byPattern).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
+  if (roof.failures.length) {
+    console.error(`\n${roof.failures.length} Rooftop Run problem(s):`);
+    for (const f of roof.failures.slice(0, 25)) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log('All football invariants pass.');
 }

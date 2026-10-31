@@ -100,47 +100,6 @@ export function sceneFor(rep, opts = {}) {
   return S;
 }
 
-/**
- * A live scene for Pocket Instinct (src/instinct): his line, the rushers, the allies and their shadows, with their
- * positions from the snap simulation as it runs (frames are filled in by extendInstinct). His eyes look straight
- * downfield unless he turns his head.
- */
-export function instinctScene(sim) {
-  const c = sim.c, snap = sim.snap, fr = snap.frame;
-  const at = (id) => (t) => { const q = sim.pos(id, t); return [q.x, q.y]; };
-  const players = [];
-  for (const id of ['LT', 'LG', 'C', 'RG', 'RT']) players.push({ id, side: 'O', role: id === 'C' ? 'C' : 'OL', num: { LT: 77, LG: 64, C: 55, RG: 66, RT: 75 }[id], label: '', pos: at(id), lookT: 0.9 });
-  for (const a of snap.allies) {
-    players.push({ id: a.id, side: 'O', role: 'WR', num: { X: 1, Y: 88, Z: 11, H: 2, R: 22 }[a.id], label: SHAPES[a.id] + ' ' + a.id, pos: at(a.id), lookT: 0.4 });
-    players.push({ id: 'S-' + a.id, side: 'D', role: 'CB', num: 20 + snap.allies.indexOf(a), label: '', pos: at('S-' + a.id), lookT: 0 });
-  }
-  for (const h of snap.hitters) {
-    const p = { id: h.id, side: 'D', role: h.kind === 'free' ? 'BLZ' : h.kind === 'drop' ? 'LB' : 'DL', num: h.number, label: String(h.number), pos: at(h.id), lookT: 0 };
-    if (h.blocker) { p.engT = c.instinct.rush.meet; p.mate = h.blocker; }
-    players.push(p);
-  }
-  const byId = {}; players.forEach((p) => { byId[p.id] = p; });
-  for (const h of snap.hitters) if (h.blocker && byId[h.blocker]) { byId[h.blocker].engT = c.instinct.rush.meet; byId[h.blocker].mate = h.id; }
-  const S = {
-    players, byId, live: true, isim: sim,
-    field: { xl: fr.leftSideline, xr: fr.rightSideline, hashes: [fr.leftHash, fr.rightHash], los: 35 },
-    T0: -0.6, T1: c.instinct.snap.max_time + 2,
-    cam: (t) => { const q = sim.pos('QB', t); return { x: q.x, y: q.y, eye: 1.64 }; },
-    Tt: Infinity, Tc: Infinity, target: null, catchPt: null, release: null, runFrom: null, yawOverride: null,
-    readId: null, readText: '', turnAt: Infinity, yawPre: 0, yaw: () => 0,
-  };
-  initFrames(S);
-  return S;
-}
-export function extendInstinct(S, t) {
-  for (const l of S.isim.hitters) {
-    if (l.relT == null) continue;
-    const p = S.byId[l.h.id]; if (p) p.relT = l.relT;
-    if (l.h.blocker && S.byId[l.h.blocker]) S.byId[l.h.blocker].relT = l.relT;
-  }
-  extendFrames(S, t);
-}
-
 /** He keeps it and runs from time t. */
 export function setRun(S, t) {
   S.runFrom = t;
@@ -274,7 +233,7 @@ function precompute(S) {
   initFrames(S);
   extendFrames(S, S.T1);
 }
-/** Frames are filled in order; a live scene (Pocket Instinct) fills them as its simulation advances. */
+/** Frames are filled in order. */
 function initFrames(S) {
   const N = Math.round((S.T1 - S.T0) / DT) + 1;
   S.data = S.players.map(() => new Float32Array(N * NF));

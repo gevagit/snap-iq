@@ -7,9 +7,12 @@ import { explain, CORNER_LABEL } from './explain';
 import { createEyes, sceneFor, setThrow, setRun, setRollOut, SHAPES } from './eyes.js';
 import { drawBoard, drawCall } from './board.js';
 import { callSheet } from './call';
-import { initInstinct } from './instinct.js';
+import { initRooftop } from './rooftop.js';
+import { makeGame, unlocked } from '../rooftop';
 
 const C = parsePlayContent(raw);
+// Rooftop Run, the Pocket workout (not football): its own settings, his throwing hand from his football profile
+const G = makeGame(raw.rooftop, C.quarterback.throwing_hand);
 const R = C.drills.routine;
 const TERMS = new Map(raw.glossary.terms.map((t) => [t.id, t]));
 const term = (id) => (TERMS.get(id) ? TERMS.get(id).term : id);
@@ -43,11 +46,8 @@ function renderHome() {
   $('playtest').checked = progress.playtest;
   const anyReviewed = makeRep(C, progress.tier, 1, 0, false) !== null;
   const b = $('playtestBanner');
-  const pocketWaits = !C.instinct.reviewed;
-  b.hidden = anyReviewed && !progress.playtest && !pocketWaits;
-  b.innerHTML = anyReviewed && pocketWaits && !progress.playtest
-    ? '<b>Pocket Instinct is waiting for sign-off.</b><span>Its settings (batch 5) are new and in owner review. To playtest it now, turn on playtest in Parent settings.</span><button class="plain" id="ptQuick" type="button">Playtest now</button>'
-    : anyReviewed
+  b.hidden = anyReviewed && !progress.playtest;
+  b.innerHTML = anyReviewed
     ? '<b>Playtest is on.</b><span>Content the owner hasn\'t signed off can appear. Turn it off in Parent settings.</span>'
     : progress.playtest
       ? '<b>Playtest: some of this isn\'t signed off yet.</b><span>Content changed after the owner\'s playtest is back in review until it is signed off.</span>'
@@ -55,12 +55,28 @@ function renderHome() {
   const q = $('ptQuick'); if (q) q.addEventListener('click', () => { progress.playtest = true; save(); renderHome(); });
   $('startBtn').disabled = !anyReviewed && !progress.playtest;
   $('startBtn').style.opacity = $('startBtn').disabled ? 0.45 : 1;
-  // Pocket Instinct (batch 5; playtest until the owner signs it off)
-  const best = (progress.instinct || {}).best || 0;
-  $('pocketBtn').disabled = pocketWaits && !progress.playtest;
-  $('pocketBtn').style.opacity = $('pocketBtn').disabled ? 0.45 : 1;
-  $('pocketSub').textContent = $('pocketBtn').disabled ? 'Waiting for sign-off (batch 5). Turn on playtest in Parent settings to try it.' : `Dodge the rush, hit the open man, hang as long as you can${best ? ` · best ${best.toFixed(1)} s` : ''}${pocketWaits ? ' · playtest' : ''}`;
+  // Rooftop Run: best score and the looks it has earned
+  const roof = progress.rooftop || {};
+  $('roofSub').textContent = `Dodge the drones, toss to the lit lantern, keep the streak${roof.best ? ` · best ${roof.best.toLocaleString()}` : ''}`;
+  renderLocker(roof);
 }
+function renderLocker(roof) {
+  const has = unlocked(G, roof.best || 0);
+  $('locker').hidden = !roof.runs;
+  $('lockerNote').textContent = 'Rooftop Run looks: your best run unlocks more';
+  const chips = (kind, list, chosen) => list.map((u) => {
+    const got = has[kind].includes(u);
+    const on = got && (chosen ? chosen === u.id : u.at === 0);
+    return `<button type="button" data-kind="${kind}" data-id="${u.id}" aria-pressed="${on}" ${got ? '' : 'disabled'}><i style="background:${u.color}"></i>${esc(u.name)}${got ? '' : ` · ${u.at.toLocaleString()}`}</button>`;
+  }).join('');
+  $('lockJackets').innerHTML = chips('jackets', G.r.unlocks.jackets, roof.jacket);
+  $('lockTrails').innerHTML = chips('trails', G.r.unlocks.trails, roof.trail);
+}
+$('locker').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-kind]'); if (!b || b.disabled) return;
+  progress.rooftop = { ...(progress.rooftop || {}), [b.dataset.kind === 'jackets' ? 'jacket' : 'trail']: b.dataset.id };
+  save(); renderHome();
+});
 $('tierSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; progress.tier = b.dataset.tier; save(); renderHome(); });
 $('playtest').addEventListener('change', () => { progress.playtest = $('playtest').checked; save(); renderHome(); });
 $('resetBtn').addEventListener('click', () => { const keep = { tier: progress.tier, playtest: progress.playtest }; progress = { ...newProgress(), ...keep }; save(); renderHome(); });
@@ -68,8 +84,8 @@ $('resetBtn').addEventListener('click', () => { const keep = { tier: progress.ti
 // ---------------------------------------------------------------- the workout
 const canvas = $('view');
 const eyes = createEyes(canvas);
-const pocket = initInstinct({ C, eyes, $, show, term, def, esc, progress: () => progress, save, renderHome, finishWorkout, today });
-$('pocketBtn').addEventListener('click', () => pocket.start());
+const rooftop = initRooftop({ G, $, show, progress: () => progress, save, renderHome });
+$('roofBtn').addEventListener('click', () => rooftop.start());
 let session = null;
 let rep = null; // as dealt (with any alignment fault)
 let played = null; // with his route changes
@@ -86,7 +102,7 @@ function startWorkout() {
   requestAnimationFrame(() => { eyes.resize(); nextRep(); });
 }
 $('startBtn').addEventListener('click', startWorkout);
-$('quitBtn').addEventListener('click', () => (pocket.isOn() ? pocket.end() : endWorkout()));
+$('quitBtn').addEventListener('click', endWorkout);
 
 function nextRep() {
   hide('result'); hide('ask'); $('cue').classList.remove('on');

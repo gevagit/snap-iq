@@ -8,7 +8,7 @@ export interface Batch2Counts { formations: number; motions: number; routes: num
 const FILES: Partial<Record<ContentKey, string>> = {
   personnel: 'offense/personnel.yaml', formations: 'offense/formations.yaml', motions: 'offense/motions.yaml', routes: 'offense/routes.yaml',
   concepts: 'offense/concepts.yaml', protections: 'offense/protections.yaml', fronts: 'defense/fronts.yaml', coverages: 'defense/coverages.yaml', speeds: 'tuning/speeds.yaml', drills: 'tuning/drills.yaml', adjustments: 'offense/adjustments.yaml', quarterback: 'offense/quarterback.yaml',
-  pocket: 'pocket/rules.yaml', instinct: 'instinct/rules.yaml',
+  pocket: 'pocket/rules.yaml',
 };
 
 function parse<T>(schema: ZodType<T>, data: unknown, key: ContentKey, errors: string[]): T | null {
@@ -37,7 +37,6 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
   const adjustments = parse(S.Adjustments, raw.adjustments, 'adjustments', errors);
   const quarterback = parse(S.Quarterback, raw.quarterback, 'quarterback', errors);
   const pocket = parse(S.Pocket, raw.pocket, 'pocket', errors);
-  const instinct = parse(S.Instinct, raw.instinct, 'instinct', errors);
 
   const term = (file: string, owner: string, id: string) => {
     if (glossary.success && !terms.has(id)) errors.push(`${file}: ${owner} uses term ${id}, which is not in the glossary`);
@@ -191,17 +190,6 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     term('offense/quarterback.yaml', 'escape', 'escape-lane');
   }
   if (pocket) for (const id of ['pocket', 'set-point', 'off-hand-reset', 'climb', 'pocket-slide', 'pocket-escape', 'happy-feet']) term('pocket/rules.yaml', 'pocket', id);
-  if (instinct) {
-    const file = 'instinct/rules.yaml';
-    for (const p of instinct.patterns) {
-      for (const id of p.terms) term(file, p.id, id);
-      if (p.response !== 'stand' && p.response !== 'ball-out') term(file, p.id, p.response);
-    }
-    if (!instinct.patterns.some((p) => p.from === 1)) errors.push(`${file}: no pattern at level 1`);
-    if (instinct.allies.depth[0] < 1) errors.push(`${file}: allies must start downfield of the line`);
-    if (instinct.allies.shadow.open <= instinct.allies.pick_reach) errors.push(`${file}: an open ally's shadow must be farther than pick_reach`);
-    for (const id of ['throwaway', 'free-blocking-zone', 'sack', 'hot-route', 'blitz']) term(file, 'game', id);
-  }
   if (coverages) for (const cv of coverages.coverages) for (const tl of cv.tells ?? []) if (tl.kind) term('defense/coverages.yaml', `${cv.id} tell`, tl.kind);
   if (coverages) for (const cv of coverages.coverages) term('defense/coverages.yaml', `${cv.id} answer`, cv.answer);
   if (speeds) for (const [job, prof] of Object.entries(speeds.jobs)) if (!speeds.profiles[prof]) errors.push(`tuning/speeds.yaml: job ${job} uses unknown profile ${prof}`);
@@ -220,7 +208,6 @@ export function validateBatch2(raw: Record<ContentKey, unknown>, errors: string[
     ...(adjustments ? [adjustments] : []),
     ...(quarterback ? [quarterback] : []),
     ...(pocket ? [pocket] : []),
-    ...(instinct ? [instinct] : []),
   ];
   return {
     formations: formations?.formations.length ?? 0,

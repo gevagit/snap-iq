@@ -20,7 +20,6 @@ export interface PlayContent {
   adjustments: S.Adjustments;
   quarterback: S.Quarterback;
   pocket: S.Pocket;
-  instinct: S.Instinct;
 }
 
 export function parsePlayContent(raw: Record<ContentKey, unknown>): PlayContent {
@@ -42,7 +41,6 @@ export function parsePlayContent(raw: Record<ContentKey, unknown>): PlayContent 
     adjustments: S.Adjustments.parse(raw.adjustments),
     quarterback: S.Quarterback.parse(raw.quarterback),
     pocket: S.Pocket.parse(raw.pocket),
-    instinct: S.Instinct.parse(raw.instinct),
   };
 }
 
