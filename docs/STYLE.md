@@ -24,8 +24,8 @@ a screenshot before it is pushed.
 ## Players
 - Real proportions (no puppets): helmet with cage and stripe, shoulder pads, jersey over pads with numbers, pants
   with knee pads, socks, cleats, gloves. Linemen bigger than receivers.
-- **Real animation:** stance, get-off, pass set, engaged block, bull and speed rush, run, backpedal, cut, catch.
-  Motion comes from the engine's positions; animations play on top (feet planted, no sliding).
+- Animation comes from the renderer's pose model (stance, run, block, rush, backpedal, catch) driven by the
+  engine's positions; feet planted, no sliding.
 - Two uniforms with strong contrast in lightness, not only hue (his team vs the defense), readable at 30 yards.
 
 ## Light and atmosphere
@@ -46,9 +46,14 @@ a screenshot before it is pushed.
   a crowd swell on a completion; panned rush sound from the side it comes from (helps the blind side).
 - Effects never hide the field: no flash or shake during the read before the ball is out.
 
+## Rendering (owner, 2026-10-31: stay in 2D)
+- The his-eyes view stays the 2D canvas renderer (src/game/eyes.js): no 3D engine or bought models. The look comes
+  from the palette above, shading instead of outlines, a pre-rendered stadium panorama that turns with his head,
+  light towers with glow, turf stripes and grain, soft contact shadows, a vignette, and the effects below.
+
 ## Performance (PRD §14.5)
-- 60 fps on the 2020 iPad: low-poly skinned players (budget per player set when the assets are chosen), baked
-  stadium lighting, blob or baked contact shadows unless the owner relaxes the §14.5 "no real-time shadows" rule.
+- 60 fps on the 2020 iPad: the stadium, vignette and grain are drawn once per screen size and reused every frame;
+  per-frame gradients only for players, helmets and shadows.
 
 ## Don't
 - No cartoon outlines, no neon arcade palettes, no flat fills.

@@ -86,6 +86,7 @@ export function initInstinct(ctx) {
   function onResult(r) {
     const words = { complete: 'COMPLETE', incomplete: 'INCOMPLETE', pick: 'PICKED OFF', 'throw-away': 'THROWN AWAY', grounding: 'GROUNDING', hit: 'HIT!' };
     cue(words[r.kind] + (r.kind === 'complete' ? `  ×${run.multiplier.toFixed(1)}` : ''), 0.9);
+    if (r.kind === 'hit') { S.shake = { t: r.t, amp: 14 }; S.flash = { t: r.t, color: '#FFFFFF' }; }
     if (r.kind === 'complete' || r.kind === 'incomplete' || r.kind === 'pick') setThrow(S, r.target, r.t, r.catchT, r.catchAt);
     else if (r.kind === 'throw-away' || r.kind === 'grounding') {
       const fr = run.sim.snap.frame, side = Math.sign(r.release.x) || 1, x = side > 0 ? fr.rightSideline + 1.5 : fr.leftSideline - 1.5;
