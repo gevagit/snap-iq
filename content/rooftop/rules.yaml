@@ -11,21 +11,22 @@ roof:
 
 courier:
   eye: 1.55            # eye height above his roof
-  walk: 4.2            # pad inside the ring
-  sprint: 6.4          # pad past the ring (or Shift)
-  accel: 40            # how fast he reaches that speed (he cuts almost at once)
+  step: 0.9            # one tap (a key or a swipe) moves him this far; tap fast to go further
+  dash: 8              # how fast he covers a step
+  accel: 90            # how fast he gets going and stops
+  tap_gap: 0.12        # the right play taps no faster than this (a person can tap about this fast)
   start: [0, -0.8]
 
 drones:
   speed: { start: 6.5, end: 10.5 }   # by level
   spawn: 20            # how far out a drone launches: always in front of him, inside his view
-  ahead: 10            # a drone from ahead launches within this many degrees of straight ahead
-  side: [22, 38]       # one from a side, this many degrees off to that side
+  ahead: 8             # a drone from ahead launches within this many degrees of straight ahead
+  side: [14, 28]       # one from a side, this many degrees off to that side (it stays in view as it closes)
   warn: 1.0            # it hovers there, blinking, this long before it launches: no drone comes out of nowhere
   height: 1.35         # they fly at chest height
   turn: 2.4            # how hard they steer (radians a second) before they lock on
   commit: { start: 0.85, end: 0.55 }  # it locks on (eye turns red) this long before it would reach him, by level: the moment to cut
-  react: 0.25          # every round must be beatable by someone who reacts this long after the lock-on and walks clear
+  react: 0.25          # every round must be beatable by someone who taps this long after the lock-on
   hit: 0.6             # closer than this, it gets him
   near: 1.8            # closer than this but not a hit: a near miss
   first: [1.1, 1.5]    # the first drone launches this long into a round

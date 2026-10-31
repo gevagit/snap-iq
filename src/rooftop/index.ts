@@ -18,7 +18,7 @@ export const RooftopRules = z
   .object({
     version: z.number().int(),
     roof: z.object({ half_width: z.number().positive(), back: z.number().negative(), gap: z.number().positive() }).strict(),
-    courier: z.object({ eye: z.number().positive(), walk: z.number().positive(), sprint: z.number().positive(), accel: z.number().positive(), start: z.tuple([z.number(), z.number()]) }).strict(),
+    courier: z.object({ eye: z.number().positive(), step: z.number().positive(), dash: z.number().positive(), accel: z.number().positive(), tap_gap: z.number().positive(), start: z.tuple([z.number(), z.number()]) }).strict(),
     drones: z.object({
       speed: StartEnd, spawn: z.number().positive(), height: z.number().positive(), turn: z.number().positive(),
       commit: StartEnd, warn: z.number().min(0), ahead: z.number().min(0), side: Range,
@@ -63,9 +63,10 @@ export function checkRules(r: Rules): string[] {
   if (r.friends.snatch >= r.friends.watcher.tight + r.friends.lit * (r.friends.watcher.open - r.friends.watcher.tight)) e.push(`${file}: snatch reach must be closer than a lit lantern's watcher`);
   if (r.drones.near <= r.drones.hit) e.push(`${file}: a near miss must reach farther than a hit`);
   if (r.drones.commit.end * r.drones.speed.end <= r.drones.hit * 2) e.push(`${file}: drones must lock on well before they are close enough to hit`);
-  // after a lock-on he always has time to see it, react and walk clear, even at the top level
-  const room = r.courier.walk * (r.drones.commit.end - r.drones.react);
-  if (room < r.drones.hit * 1.5) e.push(`${file}: at the top level a walk only gets him ${room.toFixed(2)} m clear after a lock-on and his reaction; lock on earlier`);
+  // after a lock-on he always has time to see it, react and tap once clear, even at the top level
+  if (r.courier.step < r.drones.hit + 0.2) e.push(`${file}: one tap must step him clear of a drone (step more than hit + 0.2 m)`);
+  const left = r.drones.commit.end - r.drones.react - r.courier.step / r.courier.dash;
+  if (left < 0.1) e.push(`${file}: at the top level one tap after his reaction lands only ${left.toFixed(2)} s before the drone arrives; lock on earlier`);
   if (r.drones.side[1] + 2 >= VIEW / 2) e.push(`${file}: drones must launch inside his view (within ${VIEW / 2 - 2} degrees)`);
   const ids = new Set<string>();
   for (const k of ['jackets', 'trails'] as const) {
@@ -181,7 +182,8 @@ export function draftRound(g: Game, level: number, seed: number): Round {
 }
 
 // ------------------------------------------------------------------ one round, live
-export interface Input { mx: number; mz: number; sprint?: boolean }
+/** One tap moves him one step: x across (-1 left, +1 right), z ahead (+1) or back (-1). No tap: he stays where his taps put him. */
+export interface Input { tap?: { x: number; z: number } }
 export type Action = { kind: 'toss'; target: string };
 export interface Drone {
   id: string; from: From; x: number; z: number; dx: number; dz: number; speed: number;
@@ -201,6 +203,9 @@ export interface Toss { target: string; press: number; release: number; arrive: 
 export class RoundSim {
   t = 0;
   x: number; z: number; vx = 0; vz = 0;
+  /** where his taps have sent him */
+  tx: number; tz: number;
+  taps = 0;
   drones: Drone[] = [];
   toss: Toss | null = null;
   result: Result | null = null;
@@ -212,6 +217,7 @@ export class RoundSim {
   private srand: () => number;
   constructor(readonly g: Game, readonly round: Round) {
     [this.x, this.z] = g.r.courier.start;
+    [this.tx, this.tz] = g.r.courier.start;
     for (const l of round.launches) this.drones.push(this.drone(l.id, l.from, l.x, l.z, l.speed, l.commit, false, l.t));
     this.nextSwarm = g.r.scoring.hot_clock;
     this.srand = rng(round.seed ^ 0x5eed);
@@ -237,16 +243,20 @@ export class RoundSim {
     if (this.result) return;
     const r = this.g.r, dt = STEP;
     this.events = [];
-    // his feet: the pad sets where he wants to go, he gets there almost at once
-    const m = Math.hypot(u.mx, u.mz), cap = u.sprint || m > 1.001 ? r.courier.sprint : r.courier.walk;
-    const k = m > 1 ? 1 / m : 1;
-    const tx = u.mx * k * cap, tz = u.mz * k * cap;
-    const dv = Math.hypot(tx - this.vx, tz - this.vz), a = r.courier.accel * dt;
-    if (dv <= a) { this.vx = tx; this.vz = tz; } else { this.vx += ((tx - this.vx) / dv) * a; this.vz += ((tz - this.vz) / dv) * a; }
-    this.x = clamp(this.x + this.vx * dt, -r.roof.half_width + 0.4, r.roof.half_width - 0.4);
-    this.z = clamp(this.z + this.vz * dt, r.roof.back + 0.4, -r.roof.back - 0.4);
-    if (Math.abs(this.x) >= r.roof.half_width - 0.4 - 1e-9) this.vx = 0;
-    if (Math.abs(this.z) >= -r.roof.back - 0.4 - 1e-9) this.vz = 0;
+    // his feet: each tap sends him one step further; he dashes there and stops (tap fast to go far)
+    const hw = r.roof.half_width - 0.4, zb = r.roof.back + 0.4, zf = -r.roof.back - 0.4;
+    if (u.tap && (u.tap.x || u.tap.z)) {
+      this.tx = clamp(this.tx + Math.sign(u.tap.x) * r.courier.step, -hw, hw);
+      this.tz = clamp(this.tz + Math.sign(u.tap.z) * r.courier.step, zb, zf);
+      this.taps++;
+    }
+    const ex = this.tx - this.x, ez = this.tz - this.z, ed = Math.hypot(ex, ez);
+    const want = ed < 1e-4 ? 0 : Math.min(r.courier.dash, Math.sqrt(2 * r.courier.accel * ed), ed / dt);
+    const wx = ed < 1e-4 ? 0 : (ex / ed) * want, wz = ed < 1e-4 ? 0 : (ez / ed) * want;
+    const dv = Math.hypot(wx - this.vx, wz - this.vz), a = r.courier.accel * dt;
+    if (dv <= a) { this.vx = wx; this.vz = wz; } else { this.vx += ((wx - this.vx) / dv) * a; this.vz += ((wz - this.vz) / dv) * a; }
+    this.x = clamp(this.x + this.vx * dt, -hw, hw);
+    this.z = clamp(this.z + this.vz * dt, zb, zf);
     // hold it past the hot clock and more drones come
     if (this.holding && this.t >= this.nextSwarm) {
       const id = `S${++this.swarmN}`, from: From = this.srand() < 0.5 ? 'ahead' : 'side';
@@ -314,52 +324,77 @@ export class RoundSim {
 }
 
 /**
- * The right play: stand until a drone locks on, then cut square off its line (back toward the middle of the roof when
- * either way works); toss to the first friend whose lantern is lit at release. With `react` it waits that long after
- * a lock-on and with `walk` it never sprints: what every round must allow a person to do. Used to check every round,
- * for the autoplay demo and as the tests' good player.
+ * The right play: stand until a drone locks on, then tap a step square off its line (toward the middle of the roof
+ * when either way works), and tap again if that was not enough; toss to the first friend whose lantern is lit at
+ * release. With `react` it waits that long after a lock-on before its first tap: what every round must allow a person
+ * to do. Used to check every round, for the autoplay demo and as the tests' good player.
  */
-export function idealPolicy(g: Game, how: { react?: number; walk?: boolean } = {}): (s: RoundSim) => Input & { action?: Action } {
-  const react = how.react ?? 0, speed = how.walk ? 1 : 1.5;
-  const r = g.r;
+export function idealPolicy(g: Game, how: { react?: number } = {}): (s: RoundSim) => Input & { action?: Action } {
+  const react = how.react ?? 0, r = g.r;
+  const hw = r.roof.half_width - 0.4, zb = r.roof.back + 0.4, zf = -r.roof.back - 0.4;
   const cutSide = new WeakMap<Drone, number>();
-  const room = (v: number, n: number, lo: number, hi: number) => (n > 0 ? hi - v : n < 0 ? v - lo : Infinity) / Math.max(1e-6, Math.abs(n));
+  const TAPS = [{ x: 1, z: 0 }, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 }];
+  const fits = (s: RoundSim, t: { x: number; z: number }) => {
+    const nx = s.tx + t.x * r.courier.step, nz = s.tz + t.z * r.courier.step;
+    return nx >= -hw - 1e-9 && nx <= hw + 1e-9 && nz >= zb - 1e-9 && nz <= zf + 1e-9;
+  };
+  let last = -Infinity;
   return (s) => {
-    let mx = 0, mz = 0, threat = Infinity;
+    if (s.t < last) last = -Infinity; // a new round
+    let tap: { x: number; z: number } | undefined, threat = Infinity;
     for (const d of s.drones) {
       if (!d.launched || !d.committed || d.passed || d.gone || s.t - d.commitT! < react - 1e-9) continue;
-      const rx = s.x - d.x, rz = s.z - d.z, along = rx * d.dx + rz * d.dz;
+      // where his taps will put him, against the drone's line (its normal is (-dz, dx))
+      const rx = s.tx - d.x, rz = s.tz - d.z, along = rx * d.dx + rz * d.dz;
       if (along <= 0) continue;
-      // which side of its line he is on (the line's normal is (-dz, dx))
       const off = rx * -d.dz + rz * d.dx;
       if (Math.abs(off) >= r.drones.hit + 0.45 || along / d.speed > threat) continue;
       threat = along / d.speed;
-      // pick a side once and stick to it: the side he is already on, toward the middle of the roof when he is dead
-      // on the line, the other way if the roof edge is in the way
       let side = cutSide.get(d);
       if (side == null) {
         side = Math.abs(off) > 0.05 ? Math.sign(off) : -s.x * -d.dz - (s.z - r.roof.back / 2) * d.dx >= 0 ? 1 : -1;
-        const nx = -d.dz * side, nz = d.dx * side;
-        const here = Math.min(room(s.x, nx, -r.roof.half_width + 0.4, r.roof.half_width - 0.4), room(s.z, nz, r.roof.back + 0.4, -r.roof.back - 0.4));
-        if (here < r.drones.hit + 0.5 - Math.abs(off)) side = -side;
         cutSide.set(d, side);
       }
-      mx = -d.dz * side * speed; mz = d.dx * side * speed;
+      // the tap that moves him most off the line on that side, if the roof has room; else the other side
+      const best = (sd: number) => TAPS.filter((t) => fits(s, t)).map((t) => ({ t, gain: (t.x * -d.dz + t.z * d.dx) * sd })).sort((p, q) => q.gain - p.gain)[0];
+      let pick = best(side);
+      if (!pick || pick.gain < 0.3) { side = -side; cutSide.set(d, side); pick = best(side); }
+      if (pick && pick.gain > 0) tap = pick.t;
     }
     if (threat === Infinity) {
-      // nothing locked on: drift back toward the start spot so there is room to cut
-      const [sx, sz] = r.courier.start, dx = sx - s.x, dz = sz - s.z, h = Math.hypot(dx, dz);
+      // nothing locked on: step back toward the start spot, one tap at a time, so there is room to cut
       const safe = s.drones.every((d) => !d.launched || d.passed || d.gone || Math.hypot(d.x - s.x, d.z - s.z) > d.speed * d.commitIn * 2.2);
-      if (h > 0.4 && safe) { mx = (dx / h) * 0.6; mz = (dz / h) * 0.6; }
-    }
+      const [sx, sz] = r.courier.start;
+      if (safe && s.t - last > 0.35) {
+        if (Math.abs(sx - s.tx) > r.courier.step * 0.75) tap = { x: Math.sign(sx - s.tx), z: 0 };
+        else if (Math.abs(sz - s.tz) > r.courier.step * 0.75) tap = { x: 0, z: Math.sign(sz - s.tz) };
+      }
+    } else if (tap && s.t - last < r.courier.tap_gap) tap = undefined;
+    if (tap) last = s.t;
     let action: Action | undefined;
     if (s.holding) {
       const f = s.round.friends.find((ff) => isLit(g, ff, s.t + r.toss.release));
       if (f) action = { kind: 'toss', target: f.id };
     }
-    return { mx, mz, sprint: !how.walk, ...(action ? { action } : {}) };
+    return { ...(tap ? { tap } : {}), ...(action ? { action } : {}) };
   };
 }
+
+/** Whether a drone he has to deal with is inside his view (it hovers or hunts in front of him until it is close). */
+export function inView(g: Game, s: RoundSim, d: Drone, margin = 3): boolean {
+  const dz = d.z - s.z, dx = Math.abs(d.x - s.x);
+  // the last moment of a locked-on drone's run (a quarter second or so) may be at the edge; his head turns to it
+  if (Math.hypot(dx, dz) <= (d.committed ? g.r.drones.near * 1.5 : g.r.drones.near)) return true;
+  return dz > 0 && (Math.atan2(dx, dz) * 180) / Math.PI <= VIEW / 2 - margin;
+}
+/** The drones that can still get him: hovering before launch, hunting him, or locked on with its line on him. Every
+ * one of them must be in his view (a drone that will miss may fly past his shoulder). */
+export const watched = (g: Game, s: RoundSim) => s.drones.filter((d) => {
+  if (d.gone || d.passed || !(d.launched || s.t >= d.launchT - g.r.drones.warn)) return false;
+  if (!d.committed) return true;
+  // locked on: still a threat only while its straight line runs at him
+  return Math.abs((s.x - d.x) * d.dz - (s.z - d.z) * d.dx) < g.r.drones.hit + 0.3;
+});
 
 /** Play one round with a controller to its end (or a time limit). */
 export function runRound(g: Game, round: Round, policy: (s: RoundSim) => Input & { action?: Action }, limit = 30): RoundSim {
@@ -371,7 +406,7 @@ export function runRound(g: Game, round: Round, policy: (s: RoundSim) => Input &
   }
   return s;
 }
-const still = () => ({ mx: 0, mz: 0 });
+const still = (): Input => ({});
 /** Stand still and toss to the first lit lantern: what the right move has to beat. */
 export function standPolicy(g: Game): (s: RoundSim) => Input & { action?: Action } {
   return (s) => {
@@ -383,9 +418,12 @@ export function standPolicy(g: Game): (s: RoundSim) => Input & { action?: Action
 /** Why a drafted round fails the invariants (empty: it is a fair round). */
 export function roundProblems(g: Game, round: Round): string[] {
   const p: string[] = [];
-  // fair to a person: seeing the lock-on, reacting and walking (no sprint) clear is enough
-  const human = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, walk: true }));
-  if (human.result?.kind !== 'catch') p.push(`reacting to the lock-on and walking clear does not complete it (${human.result?.kind ?? 'no result'})`);
+  // fair to a person: seeing the lock-on, reacting and tapping clear is enough, and every drone stays in his view
+  let unseen = '';
+  const humanPlay = idealPolicy(g, { react: g.r.drones.react });
+  const human = runRound(g, round, (s) => { for (const d of watched(g, s)) if (!unseen && !inView(g, s, d)) unseen = `${d.id} at ${s.t.toFixed(2)} s`; return humanPlay(s); });
+  if (human.result?.kind !== 'catch') p.push(`reacting to the lock-on and tapping clear does not complete it (${human.result?.kind ?? 'no result'})`);
+  if (unseen) p.push(`a drone leaves his view before it reaches him (${unseen})`);
   if (!round.pattern.early) {
     const stand = runRound(g, round, standPolicy(g));
     if (stand.result?.kind !== 'hit') p.push(`standing still is not punished (${stand.result?.kind ?? 'no result'})`);

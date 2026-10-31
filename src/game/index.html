@@ -171,13 +171,17 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 /* the same place every time: an arc around his thumb, ◆ at the top to ★ at the far side */
 .rtoss [data-id="A"] { left: 6px; top: 0; } .rtoss [data-id="B"] { left: 74px; top: 22px; } .rtoss [data-id="C"] { left: 132px; top: 66px; }
 .rtoss [data-id="D"] { left: 168px; top: 128px; } .rtoss [data-id="E"] { left: 180px; top: 184px; }
-.rpad { position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, rgba(10,8,24,0.3) 0 55%, rgba(10,8,24,0.6) 100%); border: 1.5px solid rgba(63,224,255,0.45); box-shadow: 0 0 18px rgba(63,224,255,0.25) inset; touch-action: none; }
-.rpad::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; border: 1.5px dashed rgba(255,255,255,0.35); }
-.rpad.sprint { border-color: #FF4FB8; box-shadow: 0 0 22px rgba(255,79,184,0.5) inset; }
-.rpad i { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFFFFF, #BFD7F2); box-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: none; }
+.rswipe { position: absolute; top: 64px; right: 0; bottom: 0; width: 50%; touch-action: none; display: grid; place-items: end; padding: 0 max(22px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) 0; }
+.rswipe span { pointer-events: none; display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 34px); place-items: center; width: 150px; height: 150px; place-content: center; border-radius: 50%; border: 1.5px dashed rgba(63,224,255,0.4); color: rgba(255,255,255,0.55); font-size: 22px; font-weight: 800; }
+.rswipe span b { grid-column: 1 / 4; grid-row: 4; font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.6); }
+.rswipe.flash span { animation: rflash 0.25s ease-out; }
+.rswipe[data-flash="l"].flash span i:nth-of-type(2), .rswipe[data-flash="r"].flash span i:nth-of-type(3), .rswipe[data-flash="u"].flash span i:nth-of-type(1), .rswipe[data-flash="d"].flash span i:nth-of-type(4) { color: #3FE0FF; text-shadow: 0 0 12px #3FE0FF; }
+.rswipe i { font-style: normal; }
+@keyframes rflash { from { border-color: #3FE0FF; box-shadow: 0 0 24px rgba(63,224,255,0.5) inset; } to { border-color: rgba(63,224,255,0.4); box-shadow: none; } }
+@media (pointer: fine) { .rswipe { display: none; } }
 body.roof-righty .rtoss { left: auto; right: max(10px, env(safe-area-inset-right)); transform: scaleX(-1); }
 body.roof-righty .rtoss button { transform: scaleX(-1); }
-body.roof-righty .rpad { right: auto; left: max(18px, env(safe-area-inset-left)); }
+body.roof-righty .rswipe { right: auto; left: 0; place-items: end start; padding: 0 0 max(22px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left)); }
 .rready, .rreport { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(10,8,24,0.86); border: 1px solid rgba(255,79,184,0.4); box-shadow: 0 0 40px rgba(255,79,184,0.25); border-radius: 18px; padding: 20px 22px; display: grid; gap: 10px; text-align: center; width: min(420px, 90vw); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .rready h2 { margin: 0; font-size: 34px; font-weight: 800; font-stretch: 70%; letter-spacing: 0.1em; background: linear-gradient(90deg, #FF4FB8, #3FE0FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .rready p { margin: 0; font-size: 15px; line-height: 1.45; color: #D9D4F0; }
@@ -277,7 +281,7 @@ body.roof-righty .rtoss button.lit { animation-name: rpulse-r; }
     <div class="card">
       <b>How a rep works</b>
       <p class="note">First the call: see where everyone lines up and what each player does. Then break the huddle: you're at the line. Go through your whole routine on the play clock: check your alignment, read the defense (shell, box, corners, tells), count the rush, change up to two routes, set your key and escape lane, and pick your reads. Drag the field or use Look left / Look right to turn your head. The play stops at the snap: your drop, the coverage, the blitz, and whether to look off the safety. It stops again a second later with your eyes on your first read: throw, roll out, run, or throw it away.</p>
-      <p class="note"><b>Rooftop Run:</b> you're a courier on the rooftops at night, carrying a package. Hunter drones come at you from ahead: each one blinks before it launches, then flies at you. When its ring turns red it's locked on and flies straight, so that's the moment to step sideways with the pad under your right thumb (move too early and it follows you). Your friends stand on the rooftops around you. When one raises a gold lantern, his button glows gold: tap it with your left thumb to toss him the package. A catch sends you leaping to the next roof, and catches in a row light up the city. Getting hit ends the run, and so does tossing to a friend whose watcher drone is still on him. For your first runs, prompts on screen tell you what to do. On a computer: W A S D to move (hold Shift to sprint), Y U I O P to toss, left to right across the view (the key is on each friend's tag), Space to start, or click a friend. A game controller works too.</p>
+      <p class="note"><b>Rooftop Run:</b> you're a courier on the rooftops at night, carrying a package. Hunter drones come at you from ahead, always where you can see them: each one blinks before it launches, then flies at you. When its ring turns red it's locked on and flies straight, so that's the moment to step sideways (move too early and it follows you). You move a step at a time: on the iPad, a quick swipe anywhere on the right half of the screen is one step in that direction, and you swipe again for another (where your thumb lands doesn't matter, only the direction). Your friends stand on the rooftops around you. When one raises a gold lantern, his button glows gold: tap it with your left thumb to toss him the package. A catch sends you leaping to the next roof, and catches in a row light up the city. Getting hit ends the run, and so does tossing to a friend whose watcher drone is still on him. For your first runs, prompts on screen tell you what to do. On a computer: tap W A S D (or the arrows) once per step, Y U I O P to toss, left to right across the view (the key is on each friend's tag), Space to start, or click a friend. A game controller works too (d-pad or a flick of the stick per step).</p>
     </div>
     <details class="card" id="parent">
       <summary><b>Parent settings</b></summary>
@@ -350,11 +354,11 @@ body.roof-righty .rtoss button.lit { animation-name: rpulse-r; }
   <div class="rguide" id="rGuide" aria-live="polite"></div>
   <div class="rclock" id="rClock" hidden><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" pathLength="100" class="bg"/><circle cx="20" cy="20" r="16" pathLength="100" id="rClockArc"/></svg><b id="rClockNum"></b></div>
   <div class="rtoss" id="rToss" aria-label="Toss: one button per friend, always in the same place"></div>
-  <div class="rpad" id="rPad" aria-label="Move: push past the ring to sprint"><i id="rKnob"></i></div>
+  <div class="rswipe" id="rSwipe" aria-label="Move: swipe anywhere on this side, one swipe is one step"><span><i style="grid-area:1/2">↑</i><i style="grid-area:2/1">←</i><i style="grid-area:2/3">→</i><i style="grid-area:3/2">↓</i></span></div>
   <div class="rready" id="rReady" hidden>
     <h2>ROOFTOP RUN</h2>
     <ol class="rsteps">
-      <li><b>Drones come at you from ahead.</b> Each one blinks before it launches. When its ring turns <b class="lock">red</b>, step sideways (pad, or W A S D). Move too early and it follows you.</li>
+      <li><b>Drones come at you from ahead.</b> Each one blinks before it launches. When its ring turns <b class="lock">red</b>, step sideways: <b>one quick swipe</b> on the right side of the screen (or tap A / D) is one step; swipe or tap again to go further. Move too early and it follows you.</li>
       <li><b>Watch your friends on the rooftops.</b> When one raises a <b class="gold">gold lantern</b>, his button glows: tap it to toss him the package.</li>
       <li><b>Catch = jump to the next roof.</b> Catches in a row light up the city. Get hit, or toss to a friend who isn't lit, and the run can end.</li>
     </ol>

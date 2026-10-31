@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
+import { rng } from '../src/game/drill';
 import { parsePlayContent } from '../src/play/content';
 import {
-  Run, RoundSim, STEP, VIEW, checkRules, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
+  Run, RoundSim, STEP, VIEW, checkRules, inView, watched, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
   type Action, type Input, type Round,
 } from '../src/rooftop';
 
 const raw = loadRawContent();
 const g = makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand);
-const still = () => ({ mx: 0, mz: 0 });
+const still = (): Input => ({});
+const RIGHT = { x: 1, z: 0 };
 
 /** Play a run with a controller until it is over (or a time limit). */
 function play(run: Run, policy: (r: Run) => Input & { action?: Action }, limit = 120) {
@@ -42,7 +44,7 @@ describe('Rooftop Run', () => {
   });
 
   it('is deterministic: the same seed and inputs give the same run (golden replay)', () => {
-    const script = () => { const i = ideal(); return (r: Run) => (r.clock > 1.2 && r.clock < 1.6 ? { mx: 0.6, mz: 0.3 } : i(r)); };
+    const script = () => { const i = ideal(); return (r: Run) => (r.clock >= 1.2 && r.clock < 1.2 + STEP ? { tap: RIGHT } : i(r)); };
     const a = play(new Run(g, 4242, 1), script(), 40), b = play(new Run(g, 4242, 1), script(), 40);
     expect(b.score).toBe(a.score);
     expect(b.log.map((l) => [l.round.pattern.id, l.result.kind, l.result.t])).toEqual(a.log.map((l) => [l.round.pattern.id, l.result.kind, l.result.t]));
@@ -63,13 +65,14 @@ describe('Rooftop Run', () => {
     expect(run.log.at(-1)!.result.kind).toBe('hit');
   });
 
-  it('a drone that commits flies straight: cutting after the commit beats it, cutting before does not', () => {
+  it('a drone that locks on flies straight: one tap after the lock-on beats it, a tap before does not', () => {
     const round = roundOf('dive', 3), r = g.r;
-    // stand, then cut at the commit: a miss
-    const late = runRound(g, round, (s) => (s.drones[0]!.committed ? { mx: 1.5, mz: 0 } : still()), 6);
+    const once = (when: (s: RoundSim) => boolean) => { let done = false; return (s: RoundSim): Input => (!done && when(s) ? ((done = true), { tap: RIGHT }) : still()); };
+    // stand, then one tap at the lock-on: a miss
+    const late = runRound(g, round, once((s) => s.drones[0]!.committed), 6);
     expect(late.drones[0]!.passed).toBe(true);
-    // cut early and hold the same line: it steers onto him
-    const early = runRound(g, round, (s) => (s.t > round.launches[0]!.t + 0.2 ? { mx: 0.6, mz: 0 } : still()), 6);
+    // one tap early: it steers onto him
+    const early = runRound(g, round, once((s) => s.t > round.launches[0]!.t + 0.2), 6);
     expect(early.result?.kind).toBe('hit');
     expect(r.drones.commit.end * r.drones.speed.end).toBeGreaterThan(r.drones.hit);
   });
@@ -86,7 +89,7 @@ describe('Rooftop Run', () => {
   it('a toss into a watcher still on his friend is snatched and ends the run', () => {
     const run = play(new Run(g, 11, 1), (r) => {
       const s = r.sim, f = s.round.friends.find((ff) => separation(g, ff, s.t + g.r.toss.release) < g.r.friends.snatch);
-      return s.holding && f && s.t > 0.2 ? { mx: 0, mz: 0, action: { kind: 'toss', target: f.id } } : still();
+      return s.holding && f && s.t > 0.2 ? { action: { kind: 'toss', target: f.id } } : still();
     });
     expect(run.log.at(-1)!.result.kind).toBe('snatch');
     expect(run.phase).toBe('over');
@@ -127,12 +130,46 @@ describe('Rooftop Run', () => {
     }
   });
 
-  it('a person always has time: react to the lock-on a beat late, walk (no sprint) clear', () => {
+  it('a person always has time: tap a beat after the lock-on and it misses', () => {
     for (let level = 1; level <= g.r.ramp.levels; level += 3) for (let i = 0; i < 8; i++) {
       const round = makeRound(g, level, 900 + 10 * level + i);
-      const s = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, walk: true }));
+      const s = runRound(g, round, idealPolicy(g, { react: g.r.drones.react }));
       expect(s.result?.kind, `level ${level} ${round.pattern.id}`).toBe('catch');
     }
+  });
+
+  it('he moves by taps: each tap is one step, holding does nothing more, tapping fast goes further', () => {
+    const round = makeRound(g, 1, 5), r = g.r;
+    const s = new RoundSim(g, round), x0 = s.x;
+    s.step({ tap: RIGHT });
+    for (let k = 0; k < 60; k++) s.step(still()); // half a second, no more taps
+    expect(s.x - x0).toBeCloseTo(r.courier.step, 3);
+    expect(Math.hypot(s.vx, s.vz)).toBeLessThan(1e-6);
+    // three quick taps: three steps, quickly
+    const q = new RoundSim(g, round);
+    for (let k = 0; k < 36; k++) q.step(k % 12 === 0 ? { tap: RIGHT } : still());
+    for (let k = 0; k < 30; k++) q.step(still());
+    expect(q.x - x0).toBeCloseTo(3 * r.courier.step, 3);
+    expect(q.taps).toBe(3);
+  });
+
+  it('a drone that can still get him stays in his view, however he moves (random tapping)', () => {
+    let rounds = 0, out = 0, hunting = 0;
+    for (let level = 1; level <= g.r.ramp.levels; level += 2) for (let i = 0; i < 20; i++) {
+      const round = makeRound(g, level, 7000 + level * 100 + i), rand = rng(level * 31 + i);
+      let next = 0.2, seen = true;
+      runRound(g, round, (s) => {
+        for (const d of watched(g, s)) if (!inView(g, s, d)) { seen = false; if (!d.committed) hunting++; }
+        if (s.t < next) return still();
+        next = s.t + 0.15 + rand() * 0.6;
+        const k = Math.floor(rand() * 5);
+        return k < 4 ? { tap: [RIGHT, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 }][k]! } : still();
+      }, 12);
+      rounds++; if (!seen) out++;
+    }
+    // a hunting drone never leaves his view; a locked-on one only right at the edge in its last moment, rarely
+    expect(hunting).toBe(0);
+    expect(out / rounds).toBeLessThan(0.02);
   });
 
   it('blindside waves come from his off-hand side', () => {

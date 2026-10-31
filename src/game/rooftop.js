@@ -1,13 +1,15 @@
 // Rooftop Run (docs/plans/rooftop.md): the Pocket workout. A courier on neon rooftops at night, seen through his own
-// eyes: dodge the hunter drones with the pad, toss the package to a friend the moment his lantern lights (fixed
+// eyes: dodge the hunter drones by tapping a step at a time (keys or swipes), toss the package to a friend the moment his lantern lights (fixed
 // buttons, always in the same place), and keep the run going. The rules and every number live in src/rooftop and
 // content/rooftop/rules.yaml; this file draws the city, plays the sound, takes input (touch, keyboard, mouse, game
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
-import { STEP, Run, idealPolicy, isLit, separation, tossKeys, report, unlocked, offSign, GLYPHS, FRIEND_IDS } from '../rooftop';
+import { STEP, Run, idealPolicy, isLit, separation, tossKeys, report, unlocked, offSign, watched, GLYPHS, FRIEND_IDS } from '../rooftop';
 
 const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, 1], s: [0, -1], a: [-1, 0], d: [1, 0] };
 // game controller (standard mapping): X Y A B RB toss, left to right like Y U I O P
 const PAD_TOSS = { 2: 'y', 3: 'u', 0: 'i', 1: 'o', 5: 'p' };
+// the d-pad steps: up, down, left, right
+const PAD_STEP = { 12: [0, 1], 13: [0, -1], 14: [-1, 0], 15: [1, 0] };
 const GOLD = '#FFD84D', GOLD_CORE = '#FFF4C2', HUNT = '#3FE0FF', LOCK = '#FF3B6B', WATCH = '#FF9A3C';
 const NEON = ['#FF4FB8', '#3FE0FF', '#A8FF3E', '#B26BFF', '#FF9A3C'];
 const FONT = '"Archivo", "Helvetica Neue", Arial, sans-serif';
@@ -26,10 +28,8 @@ export function initRooftop(ctx) {
   const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
   let run = null, raf = 0, last = 0, acc = 0, policy = null, policySim = null, on = false, started = false;
   let W = 0, H = 0, DPR = 1, F = 1, layers = null;
-  const keys = new Set();
-  let pad = { mx: 0, mz: 0, id: null };
   let gpPrev = [];
-  const fx = { shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
+  const fx = { tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
   let ghost = null, look = { jacket: null, trail: null }, guided = true;
   const trails = new Map();
   const audio = sound();
@@ -47,27 +47,28 @@ export function initRooftop(ctx) {
   /** The sky, the far skyline in three layers (with a lit-window copy that brightens with the streak), the street glow. */
   function city(w, h) {
     const mk = (cw, ch) => { const c = document.createElement('canvas'); c.width = Math.round(cw * DPR); c.height = Math.round(ch * DPR); const x = c.getContext('2d'); x.scale(DPR, DPR); return [c, x]; };
-    const hy = h * HORIZON;
-    const [sky, s] = mk(w, h);
+    // wider than the view, so the city slides when his head turns
+    const hy = h * HORIZON, VW = w * 1.6;
+    const [sky, s] = mk(VW, h);
     let gr = s.createLinearGradient(0, 0, 0, h);
     gr.addColorStop(0, '#05030F'); gr.addColorStop(0.32, '#1A0B33'); gr.addColorStop(HORIZON, '#3B1458'); gr.addColorStop(HORIZON + 0.02, '#160A26'); gr.addColorStop(1, '#030208');
-    s.fillStyle = gr; s.fillRect(0, 0, w, h);
+    s.fillStyle = gr; s.fillRect(0, 0, VW, h);
     const rnd = looks(7);
     s.fillStyle = '#FFFFFF';
-    for (let i = 0; i < 140; i++) { s.globalAlpha = 0.2 + rnd() * 0.6; const r = rnd() * 1.2 + 0.3; s.fillRect(rnd() * w, rnd() * hy * 0.8, r, r); }
+    for (let i = 0; i < 140; i++) { s.globalAlpha = 0.2 + rnd() * 0.6; const r = rnd() * 1.2 + 0.3; s.fillRect(rnd() * VW, rnd() * hy * 0.8, r, r); }
     s.globalAlpha = 1;
     // the moon, haloed
-    const mx = w * 0.78, my = h * 0.12, mr = Math.max(14, h * 0.035);
+    const mx = VW * 0.68, my = h * 0.12, mr = Math.max(14, h * 0.035);
     gr = s.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 5); gr.addColorStop(0, 'rgba(255,214,240,0.25)'); gr.addColorStop(1, 'rgba(255,214,240,0)');
     s.fillStyle = gr; s.fillRect(mx - mr * 5, my - mr * 5, mr * 10, mr * 10);
     s.fillStyle = '#FBE9F7'; s.beginPath(); s.arc(mx, my, mr, 0, Math.PI * 2); s.fill();
     // a magenta haze along the horizon
     gr = s.createLinearGradient(0, hy - h * 0.18, 0, hy + h * 0.06); gr.addColorStop(0, 'rgba(255,79,184,0)'); gr.addColorStop(0.75, 'rgba(255,79,184,0.32)'); gr.addColorStop(1, 'rgba(255,79,184,0)');
-    s.fillStyle = gr; s.fillRect(0, hy - h * 0.18, w, h * 0.24);
-    // skyline layers, wider than the view so they can slide with his steps
+    s.fillStyle = gr; s.fillRect(0, hy - h * 0.18, VW, h * 0.24);
+    // skyline layers
     const sky3 = [];
     for (let L = 0; L < 3; L++) {
-      const lw = w * 1.4, top = hy - h * (0.2 - L * 0.045), base = hy + h * (0.05 + L * 0.06);
+      const lw = VW, top = hy - h * (0.2 - L * 0.045), base = hy + h * (0.05 + L * 0.06);
       const [dark, d] = mk(lw, h), [lit, l] = mk(lw, h);
       const r2 = looks(31 + L * 17);
       const shade = ['#120A22', '#0D0719', '#080512'][L];
@@ -91,16 +92,16 @@ export function initRooftop(ctx) {
     }
     // bake the skyline into the sky (one image), and its lit windows plus the horizon glow into a second one whose
     // brightness follows the streak: two full-screen copies a frame on the iPad instead of nine
-    const [litAll, la] = mk(w, h);
-    for (const L of sky3) { const ox = -(L.lw - w) / 2; s.drawImage(L.dark, ox, 0, L.lw, h); la.drawImage(L.lit, ox, 0, L.lw, h); }
+    const [litAll, la] = mk(VW, h);
+    for (const L of sky3) { s.drawImage(L.dark, 0, 0, L.lw, h); la.drawImage(L.lit, 0, 0, L.lw, h); }
     // glow sprites (soft round light), drawn with 'lighter'
     const sprite = (col) => { const [c, x] = mk(64, 64); const gg = x.createRadialGradient(32, 32, 0, 32, 32, 32); gg.addColorStop(0, col); gg.addColorStop(0.35, col.replace(/[\d.]+\)$/, '0.35)')); gg.addColorStop(1, col.replace(/[\d.]+\)$/, '0)')); x.fillStyle = gg; x.fillRect(0, 0, 64, 64); return c; };
     gr = la.createLinearGradient(0, hy - h * 0.16, 0, hy + h * 0.1); gr.addColorStop(0, 'rgba(255,79,184,0)'); gr.addColorStop(0.7, 'rgba(255,79,184,0.4)'); gr.addColorStop(1, 'rgba(255,79,184,0)');
-    la.globalCompositeOperation = 'lighter'; la.fillStyle = gr; la.fillRect(0, hy - h * 0.16, w, h * 0.26); la.globalCompositeOperation = 'source-over';
+    la.globalCompositeOperation = 'lighter'; la.fillStyle = gr; la.fillRect(0, hy - h * 0.16, VW, h * 0.26); la.globalCompositeOperation = 'source-over';
     const rain = []; const r3 = looks(99);
     for (let i = 0; i < 110; i++) rain.push([r3(), r3(), 0.5 + r3() * 0.8]);
     return {
-      sky, litAll, rain,
+      sky, litAll, VW, rain,
       glow: { gold: sprite('rgba(255,216,77,1)'), white: sprite('rgba(255,250,235,1)'), hunt: sprite('rgba(63,224,255,1)'), lock: sprite('rgba(255,59,107,1)'), watch: sprite('rgba(255,154,60,1)'), pink: sprite('rgba(255,79,184,1)') },
     };
   }
@@ -148,14 +149,14 @@ export function initRooftop(ctx) {
   }
   $('rGo').addEventListener('click', go);
 
-  let blds = [];
+  let blds = [], frameDt = 1 / 60;
   function newRound() {
     blds = buildings(run.sim.round); trails.clear();
     renderToss();
   }
 
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now; acc += dt;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; acc += dt; frameDt = dt;
     pollPad();
     while (acc >= STEP && run.phase !== 'over') {
       acc -= STEP;
@@ -211,7 +212,7 @@ export function initRooftop(ctx) {
     const fresh = [...after.jackets.filter((u) => !before.jackets.includes(u)).map((u) => `${u.name} jacket`), ...after.trails.filter((u) => !before.trails.includes(u)).map((u) => `${u.name} trail`)];
     const f1 = (v) => (v == null ? '–' : `${v.toFixed(2)} s`);
     const cause = rep.end === 'snatch' ? 'A watcher was still on him: toss only when his lantern glows gold.'
-      : rep.end === 'hit' ? 'Wait for the drone\'s ring to turn red, then step sideways. Move too early and it follows you.' : '';
+      : rep.end === 'hit' ? 'Wait for the drone\'s ring to turn red, then step sideways: one quick tap or swipe. Move too early and it follows you.' : '';
     const side = (b, name) => `<li><b>${name}</b><span>${b.caught} of ${b.lit} lanterns${b.spot != null ? ` · spotted in ${f1(b.spot)}` : ''}</span></li>`;
     $('rRepTitle').textContent = newBest ? 'New best run!' : 'Run over';
     $('rRepBig').textContent = run.score.toLocaleString();
@@ -230,16 +231,11 @@ export function initRooftop(ctx) {
   $('rAgain').addEventListener('click', () => { canvas.classList.remove('over'); start(); });
   $('rDone').addEventListener('click', end);
 
-  // ------------------------------------------------------------ input: pad, keys, mouse, game controller
-  function input() {
-    if (pad.id != null) return { mx: pad.mx, mz: pad.mz, sprint: Math.hypot(pad.mx, pad.mz) > 1 };
-    let mx = 0, mz = 0;
-    for (const k of keys) { const v = MOVE_KEYS[k]; if (v) { mx += v[0]; mz += v[1]; } }
-    const gp = gamepad();
-    if (gp && Math.hypot(gp.axes[0] || 0, gp.axes[1] || 0) > 0.2) { mx = gp.axes[0]; mz = -gp.axes[1]; return { mx, mz, sprint: Math.hypot(mx, mz) > 0.9 }; }
-    const m = Math.hypot(mx, mz);
-    return m ? { mx: mx / m, mz: mz / m, sprint: keys.has('Shift') } : { mx: 0, mz: 0 };
-  }
+  // ------------------------------------------------------------ input: taps (keys, swipes, game controller), mouse
+  // Every tap is one step; holding does nothing more, so he taps fast to go further (owner, 2026-10-31).
+  const taps = [];
+  function tap(x, z) { if (on && started && run && run.phase === 'live' && taps.length < 6) { taps.push({ x, z }); fx.tapT = run.clock; fx.tapX = x; fx.tapZ = z; } }
+  function input() { const t = taps.shift(); return t ? { tap: t } : {}; }
   function toss(id) { if (on && started && run.phase === 'live' && run.sim.holding) run.act({ kind: 'toss', target: id }); }
   function tossKey(k) { if (!run) return; const id = tossKeys(run.sim.round).get(k); if (id) toss(id); }
   window.addEventListener('keydown', (e) => {
@@ -248,30 +244,46 @@ export function initRooftop(ctx) {
     if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === ' ') $('rAgain').click(); return; }
     if ('yuiop'.includes(k) && k.length === 1) { tossKey(k); return; }
     if (k === 'Escape') { $('rQuit').click(); return; }
-    keys.add(k === 'Shift' ? 'Shift' : k);
+    const v = MOVE_KEYS[k];
+    if (v) { e.preventDefault(); if (!e.repeat) tap(v[0], v[1]); }
   });
-  window.addEventListener('keyup', (e) => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; keys.delete(k); });
-  window.addEventListener('blur', () => keys.clear());
   function gamepad() { const list = navigator.getGamepads ? navigator.getGamepads() : []; for (const p of list) if (p) return p; return null; }
+  let stick = { x: 0, z: 0 };
   function pollPad() {
     const gp = gamepad(); if (!gp) return;
     const now = gp.buttons.map((b) => b.pressed);
-    now.forEach((p, i) => { if (p && !gpPrev[i]) { if (PAD_TOSS[i]) tossKey(PAD_TOSS[i]); if (i === 9) go(); } });
+    now.forEach((p, i) => {
+      if (!p || gpPrev[i]) return;
+      if (PAD_TOSS[i]) tossKey(PAD_TOSS[i]);
+      if (i === 9) go();
+      if (PAD_STEP[i]) tap(...PAD_STEP[i]);
+    });
     gpPrev = now;
+    // the stick: a flick past the middle is one step, it has to come back before the next
+    const ax = gp.axes[0] || 0, az = -(gp.axes[1] || 0);
+    for (const [v, key, step] of [[ax, 'x', [Math.sign(ax), 0]], [az, 'z', [0, Math.sign(az)]]]) {
+      if (Math.abs(v) > 0.6 && Math.sign(v) !== stick[key]) { stick[key] = Math.sign(v); tap(...step); }
+      else if (Math.abs(v) < 0.3) stick[key] = 0;
+    }
   }
-  const padEl = $('rPad'), knob = $('rKnob');
-  function padMove(e) {
-    const r = padEl.getBoundingClientRect(), rad = r.width / 2;
-    let dx = (e.clientX - r.left - rad) / (rad * 0.72), dz = -(e.clientY - r.top - rad) / (rad * 0.72);
-    const m = Math.hypot(dx, dz); if (m > 1.35) { dx *= 1.35 / m; dz *= 1.35 / m; }
-    pad.mx = dx; pad.mz = dz;
-    knob.style.transform = `translate(${dx * rad * 0.55}px, ${-dz * rad * 0.55}px)`;
-    padEl.classList.toggle('sprint', Math.hypot(dx, dz) > 1);
-  }
-  padEl.addEventListener('pointerdown', (e) => { e.preventDefault(); pad.id = e.pointerId; padEl.setPointerCapture(e.pointerId); padMove(e); });
-  padEl.addEventListener('pointermove', (e) => { if (e.pointerId === pad.id) padMove(e); });
-  const padUp = (e) => { if (e.pointerId !== pad.id) return; pad = { mx: 0, mz: 0, id: null }; knob.style.transform = ''; padEl.classList.remove('sprint'); };
-  padEl.addEventListener('pointerup', padUp); padEl.addEventListener('pointercancel', padUp);
+  // the swipe area (the half of the screen under his off-hand thumb): a flick in any direction is one step. Only the
+  // direction counts, never where the thumb lands, so he never has to look at it. Turning back mid-stroke is a new step.
+  const swipeEl = $('rSwipe');
+  const strokes = new Map();
+  swipeEl.addEventListener('pointerdown', (e) => { e.preventDefault(); swipeEl.setPointerCapture(e.pointerId); strokes.set(e.pointerId, { x: e.clientX, y: e.clientY, dir: null }); });
+  swipeEl.addEventListener('pointermove', (e) => {
+    const st = strokes.get(e.pointerId); if (!st) return;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if (Math.hypot(dx, dy) < 14) return;
+    const dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : dy > 0 ? 'd' : 'u';
+    st.x = e.clientX; st.y = e.clientY;
+    if (dir === st.dir) return;
+    st.dir = dir;
+    tap(dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'u' ? 1 : dir === 'd' ? -1 : 0);
+    swipeEl.dataset.flash = dir; swipeEl.classList.remove('flash'); void swipeEl.offsetWidth; swipeEl.classList.add('flash');
+  });
+  const strokeEnd = (e) => strokes.delete(e.pointerId);
+  swipeEl.addEventListener('pointerup', strokeEnd); swipeEl.addEventListener('pointercancel', strokeEnd);
   // a click (or tap) on a friend tosses to him
   canvas.addEventListener('pointerdown', (e) => {
     if (!run || run.phase !== 'live') return;
@@ -345,26 +357,36 @@ export function initRooftop(ctx) {
     if (guided && started && run.phase === 'live') {
       const live = s.drones.filter((d) => !d.gone && !d.passed);
       const lit = holding && s.round.friends.find((f) => isLit(G, f, s.t));
-      if (live.some((d) => d.committed)) { text = 'RED! STEP SIDEWAYS'; kind = 'lock'; }
+      if (live.some((d) => d.committed)) { text = fine ? 'RED! TAP A STEP SIDEWAYS (A / D)' : 'RED! SWIPE SIDEWAYS'; kind = 'lock'; }
       else if (lit) { const key = [...tossKeys(s.round)].find(([, id]) => id === lit.id); text = `GOLD! TOSS TO ${GLYPHS[lit.id]}${fine && key ? ` (${key[0].toUpperCase()})` : ''}`; kind = 'gold'; }
-      else if (live.some((d) => s.t >= d.launchT - R.drones.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN STEP'; kind = 'warn'; }
+      else if (live.some((d) => s.t >= d.launchT - R.drones.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN STEP ASIDE'; kind = 'warn'; }
       else if (holding) { text = 'WATCH FOR A GOLD LANTERN'; kind = 'warn'; }
     }
     if (shown.rGuide !== text) { shown.rGuide = text; el.textContent = text; el.className = 'rguide' + (text ? ' on ' + kind : ''); }
   }
 
   // ------------------------------------------------------------ the camera and drawing
-  let cam = { x: 0, y: 0, z: 0, bob: 0 };
+  let cam = { x: 0, y: 0, z: 0, bob: 0, yaw: 0 };
   function project(x, y, z) {
-    const dz = z - cam.z; if (dz < 0.25) return null;
+    // his head may be turned (yaw, + to the right) toward a drone near the edge of his view
+    const ox = x - cam.x, oz = z - cam.z, c = Math.cos(cam.yaw), sn = Math.sin(cam.yaw);
+    const rx = ox * c - oz * sn, dz = ox * sn + oz * c;
+    if (dz < 0.25) return null;
     const s = F / dz;
-    return { x: W / 2 + (x - cam.x) * s, y: H * HORIZON - (y - cam.y) * s, s };
+    return { x: W / 2 + rx * s, y: H * HORIZON - (y - cam.y) * s, s };
   }
   function camera() {
     const s = run.sim, eye = R.courier.eye;
     const speed = Math.hypot(s.vx, s.vz);
-    cam.bob = run.phase === 'live' ? Math.sin(run.clock * 11) * 0.025 * Math.min(1, speed / 4) : 0;
+    cam.bob = run.phase === 'live' ? Math.sin(run.clock * 22) * 0.03 * Math.min(1, speed / 4) : 0;
     cam.x = s.x; cam.y = eye + cam.bob; cam.z = s.z;
+    // his head turns a little toward a drone that can still get him when it nears the edge of his view
+    let want = 0;
+    if (run.phase === 'live') for (const d of watched(G, s)) {
+      const b = Math.atan2(d.x - s.x, Math.max(0.2, d.z - s.z)), edge = (36 * Math.PI) / 180;
+      if (Math.abs(b) > edge && Math.abs(Math.abs(b) - edge) > Math.abs(want)) want = Math.sign(b) * Math.min((25 * Math.PI) / 180, Math.abs(b) - edge);
+    }
+    cam.yaw += (want - cam.yaw) * Math.min(1, frameDt * 8);
     if (run.phase === 'jump') {
       const u = Math.min(1, run.phaseT / R.beats.jump), D = -2 * R.roof.back + R.roof.gap, [sx, sz] = R.courier.start;
       const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
@@ -383,9 +405,10 @@ export function initRooftop(ctx) {
     const sk = t - fx.shakeT;
     if (sk >= 0 && sk < 0.35) { const a = 9 * (1 - sk / 0.35) ** 2; g.translate(a * Math.sin(t * 83), a * Math.cos(t * 71)); }
     const glow = streakGlow();
-    g.drawImage(layers.sky, 0, 0, W, H);
+    const bx = -(layers.VW - W) / 2 - Math.tan(cam.yaw) * F;
+    g.drawImage(layers.sky, bx, 0, layers.VW, H);
     // the city's windows, neon and horizon glow brighten as the streak builds
-    g.globalAlpha = 0.35 + 0.65 * glow; g.drawImage(layers.litAll, 0, 0, W, H); g.globalAlpha = 1;
+    g.globalAlpha = 0.35 + 0.65 * glow; g.drawImage(layers.litAll, bx, 0, layers.VW, H); g.globalAlpha = 1;
     const s = run.sim, fade = run.phase === 'jump' ? Math.max(0, 1 - run.phaseT / (R.beats.jump * 0.5)) : run.phase === 'live' && started ? Math.min(1, s.t / 0.4) : 1;
     // far to near: friends' buildings (with friends and watchers), the next roof once the round is done, his roof,
     // then the drones (always nearer than the buildings' fronts while they hunt him)

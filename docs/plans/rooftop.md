@@ -20,10 +20,16 @@ running and leaping to the next roof, a little faster each time. **A hit or a sn
 | Incompletion | A toss before the lantern is fully lit: dropped, the streak starts over |
 | Hot clock | Hold the package past 5 s and more drones come |
 
-- **Feet (pad, his off-hand thumb):** move on his roof; past the ring to sprint. Drones lead him while they hunt, so
-  running in a straight line does not work: wait for the lock-on (ring turns red), then step sideways. The lock-on
-  comes 0.85 s before impact at level 1 and never later than 0.55 s; every round is checked to be beatable by someone
-  who reacts 0.25 s after the lock-on and only walks (owner, 2026-10-31: the controls must always be quick enough).
+- **Feet (taps, owner 2026-10-31):** he moves one step per tap, never by holding: on the iPad a quick swipe anywhere
+  on the right half of the screen (only the direction counts, never where the thumb lands, so he never looks at it);
+  on a computer one press of W A S D or the arrows; on a controller the d-pad or a flick of the stick. Tapping fast
+  goes further. Drones lead him while they hunt, so moving early does not work: wait for the lock-on (ring turns red),
+  then step aside. The lock-on comes 0.85 s before impact at level 1 and never later than 0.55 s; every round is
+  checked to be beatable by one tap 0.25 s after the lock-on.
+- **Always in view (owner 2026-10-31):** drones launch within 28 degrees of straight ahead. A drone that can still get
+  him (hovering, hunting, or locked on with its line on him) stays inside his view: checked on every round for the
+  right play and by a random-tapping test; in the last quarter second of a locked-on drone's run his head turns
+  toward it if it nears the edge.
 - **Guide:** for his first five runs, prompts say what to do now (drone coming, step sideways, toss to ◆), and the
   lit friend's button glows gold.
 - **Eyes:** 3-5 friends across his view; lanterns light anywhere, often on his blind (off-hand) side as levels go up.
