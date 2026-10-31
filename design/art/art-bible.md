@@ -115,10 +115,57 @@ holding its placeholder is incomplete; a later run fills only those.
 
 ## 4. Color System
 
-[To be designed] — a primary palette of 5–7 colours with their meaning in this
-world, semantic colour usage, per-area colour temperature rules, the UI palette
-and where it diverges, and colourblind safety: which semantic colours need a
-shape, icon or sound backup.
+**Principle (1.1, 1.3):** lightness first, hue second, never colour alone. The field is a muted dark stage; only the defense and the open receiver are bright.
+
+**Primary palette** (from the current `STYLE` in `src/game/eyes.js`, plus Signal Gold)
+
+| Name | Hex | Role |
+|---|---|---|
+| Night Navy | #03050C → #16233F | sky and stadium ambient; cool, dark |
+| Turf Green | #215F36, stripe #1A4F2D | the field stage; muted, mid-dark |
+| Paint White | #EEF2F6 (numbers at 0.82 alpha); jersey #F4F5F8 | yard lines, numbers, defense jersey |
+| Defense Red | #B5122B (helmet, numbers); alert #E0465E | defense identity; edge alerts and defense tags |
+| Team Blue | #5B8DEF jersey, #1C3A8C helmet | his team (see-through in drills) |
+| Signal Gold (new, owner 2026-10-31) | #FFD84D, core #FFF4C2 | the open receiver, on the field only; replaces the current green glow (rgba(107,203,147) / #2F7D4F), which sat too close to the turf |
+| Glass Ink | #080C16 at 0.72–0.82 alpha | HUD ground, controls, dark cards |
+
+- Light-bank key rgba(255,250,235): the field pool and bloom tint, the only warm in night scenes.
+- The white defense jersey is the brightest large object on screen, on purpose.
+
+**Semantic colours**
+- **Open receiver:** Signal Gold feathered ground glow and its tag. Never on a button, HUD element or UI chrome; the only additive-blend element on the field; never used for danger.
+- **Pressure / danger:** defenders white with red trim; edge alerts and defense tags #E0465E. No red glow on rushers (Section 2).
+- **Blind side:** off-hand-edge chevron wedges in #E0465E with a flicker; same family as danger, separated by shape, position and motion.
+- **His team:** Team Blue, see-through; tag border #6EA0FF. **The defense:** white jersey, red helmet and numbers; tag border #E0465E.
+- **Line of scrimmage:** broadcast blue #4C8DFF, solid, with a 0.28-alpha glow band. Risk: close in hue to Team Blue; accepted because one is a line and one a see-through figure. If playtest shows confusion, move the line toward cyan; do not touch Team Blue.
+- **Pocket edge:** Paint White at about 60% alpha, dashed, 1.5× yard-line weight; check it does not read as a yard line where they cross.
+- **Hot clock:** HUD ring only, white shrinking to orange #FF9A3C over the last second; orange never appears on the field; the ring always shows a number.
+- **Result:** right = mint #3DDC97 with a check; wrong = slate #8FA0BC with an arrow and "next time" copy. No red for a miss.
+
+**Colour temperature**
+- Sky and stands cool and dark; field and players warm-white key over cool ambient; Home warm indoor; Breakdown neutral-cool paper; run report cool navy with one warm accent; the call cool slate.
+- Mood shifts are lightness, saturation and vignette, never a whole-screen tint.
+
+**UI palette and divergences**
+- In-drill HUD: dark glass rgba(8,12,22,0.72–0.82), borders rgba(255,255,255,0.12–0.32), white text; text contrast ≥ 4.5:1, touch targets ≥ 44 px.
+- HUD red #C8102E → #8E0B21 (brand and cue red): score pill and cue banner only, never on the field or the glow.
+- Mint and slate only in result banners; hot-clock orange only in the ring.
+- Light screens use the `:root` variables in `src/game/index.html` (--ink #1C2430, --paper #FFFFFF, --ground #E9ECEF, --off #1F5FD1, --def #C94A16, --ok #2F7D4F). Offense and defense colours used as text must meet 4.5:1 on paper; gold is never text on paper.
+
+**Colourblind safety (must pass deuteranopia and protanopia)**
+
+| Pair | Risk | Backup |
+|---|---|---|
+| Red helmet vs turf | about 1.1:1 luminance; fails alone | the white jersey (about 6:1 on turf) carries the defense; the helmet is never the sole cue |
+| Red edge alert vs turf | hue lost | shape (chevron wedge), motion (flicker), later panned audio |
+| Blind-side red vs other danger red | same hue | chevrons on the off-hand edge only |
+| Gold glow vs hot-clock orange | near-identical for red-green deficiency | place (field vs HUD), shape (ground ellipse vs shrinking ring), digits on the ring |
+| Gold vs turf | passes, about 5.5:1 | still paired with the ellipse and a pulse |
+| Team Blue vs defense | lightness differs strongly | tags differ: offense shape glyph + key, defense jersey number |
+| Line-of-scrimmage blue vs Team Blue | similar hue | a line vs a figure |
+| Mint vs slate result | similar lightness for some | check vs arrow icon, different copy |
+
+- Acceptance (before Section 7 sign-off): screenshots of each drill state through deuteranopia and protanopia simulation, plus a greyscale pass; the open receiver, nearest rusher and blind-side marker must stay identifiable.
 
 ## 5. Character Design Direction
 
