@@ -161,6 +161,17 @@ body.pocket .look button { padding: 8px 10px; font-size: 13px; }
 #pReport li b { font-variant-numeric: tabular-nums; }
 #pReport .btns { grid-template-columns: 1fr 1fr 1fr; }
 
+/* broadcast look for the his-eyes screens (docs/STYLE.md): dark glass, condensed type, quiet controls */
+#rep .pill { background: rgba(8,12,22,0.82); border: 1px solid rgba(255,255,255,0.12); font-stretch: 78%; font-size: 14px; letter-spacing: 0.03em; padding: 7px 13px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#rep .pill:first-child { background: linear-gradient(180deg, #C8102E, #8E0B21); border-color: rgba(255,255,255,0.18); font-size: 16px; }
+#rep .quit, #rep .look button { background: rgba(8,12,22,0.78); border: 1px solid rgba(255,255,255,0.14); font-stretch: 80%; letter-spacing: 0.03em; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+body.pocket .pthrows button { background: rgba(8,12,22,0.72); color: #FFFFFF; border: 1.5px solid rgba(255,255,255,0.32); box-shadow: 0 4px 14px rgba(0,0,0,0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+body.pocket .pthrows button:disabled { opacity: 0.3; }
+body.pocket .pthrows .away { background: rgba(8,12,22,0.72); color: #FFFFFF; font-stretch: 80%; letter-spacing: 0.05em; text-transform: uppercase; font-size: 12px; }
+body.pocket .ppad { background: radial-gradient(circle, rgba(8,12,22,0.35) 0 55%, rgba(8,12,22,0.6) 100%); border: 1.5px solid rgba(255,255,255,0.3); }
+body.pocket .ppad i { background: radial-gradient(circle at 35% 30%, #FFFFFF, #C9D3E6); }
+#rep .cue { background: linear-gradient(180deg, rgba(200,16,46,0.95), rgba(142,11,33,0.95)); font-stretch: 72%; letter-spacing: 0.08em; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+
 /* breakdown */
 #breakdown, #pbreakdown { background: var(--ground); overflow: auto; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
 .bd { max-width: 1100px; margin: 0 auto; display: grid; gap: 12px; }
@@ -214,7 +225,7 @@ body.pocket .look button { padding: 8px 10px; font-size: 13px; }
     <div class="card">
       <b>How a rep works</b>
       <p class="note">First the call: see where everyone lines up and what each player does. Then break the huddle: you're at the line. Go through your whole routine on the play clock: check your alignment, read the defense (shell, box, corners, tells), count the rush, change up to two routes, set your key and escape lane, and pick your reads. Drag the field or use Look left / Look right to turn your head. The play stops at the snap: your drop, the coverage, the blitz, and whether to look off the safety. It stops again a second later with your eyes on your first read: throw, roll out, run, or throw it away.</p>
-      <p class="note"><b>Pocket Instinct:</b> one long run, snap after snap. Dodge the rush with the pad under your right thumb: climb away from an edge rush, slide away from a push inside, escape when it collapses, stay put when the pocket is clean. When an ally comes open (he glows green), throw to him with his button under your left thumb. Every completion makes the next snap faster. The run ends when you get hit or picked off. Hang as long as you can. On a computer: arrow keys or WASD to move (Shift runs), J K L ; Space to throw, T to throw it away, or click an ally. A game controller works too.</p>
+      <p class="note"><b>Pocket Instinct:</b> one long run, snap after snap. Dodge the rush with the pad under your right thumb: climb away from an edge rush, slide away from a push inside, escape when it collapses, stay put when the pocket is clean. When an ally comes open (he glows green), throw to him with his button under your left thumb. Every completion makes the next snap faster. The run ends when you get hit or picked off. Hang as long as you can. On a computer: W A S D to move (hold Shift to run), Y U I O P to throw, left to right by where the receivers line up (Y the leftmost, P the rightmost; the key is on each receiver's tag), T to throw it away, Space to snap, or click a receiver. A game controller works too.</p>
     </div>
     <details class="card" id="parent">
       <summary><b>Parent settings</b></summary>

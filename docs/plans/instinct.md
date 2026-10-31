@@ -15,8 +15,9 @@ and harder. **The run ends when a hitter gets him** (or a throw is picked off). 
 - **Hands (left thumb, his throwing hand):** fixed buttons, one per ally, with the shape that floats over that
   ally (◆ ● ▲ ■ ★), always in the same place, so his thumb learns them and his eyes stay downfield. The open
   glow is on the ally, never on the button. Throw it away: legal only outside the free-blocking zone.
-- **Desktop:** WASD / arrows move (Shift runs); J K L ; Space throw to ◆ ● ▲ ■ ★; T throws it away; a mouse
-  click on an ally throws to him. **Game controller:** left stick moves, A B X Y RB throw, LB throws it away.
+- **Desktop (owner, 2026-10-30):** W A S D move (Shift runs); Y U I O P throw, left to right by where the receivers
+  line up at the snap (Y the leftmost, P the rightmost; with fewer receivers the outside keys stay outside: 3 = Y I P,
+  4 = Y U O P); the key shows on each receiver's tag; T throws it away; Space snaps; a mouse click on an ally throws. **Game controller:** left stick moves, A B X Y RB throw, LB throws it away.
 
 ## Scoring (owner: OK)
 - **Hang time:** time he survives with the ball, counted only up to the hot clock (3 s) per ball, so holding

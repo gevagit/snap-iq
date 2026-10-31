@@ -10,13 +10,15 @@ const ease = (a, b, t, t0, t1) => { const u = clamp((t - t0) / (t1 - t0), 0, 1);
 // receiver shapes on the field and on his throw buttons (PRD §7.4)
 export const SHAPES = { X: '◆', Y: '●', Z: '▲', H: '■', R: '★', F: '✚' };
 
+// The look (docs/STYLE.md): a night game under stadium lights, seen from his eyes. One continuous field; shading,
+// not outlines; the defense and the open receiver are the brightest things on screen.
 const STYLE = {
-  sky: ['#E3E7EB', '#E3E7EB'], oob: '#BAC3BA', turf: ['#CAD4C7', '#C2CDBF'], endzone: '#BFC9BB', line: '#FFFFFF', num: 'rgba(255,255,255,0.95)',
-  los: '#1F5FD1', goal: '#5B6573', shadow: 'rgba(28,36,48,0.17)', edgeW: 1.5, ownAlpha: 0.6,
-  D: { jersey: '#FFFFFF', edge: '#C94A16', num: '#C94A16', pants: '#F3E7E0', socks: '#C94A16', shoe: '#1C2430', under: '#F0DDD3', glove: '#C94A16', helmet: '#C94A16', helmetHi: 'rgba(255,255,255,0.22)', mask: '#1C2430', stripe: '#FFFFFF' },
-  O: { jersey: '#E3ECFB', edge: '#1F5FD1', num: '#1F5FD1', pants: '#EEF3FC', socks: '#1F5FD1', shoe: '#1C2430', under: '#D6E2F7', glove: '#1F5FD1', helmet: '#1F5FD1', helmetHi: 'rgba(255,255,255,0.22)', mask: '#1C2430', stripe: '#FFFFFF' },
-  tag: { bg: '#FFFFFF', fg: '#8A2E0A', ofg: '#173F8F', obg: '#FFFFFF', border: '#C94A16', oborder: '#1F5FD1' },
-  hands: { glove: '#FFFFFF', sleeve: 'rgba(31,95,209,0.30)', edge: '#1F5FD1' }, ball: '#8A5A3C', lace: '#FFFFFF'
+  sky: ['#03050C', '#16233F'], turf: ['#215F36', '#1A4F2D'], line: '#EEF2F6', num: 'rgba(238,242,246,0.82)',
+  los: '#4C8DFF', shadow: 'rgba(0,0,0,0.42)', edgeW: 1, ownAlpha: 0.34,
+  D: { jersey: '#F4F5F8', shade: '#B9C0CC', edge: 'rgba(40,20,28,0.55)', num: '#B5122B', numEdge: '#3A0710', pants: '#E6E8ED', pantsShade: '#B4B9C3', socks: '#B5122B', shoe: '#101216', under: '#DADDE4', glove: '#B5122B', helmet: '#B5122B', helmetDark: '#5E0815', helmetHi: 'rgba(255,255,255,0.5)', mask: '#1A1A1A', stripe: '#F4F5F8', trim: '#B5122B' },
+  O: { jersey: '#5B8DEF', shade: '#2E58B8', edge: 'rgba(6,14,40,0.6)', num: '#FFFFFF', numEdge: '#0B1B4A', pants: '#D6DDE8', pantsShade: '#98A3B6', socks: '#2453C6', shoe: '#101216', under: '#1C3E9A', glove: '#FFFFFF', helmet: '#1C3A8C', helmetDark: '#0A1A45', helmetHi: 'rgba(255,255,255,0.45)', mask: '#C9CED6', stripe: '#FFFFFF', trim: '#FFFFFF' },
+  tag: { bg: 'rgba(10,14,24,0.82)', fg: '#FFFFFF', ofg: '#FFFFFF', obg: 'rgba(10,14,24,0.82)', border: '#E0465E', oborder: '#6EA0FF' },
+  hands: { glove: '#F4F6FA', gloveShade: '#C3CAD6', sleeve: '#1C3E9A', edge: 'rgba(6,14,40,0.6)' }, ball: '#7A4524', ballHi: '#A5643A', lace: '#FFFFFF'
 };
 const SIZE = { OL: 1.92, C: 1.9, DL: 1.92, BLZ: 1.86, LB: 1.88, CB: 1.82, CBpress: 1.82, S: 1.84, WR: 1.84, TE: 1.9, RB: 1.8 };
 const FONT = 'Archivo, "Helvetica Neue", Arial, sans-serif';
@@ -421,6 +423,7 @@ export function createEyes(canvas) {
     for (const c of [canvas, layer]) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); }
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     F = (W / 2) / Math.tan(FOVN / 2); HY = Math.round(H * 0.3); CX = W / 2;
+    pano = null; // the stadium layers are rebuilt for the new size
   }
   function groundPoly(c, xa, xb, ya, yb) {
     const cl = clipNear([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], 0.35); if (cl.length < 3) return false;
@@ -440,18 +443,75 @@ export function createEyes(canvas) {
     c.save(); c.setTransform(DPR * (pu.x - p0.x), DPR * (pu.y - p0.y), DPR * (pv.x - p0.x), DPR * (pv.y - p0.y), DPR * p0.x, DPR * p0.y);
     c.scale(sizeYd / 100, sizeYd / 100); c.fillStyle = color; c.font = '700 100px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, 0, 0); c.restore();
   }
+  // ---- the stadium: a panorama of stands and crowd around him (turns with his head), light towers, the field
+  let pano = null, vig = null, grain = null;
+  function buildLayers() {
+    // seeded so the crowd is the same every time (no Math.random)
+    let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    const P = Math.max(1, Math.round(F * 2 * Math.PI)), Hs = Math.round(H * 0.19);
+    pano = document.createElement('canvas'); pano.width = P; pano.height = Hs;
+    const g = pano.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, Hs); bg.addColorStop(0, '#070B16'); bg.addColorStop(0.55, '#101A31'); bg.addColorStop(1, '#16223D');
+    g.fillStyle = bg; g.fillRect(0, 0, P, Hs);
+    const crowd = ['#24314F', '#2E3E62', '#3B4D78', '#4B5E8C', '#5C1426', '#8A1E33', '#BFC6D2', '#1B2540'];
+    for (let y = Hs * 0.12; y < Hs * 0.86; y += 2.6) for (let x = 0; x < P; x += 2.4) {
+      if (rnd() < 0.18) continue;
+      g.globalAlpha = 0.35 + rnd() * 0.55; g.fillStyle = crowd[Math.floor(rnd() * crowd.length)];
+      g.fillRect(x + rnd() * 1.4, y + rnd() * 1.2, 1.6, 1.8);
+    }
+    g.globalAlpha = 1;
+    for (let x = 0; x < P; x += 140) { g.fillStyle = 'rgba(4,6,12,0.55)'; g.fillRect(x, Hs * 0.1, 7, Hs * 0.78); }   // aisles
+    for (let y = Hs * 0.3; y < Hs * 0.86; y += Hs * 0.19) { g.fillStyle = 'rgba(4,6,12,0.35)'; g.fillRect(0, y, P, 1.5); } // tiers
+    // the lit ribbon board along the front of the stands
+    const rb = Hs * 0.86, rh = Math.max(4, Hs * 0.07);
+    g.fillStyle = '#05070D'; g.fillRect(0, rb, P, Hs - rb);
+    for (let x = 0; x < P; x += 180) {
+      const lg = g.createLinearGradient(x, 0, x + 180, 0); lg.addColorStop(0, '#B5122B'); lg.addColorStop(0.5, '#E0465E'); lg.addColorStop(1, '#2453C6');
+      g.fillStyle = lg; g.globalAlpha = 0.75; g.fillRect(x, rb + 1, 176, rh); g.globalAlpha = 1;
+    }
+    for (let k = 0; k < P / 40; k++) { g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillRect(rnd() * P, Hs * 0.15 + rnd() * Hs * 0.65, 1.4, 1.4); } // camera flashes
+    // the vignette and the turf grain, made once per size
+    vig = document.createElement('canvas'); vig.width = W; vig.height = H;
+    const v = vig.getContext('2d'), vg = v.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.35, W / 2, H * 0.55, Math.hypot(W, H) * 0.62);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)'); v.fillStyle = vg; v.fillRect(0, 0, W, H);
+    const gc = document.createElement('canvas'); gc.width = 128; gc.height = 128; const gx = gc.getContext('2d');
+    for (let k = 0; k < 1400; k++) { gx.fillStyle = rnd() < 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)'; gx.fillRect(rnd() * 128, rnd() * 128, 1, 1 + rnd() * 2); }
+    grain = ctx.createPattern(gc, 'repeat');
+  }
   function drawField(st) {
     const f = S.field, yEnd = 110 - f.los, xc = (f.xl + f.xr) / 2;
     const farY = proj(xc, yEnd + 14, 0).y;
-    ctx.fillStyle = st.sky[0]; ctx.fillRect(0, 0, W, farY + 1);
-    ctx.fillStyle = '#D2D7DC'; ctx.fillRect(0, HY - 4, W, farY - HY + 5);
-    ctx.fillStyle = st.oob; ctx.fillRect(0, farY, W, H - farY);
+    if (!pano) buildLayers();
+    // sky, light towers, stands
+    const sky = ctx.createLinearGradient(0, 0, 0, farY); sky.addColorStop(0, st.sky[0]); sky.addColorStop(1, st.sky[1]);
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, farY + 1);
+    const Hs = pano.height, top = farY - Hs, P = pano.width;
+    let sx = ((F * (cam.yaw + Math.PI) - CX) % P + P) % P;
+    ctx.drawImage(pano, sx, 0, Math.min(W, P - sx), Hs, 0, top, Math.min(W, P - sx), Hs);
+    if (P - sx < W) ctx.drawImage(pano, 0, 0, W - (P - sx), Hs, P - sx, top, W - (P - sx), Hs);
+    for (const a of [-0.95, 0.95, -2.3, 2.3]) {
+      let d = a - cam.yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+      if (Math.abs(d) > FOVN / 2 + 0.3) continue;
+      const lx = CX + F * d, ly = top - Hs * 0.22, lw = Math.max(40, W * 0.07);
+      const glow = ctx.createRadialGradient(lx, ly, 0, lx, ly, lw * 2.6);
+      glow.addColorStop(0, 'rgba(255,255,255,0.85)'); glow.addColorStop(0.18, 'rgba(214,228,255,0.35)'); glow.addColorStop(1, 'rgba(214,228,255,0)');
+      ctx.fillStyle = glow; ctx.fillRect(lx - lw * 2.6, ly - lw * 2.6, lw * 5.2, lw * 5.2);
+      ctx.fillStyle = '#F4F7FF'; ctx.fillRect(lx - lw / 2, ly - lw * 0.18, lw, lw * 0.36);
+      ctx.fillStyle = 'rgba(10,14,24,0.9)'; ctx.fillRect(lx - 2, ly + lw * 0.18, 4, top - ly + Hs * 0.2);
+    }
+    // the field: grass right out to the walls, one surface (docs/STYLE.md)
+    ctx.fillStyle = st.turf[0]; ctx.fillRect(0, farY, W, H - farY);
     for (let A = -10; A < 110; A += 5) {
       const ya = A - f.los, yb = ya + 5; if (yb < cam.y + 0.35) continue;
-      strip(ctx, f.xl, f.xr, ya, yb, (A < 0 || A >= 100) ? st.endzone : st.turf[((A / 5) % 2 + 2) % 2]);
+      if (((A / 5) % 2 + 2) % 2) strip(ctx, f.xl - 40, f.xr + 40, ya, yb, st.turf[1]);
     }
-    for (let A = 0; A <= 100; A += 5) { const Y = A - f.los; strip(ctx, f.xl, f.xr, Y - 0.12, Y + 0.12, st.line); }
-    strip(ctx, f.xl - 0.4, f.xl, -50, yEnd + 0.12, st.line); strip(ctx, f.xr, f.xr + 0.4, -50, yEnd + 0.12, st.line);
+    const pool = ctx.createRadialGradient(CX, farY + (H - farY) * 0.25, 0, CX, farY + (H - farY) * 0.25, W * 0.75);
+    pool.addColorStop(0, 'rgba(255,250,235,0.10)'); pool.addColorStop(1, 'rgba(255,250,235,0)');
+    ctx.fillStyle = pool; ctx.fillRect(0, farY, W, H - farY);
+    ctx.save(); ctx.fillStyle = grain; ctx.fillRect(0, farY, W, H - farY); ctx.restore();
+    // paint
+    for (let A = 0; A <= 100; A += 5) { const Y = A - f.los; strip(ctx, f.xl, f.xr, Y - 0.1, Y + 0.1, st.line); }
+    strip(ctx, f.xl - 0.5, f.xl, -50, yEnd + 0.1, st.line); strip(ctx, f.xr, f.xr + 0.5, -50, yEnd + 0.1, st.line);
     ctx.fillStyle = st.line; ctx.beginPath();
     for (let A = 1; A < 100; A++) {
       if (A % 5 === 0) continue; const Y = A - f.los; if (Y < cam.y + 1.2 || Y > 40) continue;
@@ -463,7 +523,9 @@ export function createEyes(canvas) {
       const Y = A - f.los, lab = String(A <= 50 ? A : 100 - A);
       groundText(ctx, lab, f.xl + 8, Y, 0, -1, -1, 0, 2.0, st.num); groundText(ctx, lab, f.xr - 8, Y, 0, 1, 1, 0, 2.0, st.num);
     }
-    strip(ctx, f.xl, f.xr, -0.14, 0.14, st.los);
+    // the line of scrimmage: a broadcast line with a glow, never paint
+    ctx.save(); ctx.globalAlpha = 0.28; strip(ctx, f.xl - 40, f.xr + 40, -0.35, 0.35, st.los); ctx.restore();
+    strip(ctx, f.xl - 40, f.xr + 40, -0.09, 0.09, st.los);
   }
   function drawFigure(c, p, s, st) {
     const team = st[p.side], size = SIZE[p.role] || 1.86, J = skeleton(s, size);
@@ -480,28 +542,46 @@ export function createEyes(canvas) {
       c.strokeStyle = col; c.lineWidth = px; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
     };
     const dot = (a, rYd, col, edge) => { c.beginPath(); c.arc(a.x, a.y, rYd * a.sc, 0, Math.PI * 2); c.fillStyle = col; c.fill(); if (edge) { c.lineWidth = ew; c.strokeStyle = edge; c.stroke(); } };
+    const leg = (hi, kn, ft) => {
+      limb(hi, kn, 0.21 * k, team.pants, team.edge);
+      limb(kn, ft, 0.15 * k, team.socks, team.edge);
+      dot(kn, 0.085 * k, team.pantsShade);                 // knee pad
+      c.save(); c.translate(ft.x, ft.y); c.beginPath(); c.ellipse(0, 0, 0.11 * k * ft.sc, 0.065 * k * ft.sc, 0, 0, Math.PI * 2); c.fillStyle = team.shoe; c.fill(); c.restore();
+    };
+    const arm = (sh, el, ha) => {
+      limb(sh, el, 0.15 * k, team.jersey, team.edge);
+      const mx = sh.x + (el.x - sh.x) * 0.72, my = sh.y + (el.y - sh.y) * 0.72;  // sleeve stripe
+      c.strokeStyle = team.trim; c.lineWidth = Math.max(1, 0.15 * k * el.sc); c.lineCap = 'butt'; c.beginPath(); c.moveTo(mx, my); c.lineTo(mx + (el.x - sh.x) * 0.1, my + (el.y - sh.y) * 0.1); c.stroke();
+      limb(el, ha, 0.12 * k, team.under, team.edge);
+      dot(ha, 0.075 * k, team.glove, team.edge);
+    };
     const toCam = [cam.x - rx0, cam.y - ry0], tl = Math.hypot(toCam[0], toCam[1]) || 1;
     const facing = (J.fwd[0] * toCam[0] + J.fwd[1] * toCam[1]) / tl;
     const parts = [
-      { r: (Pj.hiL.r + Pj.knL.r + Pj.ftL.r) / 3, d: () => { limb(Pj.hiL, Pj.knL, 0.21 * k, team.pants, team.edge); limb(Pj.knL, Pj.ftL, 0.15 * k, team.socks, team.edge); dot(Pj.ftL, 0.09 * k, team.shoe); } },
-      { r: (Pj.hiR.r + Pj.knR.r + Pj.ftR.r) / 3, d: () => { limb(Pj.hiR, Pj.knR, 0.21 * k, team.pants, team.edge); limb(Pj.knR, Pj.ftR, 0.15 * k, team.socks, team.edge); dot(Pj.ftR, 0.09 * k, team.shoe); } },
+      { r: (Pj.hiL.r + Pj.knL.r + Pj.ftL.r) / 3, d: () => leg(Pj.hiL, Pj.knL, Pj.ftL) },
+      { r: (Pj.hiR.r + Pj.knR.r + Pj.ftR.r) / 3, d: () => leg(Pj.hiR, Pj.knR, Pj.ftR) },
       { r: (Pj.shL.r + Pj.shR.r + Pj.hiL.r + Pj.hiR.r) / 4 + 0.001, d: () => {
         const hp = hull(J.torso.map(pp));
         c.beginPath(); hp.forEach((q, i) => { if (i) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y); }); c.closePath();
-        c.fillStyle = team.jersey; c.fill(); c.lineJoin = 'round'; c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke();
+        // lit from the stadium lights above: bright at the shoulders, shaded at the waist
+        const tg = c.createLinearGradient(0, (Pj.shL.y + Pj.shR.y) / 2, 0, (Pj.hiL.y + Pj.hiR.y) / 2);
+        tg.addColorStop(0, team.jersey); tg.addColorStop(1, team.shade);
+        c.fillStyle = tg; c.fill(); c.lineJoin = 'round'; c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke();
         // shoulder pads (a cap over each shoulder) and the belt
         for (const sh of [Pj.shL, Pj.shR]) { c.beginPath(); c.arc(sh.x, sh.y, Math.max(2, 0.12 * k * sh.sc), Math.PI, 0); c.closePath(); c.fillStyle = team.jersey; c.fill(); c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke(); }
-        c.strokeStyle = team.edge; c.lineWidth = Math.max(1, 0.035 * k * Pj.chest.sc); c.beginPath();
+        c.strokeStyle = team.trim; c.lineWidth = Math.max(1, 0.035 * k * Pj.chest.sc); c.beginPath();
         c.moveTo(Pj.hiL.x + (Pj.shL.x - Pj.hiL.x) * 0.12, Pj.hiL.y + (Pj.shL.y - Pj.hiL.y) * 0.12); c.lineTo(Pj.hiR.x + (Pj.shR.x - Pj.hiR.x) * 0.12, Pj.hiR.y + (Pj.shR.y - Pj.hiR.y) * 0.12); c.stroke();
         const cxp = (Pj.shL.x + Pj.shR.x + Pj.hiL.x + Pj.hiR.x) / 4, cyp = (Pj.shL.y + Pj.shR.y) / 2 * 0.55 + (Pj.hiL.y + Pj.hiR.y) / 2 * 0.45;
         const fs = Math.abs((Pj.hiL.y + Pj.hiR.y) / 2 - (Pj.shL.y + Pj.shR.y) / 2) * 0.55;
         if (fs > 5 && p.num != null) {
           c.save(); c.translate(cxp, cyp); c.scale(Math.max(0.18, Math.abs(facing)), 1);
-          c.font = '800 ' + fs.toFixed(1) + 'px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = team.num; c.fillText(String(p.num), 0, 0); c.restore();
+          c.font = '800 ' + fs.toFixed(1) + 'px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
+          c.lineJoin = 'round'; c.lineWidth = Math.max(1, fs * 0.12); c.strokeStyle = team.numEdge; c.strokeText(String(p.num), 0, 0);
+          c.fillStyle = team.num; c.fillText(String(p.num), 0, 0); c.restore();
         }
       } },
-      { r: (Pj.shL.r + Pj.elL.r + Pj.haL.r) / 3, d: () => { limb(Pj.shL, Pj.elL, 0.15 * k, team.jersey, team.edge); limb(Pj.elL, Pj.haL, 0.12 * k, team.under, team.edge); dot(Pj.haL, 0.07 * k, team.glove, team.edge); } },
-      { r: (Pj.shR.r + Pj.elR.r + Pj.haR.r) / 3, d: () => { limb(Pj.shR, Pj.elR, 0.15 * k, team.jersey, team.edge); limb(Pj.elR, Pj.haR, 0.12 * k, team.under, team.edge); dot(Pj.haR, 0.07 * k, team.glove, team.edge); } },
+      { r: (Pj.shL.r + Pj.elL.r + Pj.haL.r) / 3, d: () => arm(Pj.shL, Pj.elL, Pj.haL) },
+      { r: (Pj.shR.r + Pj.elR.r + Pj.haR.r) / 3, d: () => arm(Pj.shR, Pj.elR, Pj.haR) },
       { r: Pj.head.r, d: () => {
         const hr = 0.165 * k * Pj.head.sc, hx = Pj.head.x, hy = Pj.head.y;
         const fdot = (J.faceDir[0] * toCam[0] + J.faceDir[1] * toCam[1]) / tl;
@@ -511,8 +591,12 @@ export function createEyes(canvas) {
           c.moveTo(mx, my - hr * 0.05); c.lineTo(mx, my + hr * 0.42); c.stroke();
         };
         if (fdot < -0.15) mask();
-        c.beginPath(); c.arc(hx, hy, hr, 0, Math.PI * 2); c.fillStyle = team.helmet; c.fill(); c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke();
-        c.beginPath(); c.arc(hx - hr * 0.3, hy - hr * 0.35, hr * 0.38, 0, Math.PI * 2); c.fillStyle = team.helmetHi; c.fill();
+        const hg = c.createRadialGradient(hx - hr * 0.35, hy - hr * 0.4, hr * 0.1, hx, hy, hr * 1.05);
+        hg.addColorStop(0, team.helmet); hg.addColorStop(0.7, team.helmet); hg.addColorStop(1, team.helmetDark);
+        c.beginPath(); c.arc(hx, hy, hr, 0, Math.PI * 2); c.fillStyle = hg; c.fill(); c.lineWidth = ew; c.strokeStyle = team.edge; c.stroke();
+        // gloss: a soft spot and a thin specular streak from the lights
+        c.beginPath(); c.arc(hx - hr * 0.32, hy - hr * 0.38, hr * 0.3, 0, Math.PI * 2); c.fillStyle = team.helmetHi; c.fill();
+        c.beginPath(); c.arc(hx, hy, hr * 0.78, -2.5, -1.7); c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineCap = 'round'; c.lineWidth = Math.max(1, hr * 0.1); c.stroke();
         // the helmet stripe, seen from the front or the back
         if (Math.abs(fdot) > 0.35) { c.strokeStyle = team.stripe; c.lineCap = 'butt'; c.lineWidth = Math.max(1, hr * 0.2); c.beginPath(); c.moveTo(hx, hy - hr * 0.97); c.lineTo(hx, hy + hr * (fdot < 0 ? -0.1 : 0.6)); c.stroke(); }
         if (fdot >= -0.15) mask();
@@ -521,10 +605,17 @@ export function createEyes(canvas) {
     parts.sort((a, b) => b.r - a.r).forEach((q) => q.d());
     return { head: Pj.head, hr: 0.165 * k * Pj.head.sc };
   }
-  function drawBall(c, p3, st) {
+  function drawBall(c, p3, st, trail) {
     const p = proj(p3[0], p3[1], p3[2]); if (p.dy < 0.9) return;
-    const len = 0.31 * p.sc, wid = len * 0.62;
-    c.save(); c.translate(p.x, p.y); c.rotate(-0.35); c.beginPath(); c.ellipse(0, 0, len / 2, wid / 2, 0, 0, Math.PI * 2); c.fillStyle = st.ball; c.fill(); c.restore();
+    if (trail) for (let k = trail.length - 1; k >= 0; k--) {
+      const q = proj(trail[k][0], trail[k][1], trail[k][2]); if (q.dy < 0.9) continue;
+      c.beginPath(); c.arc(q.x, q.y, Math.max(1, 0.1 * q.sc), 0, Math.PI * 2); c.fillStyle = `rgba(255,236,200,${0.28 * (1 - k / trail.length)})`; c.fill();
+    }
+    const len = Math.max(4, 0.31 * p.sc), wid = len * 0.62;
+    c.save(); c.translate(p.x, p.y); c.rotate(-0.35);
+    c.beginPath(); c.ellipse(0, 0, len / 2, wid / 2, 0, 0, Math.PI * 2); c.fillStyle = st.ball; c.fill();
+    c.strokeStyle = st.lace; c.lineWidth = Math.max(0.6, len * 0.06); c.beginPath(); c.moveTo(-len * 0.18, -wid * 0.18); c.lineTo(len * 0.18, -wid * 0.18); c.stroke();
+    c.restore();
   }
   function chip(text, x, y, bg, fg, border, align, size) {
     const fsz = size || 13;
@@ -543,12 +634,21 @@ export function createEyes(canvas) {
     ctx.save(); ctx.globalAlpha = alpha;
     const hand = (x, y, flip) => {
       ctx.beginPath(); ctx.moveTo(x + flip * 60 * sc, H + 10); ctx.quadraticCurveTo(x + flip * 40 * sc, y + 20 * sc, x, y + 6 * sc);
-      ctx.lineWidth = 30 * sc; ctx.strokeStyle = st.hands.sleeve; ctx.lineCap = 'round'; ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(x, y, 20 * sc, 16 * sc, 0, 0, Math.PI * 2); ctx.fillStyle = st.hands.glove; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = st.hands.edge; ctx.stroke();
+      ctx.lineWidth = 34 * sc; ctx.strokeStyle = st.hands.sleeve; ctx.lineCap = 'round'; ctx.stroke();
+      const gg = ctx.createRadialGradient(x - 6 * sc, y - 6 * sc, 2 * sc, x, y, 22 * sc); gg.addColorStop(0, st.hands.glove); gg.addColorStop(1, st.hands.gloveShade);
+      ctx.beginPath(); ctx.ellipse(x, y, 21 * sc, 17 * sc, 0, 0, Math.PI * 2); ctx.fillStyle = gg; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = st.hands.edge; ctx.stroke();
     };
     const gap = ball ? 34 * sc : 46 * sc;
     hand(cx - gap + lx, by - lift, -1); hand(cx + gap + lx * 0.6, by - lift * 0.8, 1);
-    if (ball) { ctx.save(); ctx.translate(cx + lx * 0.8, by - 4 * sc - lift * 0.9); ctx.rotate(-0.12); ctx.beginPath(); ctx.ellipse(0, 0, 40 * sc, 25 * sc, 0, 0, Math.PI * 2); ctx.fillStyle = st.ball; ctx.fill(); ctx.strokeStyle = st.lace; ctx.lineWidth = 3 * sc; ctx.beginPath(); ctx.moveTo(-13 * sc, -9 * sc); ctx.lineTo(13 * sc, -9 * sc); ctx.stroke(); ctx.restore(); }
+    if (ball) {
+      ctx.save(); ctx.translate(cx + lx * 0.8, by - 4 * sc - lift * 0.9); ctx.rotate(-0.12);
+      const bg = ctx.createRadialGradient(-12 * sc, -10 * sc, 2 * sc, 0, 0, 42 * sc); bg.addColorStop(0, st.ballHi); bg.addColorStop(1, st.ball);
+      ctx.beginPath(); ctx.ellipse(0, 0, 40 * sc, 25 * sc, 0, 0, Math.PI * 2); ctx.fillStyle = bg; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1.5 * sc; ctx.stroke();
+      ctx.strokeStyle = st.lace; ctx.lineCap = 'round'; ctx.lineWidth = 3 * sc; ctx.beginPath(); ctx.moveTo(-14 * sc, -10 * sc); ctx.lineTo(14 * sc, -10 * sc); ctx.stroke();
+      ctx.lineWidth = 2.2 * sc; ctx.beginPath(); for (let k = -2; k <= 2; k++) { ctx.moveTo(k * 6 * sc, -14 * sc); ctx.lineTo(k * 6 * sc, -6 * sc); } ctx.stroke();
+      ctx.restore();
+    }
     ctx.restore();
   }
   function drawLookStrip(t, states) {
@@ -577,12 +677,21 @@ export function createEyes(canvas) {
     if (!S) return;
     const st = STYLE;
     cam = S.cam(t); cam.yaw = S.yawOverride != null ? S.yawOverride : S.yaw(t); cam.sv = Math.sin(cam.yaw); cam.cv = Math.cos(cam.yaw);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    // a hit shakes his view for a moment (S.shake = { t, amp }); it never runs before the ball is out or he is hit
+    let ox = 0, oy = 0;
+    if (S.shake && t >= S.shake.t && t < S.shake.t + 0.4) { const u = 1 - (t - S.shake.t) / 0.4, a = S.shake.amp * u * u; ox = a * Math.sin(t * 83); oy = a * Math.cos(t * 71); }
+    ctx.setTransform(DPR, 0, 0, DPR, DPR * ox, DPR * oy);
     drawField(st);
     if (S.overlay) S.overlay({ ctx, proj, cam, t, W, H });
     const states = S.players.map((p, i) => stateAt(S, i, t));
-    ctx.fillStyle = st.shadow;
-    states.forEach((s) => { const c = proj(s[F_X], s[F_Y], 0); if (c.dy < 0.3) return; const a = proj(s[F_X], s[F_Y] - 0.45, 0), b = proj(s[F_X], s[F_Y] + 0.45, 0); ctx.beginPath(); ctx.ellipse(c.x, c.y, 0.48 * c.sc, Math.max(1.5, Math.abs(a.y - b.y) / 2), 0, 0, Math.PI * 2); ctx.fill(); });
+    // soft contact shadows under every player
+    states.forEach((s) => {
+      const c = proj(s[F_X], s[F_Y], 0); if (c.dy < 0.3) return;
+      const a = proj(s[F_X], s[F_Y] - 0.5, 0), b = proj(s[F_X], s[F_Y] + 0.5, 0), rx = 0.6 * c.sc, ry = Math.max(1.5, Math.abs(a.y - b.y) / 2);
+      ctx.save(); ctx.translate(c.x, c.y); ctx.scale(1, ry / rx);
+      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); sg.addColorStop(0, st.shadow); sg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    });
     const ball = ballAt(S, t);
     const order = S.players.map((p, i) => ({ p, s: states[i], r: Math.hypot(states[i][F_X] - cam.x, states[i][F_Y] - cam.y) })).sort((a, b) => b.r - a.r);
     const info = {};
@@ -593,7 +702,8 @@ export function createEyes(canvas) {
     for (const [id, inf] of Object.entries(info)) if (inf && inf.head) S.screen[id] = { x: inf.head.x, y: inf.head.y + inf.hr * 4, r: Math.max(28, inf.hr * 6) };
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = st.ownAlpha; ctx.drawImage(layer, 0, 0); ctx.restore();
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    if (ball.mode === 'ground' || ball.mode === 'air') drawBall(ctx, ball.p, st);
+    if (ball.mode === 'ground') drawBall(ctx, ball.p, st);
+    else if (ball.mode === 'air') drawBall(ctx, ball.p, st, [0.03, 0.06, 0.09, 0.12, 0.15].map((d) => ballAt(S, t - d)).filter((b) => b.mode === 'air').map((b) => b.p));
     else if (ball.mode === 'caught') { const i = S.players.indexOf(S.byId[S.target]), s = states[i]; drawBall(ctx, [s[F_X] + Math.sin(s[F_PSI]) * 0.15, s[F_Y] + Math.cos(s[F_PSI]) * 0.15, 1.05], st); }
     // labels and edge markers
     const edge = { left: [], right: [] };
@@ -609,7 +719,10 @@ export function createEyes(canvas) {
       const list = edge[side].sort((a, b) => a.y - b.y); let last = -1e9;
       for (const m of list) { m.y = Math.max(m.y, last + 24); last = m.y; const R = side === 'right'; chip(R ? m.lab + ' ›' : '‹ ' + m.lab, R ? W - 6 : 6, m.y, m.look[0], m.look[1], m.look[2], R ? 'right' : 'left'); }
     }
+    if (vig) ctx.drawImage(vig, 0, 0, W, H);
     drawHands(t, st);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (S.flash && t >= S.flash.t && t < S.flash.t + 0.3) { ctx.fillStyle = S.flash.color; ctx.globalAlpha = 0.55 * (1 - (t - S.flash.t) / 0.3); ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
     drawLookStrip(t, states);
     if (S.hud) S.hud({ ctx, proj, cam, t, W, H, FOV: FOVN });
   }
