@@ -14,14 +14,18 @@ running and leaping to the next roof, a little faster each time. **A hit or a sn
 |---|---|
 | Rusher | Hunter drone (cyan eye while it hunts) |
 | The moment to move | The drone **locks on** (eye turns red) and flies straight: cut sideways then, not before |
-| Edge, push, collapse, free rusher | Patterns: swoop (from a side), dive (head-on), pincer (both sides), blind (from behind his off-hand shoulder: the screen edge flickers), double, swarm, early (a lantern lights before the wave gets there) |
+| Edge, push, collapse, free rusher | Patterns: swoop (from a side), dive (head-on), pincer (both sides), blindside (two from his off-hand side), double, swarm, early (a lantern lights before the wave gets there). Every drone launches in front of him, inside his view, and blinks there for a second first (owner, 2026-10-31: no drone out of nowhere) |
 | Open receiver | A friend whose lantern lights |
 | Interception | A toss while the watcher is still on him: snatched, the run ends |
 | Incompletion | A toss before the lantern is fully lit: dropped, the streak starts over |
 | Hot clock | Hold the package past 5 s and more drones come |
 
 - **Feet (pad, his off-hand thumb):** move on his roof; past the ring to sprint. Drones lead him while they hunt, so
-  running in a straight line does not work: wait for the lock-on, then cut.
+  running in a straight line does not work: wait for the lock-on (ring turns red), then step sideways. The lock-on
+  comes 0.85 s before impact at level 1 and never later than 0.55 s; every round is checked to be beatable by someone
+  who reacts 0.25 s after the lock-on and only walks (owner, 2026-10-31: the controls must always be quick enough).
+- **Guide:** for his first five runs, prompts say what to do now (drone coming, step sideways, toss to ◆), and the
+  lit friend's button glows gold.
 - **Eyes:** 3-5 friends across his view; lanterns light anywhere, often on his blind (off-hand) side as levels go up.
 - **Hands (his throwing thumb):** fixed buttons, one per friend, each with the shape over that friend (◆ ● ▲ ■ ★),
   always in the same place. On a computer: W A S D move (Shift sprints), Y U I O P toss left to right across the
