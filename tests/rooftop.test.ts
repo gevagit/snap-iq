@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
 import { parsePlayContent } from '../src/play/content';
 import {
-  Run, RoundSim, STEP, checkRules, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
+  Run, RoundSim, STEP, VIEW, checkRules, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
   type Action, type Input, type Round,
 } from '../src/rooftop';
 
@@ -71,7 +71,7 @@ describe('Rooftop Run', () => {
     // cut early and hold the same line: it steers onto him
     const early = runRound(g, round, (s) => (s.t > round.launches[0]!.t + 0.2 ? { mx: 0.6, mz: 0 } : still()), 6);
     expect(early.result?.kind).toBe('hit');
-    expect(r.drones.commit).toBeGreaterThan(r.drones.hit);
+    expect(r.drones.commit.end * r.drones.speed.end).toBeGreaterThan(r.drones.hit);
   });
 
   it('a drone that just misses him is a near miss and scores', () => {
@@ -116,11 +116,28 @@ describe('Rooftop Run', () => {
     expect(s.drones.some((d) => d.swarm)).toBe(true);
   });
 
-  it('blind drones come from behind his off-hand shoulder', () => {
-    const round = roundOf('blind');
-    const l = round.launches[0]!;
-    expect(l.z).toBeLessThan(0);
-    expect(Math.sign(l.x)).toBe(offSign(g));
+  it('every drone launches in front of him, inside his view, and hovers there before it comes', () => {
+    for (let level = 1; level <= g.r.ramp.levels; level++) for (let i = 0; i < 10; i++) {
+      const round = makeRound(g, level, 500 + 10 * level + i), [sx, sz] = g.r.courier.start;
+      for (const l of round.launches) {
+        const deg = (Math.atan2(l.x - sx, l.z - sz) * 180) / Math.PI;
+        expect(Math.abs(deg)).toBeLessThan(VIEW / 2 - 2);
+        expect(l.t).toBeGreaterThanOrEqual(g.r.drones.warn * 0.9);
+      }
+    }
+  });
+
+  it('a person always has time: react to the lock-on a beat late, walk (no sprint) clear', () => {
+    for (let level = 1; level <= g.r.ramp.levels; level += 3) for (let i = 0; i < 8; i++) {
+      const round = makeRound(g, level, 900 + 10 * level + i);
+      const s = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, walk: true }));
+      expect(s.result?.kind, `level ${level} ${round.pattern.id}`).toBe('catch');
+    }
+  });
+
+  it('blindside waves come from his off-hand side', () => {
+    const round = roundOf('blindside');
+    for (const l of round.launches) expect(Math.sign(l.x - g.r.courier.start[0])).toBe(offSign(g));
   });
 
   it('a toss to a friend who is not out this round does nothing', () => {
