@@ -3,7 +3,7 @@
 > **Status**: Draft
 > **Owned By**: art-director
 > **Last Updated**: 2026-10-31
-> **Art Director Sign-Off (AD-ART-BIBLE)**: [Not yet reviewed]
+> **Art Director Sign-Off (AD-ART-BIBLE)**: SKIPPED 2026-10-31 — solo mode
 
 `/art-bible` writes these nine sections in this order and replaces each
 section's `[To be designed]` line as that section is approved. A section still
