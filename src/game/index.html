@@ -134,46 +134,85 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 .callinfo p:last-child { margin: 0; }
 .break { background: var(--ink); color: #fff; border-radius: 14px; padding: 16px 20px; font-weight: 800; font-stretch: 80%; font-size: 24px; letter-spacing: 0.03em; width: 100%; }
 
-/* Bubble: the Pocket workout. Throw buttons on the left (his throwing thumb), the movement pad on the right. */
-.pocketui { display: none; }
-body.pocket .pocketui { display: block; }
-body.pocket .look { top: max(56px, calc(env(safe-area-inset-top) + 46px)); bottom: auto; }
-body.pocket .look button { padding: 8px 10px; font-size: 13px; }
-.pthrows { position: absolute; left: max(10px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); width: 250px; height: 250px; }
-.pthrows button { position: absolute; width: 66px; height: 66px; border-radius: 50%; background: #FFFFFF; color: var(--ink); font-size: 30px; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,0.3); touch-action: none; }
-.pthrows button:disabled { opacity: 0.25; }
-/* the same place every time: an arc around his left thumb, ◆ at the top to ★ at the right */
-.pthrows .b-X { left: 6px; top: 0; } .pthrows .b-Y { left: 74px; top: 22px; } .pthrows .b-Z { left: 132px; top: 66px; }
-.pthrows .b-H { left: 168px; top: 128px; } .pthrows .b-R { left: 180px; top: 196px; transform: translateY(-12px); }
-.pthrows .away { width: 104px; height: 40px; border-radius: 12px; left: 2px; top: 206px; font-size: 13px; background: #DDE5F5; }
-.ppad { position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); width: 190px; height: 190px; border-radius: 50%; background: rgba(16,20,26,0.45); border: 2px solid rgba(255,255,255,0.5); touch-action: none; }
-.ppad::before { content: ''; position: absolute; inset: 19%; border-radius: 50%; border: 1.5px dashed rgba(255,255,255,0.45); }
-.ppad i { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; background: rgba(255,255,255,0.88); box-shadow: 0 2px 6px rgba(0,0,0,0.3); pointer-events: none; }
-.ppad span { position: absolute; left: 0; right: 0; bottom: -20px; text-align: center; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
-.pready { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--panel); color: #fff; border-radius: 16px; padding: 16px 18px; display: grid; gap: 10px; text-align: center; min-width: 280px; }
-.pready b { display: block; font-size: 19px; font-weight: 800; font-stretch: 85%; }
-.pready span { color: var(--panel-ink-2); font-size: 14px; }
-.pready button { background: #fff; color: var(--ink); border-radius: 12px; font-weight: 800; font-size: 22px; padding: 12px; letter-spacing: 0.04em; }
-#pReport { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(460px, 92vw); }
-#pReport .big { font-size: 56px; color: #F2C14E; }
-#pReport ul { grid-template-columns: 1fr; }
-#pReport li { grid-template-columns: 1fr auto; }
-#pReport li b { font-variant-numeric: tabular-nums; }
-#pReport .btns { grid-template-columns: 1fr 1fr 1fr; }
+/* Rooftop Run: neon night. Toss buttons under his throwing thumb (left for a lefty), the pad under the other. */
+#roof { background: #05030F; color: #fff; }
+#roofView { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; transition: filter 0.5s; }
+#roofView.over { filter: saturate(0.35) brightness(0.8); }
+.rvig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%); }
+.rhud { position: absolute; top: max(12px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); display: grid; gap: 8px; pointer-events: none; }
+.rscore { display: flex; align-items: baseline; gap: 10px; }
+.rscore b { font-size: 34px; font-weight: 800; font-stretch: 75%; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 12px rgba(63,224,255,0.7); }
+.rscore span { font-weight: 800; font-stretch: 78%; font-size: 15px; padding: 4px 10px; border-radius: 999px; background: rgba(10,8,24,0.7); border: 1px solid rgba(255,255,255,0.18); }
+#rMult.hot { background: linear-gradient(90deg, #FF4FB8, #B26BFF); border-color: transparent; box-shadow: 0 0 14px rgba(255,79,184,0.7); }
+.rghost { position: relative; width: 220px; height: 22px; border-radius: 6px; background: rgba(10,8,24,0.7); border: 1px solid rgba(255,255,255,0.16); overflow: hidden; }
+.rghost i { position: absolute; inset: 0 auto 0 0; background: rgba(255,255,255,0.14); }
+.rghost span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; font-weight: 800; font-stretch: 80%; letter-spacing: 0.04em; color: #FFB3C8; }
+.rghost.ahead span { color: #A8FF3E; }
+.rbtns { position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); display: flex; gap: 8px; }
+.rquit, .rround { background: rgba(10,8,24,0.7); color: #fff; border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 8px 14px; font-weight: 800; font-stretch: 80%; font-size: 13px; }
+.rround { width: 38px; padding: 8px 0; }
+.rpop, .rlevelup { position: absolute; left: 50%; transform: translateX(-50%); pointer-events: none; font-weight: 800; font-stretch: 72%; letter-spacing: 0.08em; opacity: 0; transition: opacity 0.15s; white-space: nowrap; }
+.rpop { top: 20%; font-size: 26px; color: #fff; text-shadow: 0 0 14px rgba(255,79,184,0.9), 0 2px 0 rgba(0,0,0,0.5); }
+.rpop.on, .rlevelup.on { opacity: 1; }
+.rlevelup { top: 34%; font-size: 44px; color: #A8FF3E; text-shadow: 0 0 20px rgba(168,255,62,0.8); }
+.rclock { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: 58px; height: 58px; display: grid; place-items: center; pointer-events: none; }
+.rclock svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.rclock circle { fill: none; stroke-width: 4; }
+.rclock circle.bg { stroke: rgba(255,255,255,0.15); fill: rgba(10,8,24,0.55); }
+#rClockArc { stroke: #FFFFFF; stroke-dasharray: 100; stroke-linecap: round; }
+.rclock.late #rClockArc { stroke: #FF9A3C; }
+.rclock b { font-size: 15px; font-weight: 800; font-stretch: 80%; font-variant-numeric: tabular-nums; }
+.rtoss { position: absolute; left: max(10px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); width: 250px; height: 250px; }
+.rtoss button { position: absolute; width: 66px; height: 66px; border-radius: 50%; color: #fff; background: rgba(10,8,24,0.66); border: 1.5px solid rgba(255,255,255,0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); touch-action: none; display: grid; place-items: center; }
+.rtoss button b { font-size: 28px; line-height: 1; }
+.rtoss button span { position: absolute; bottom: 5px; font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.7); }
+.rtoss button:disabled { opacity: 0.2; }
+.rtoss button.dim:not(:disabled) { opacity: 0.55; }
+/* the same place every time: an arc around his thumb, ◆ at the top to ★ at the far side */
+.rtoss [data-id="A"] { left: 6px; top: 0; } .rtoss [data-id="B"] { left: 74px; top: 22px; } .rtoss [data-id="C"] { left: 132px; top: 66px; }
+.rtoss [data-id="D"] { left: 168px; top: 128px; } .rtoss [data-id="E"] { left: 180px; top: 184px; }
+.rpad { position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, rgba(10,8,24,0.3) 0 55%, rgba(10,8,24,0.6) 100%); border: 1.5px solid rgba(63,224,255,0.45); box-shadow: 0 0 18px rgba(63,224,255,0.25) inset; touch-action: none; }
+.rpad::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; border: 1.5px dashed rgba(255,255,255,0.35); }
+.rpad.sprint { border-color: #FF4FB8; box-shadow: 0 0 22px rgba(255,79,184,0.5) inset; }
+.rpad i { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFFFFF, #BFD7F2); box-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: none; }
+body.roof-righty .rtoss { left: auto; right: max(10px, env(safe-area-inset-right)); transform: scaleX(-1); }
+body.roof-righty .rtoss button { transform: scaleX(-1); }
+body.roof-righty .rpad { right: auto; left: max(18px, env(safe-area-inset-left)); }
+.rready, .rreport { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(10,8,24,0.86); border: 1px solid rgba(255,79,184,0.4); box-shadow: 0 0 40px rgba(255,79,184,0.25); border-radius: 18px; padding: 20px 22px; display: grid; gap: 10px; text-align: center; width: min(420px, 90vw); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.rready h2 { margin: 0; font-size: 34px; font-weight: 800; font-stretch: 70%; letter-spacing: 0.1em; background: linear-gradient(90deg, #FF4FB8, #3FE0FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.rready p { margin: 0; font-size: 15px; line-height: 1.45; color: #D9D4F0; }
+.rready .lock { color: #FF3B6B; } .rready .gold { color: #FFD84D; }
+.rready span { color: #A99FCC; font-size: 13px; font-weight: 700; }
+.rready button { background: linear-gradient(90deg, #FF4FB8, #B26BFF); color: #fff; border-radius: 12px; font-weight: 800; font-stretch: 75%; font-size: 26px; padding: 12px; letter-spacing: 0.14em; box-shadow: 0 0 20px rgba(255,79,184,0.5); }
+.rreport small { font-size: 14px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #FF4FB8; }
+.rreport .big { font-size: 58px; font-weight: 800; font-stretch: 72%; line-height: 1; color: #fff; text-shadow: 0 0 18px rgba(63,224,255,0.7); font-variant-numeric: tabular-nums; }
+.rreport > span { color: #A99FCC; font-size: 13px; font-weight: 700; }
+.rreport ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; text-align: left; }
+.rreport li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; font-size: 14px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.05); }
+.rreport li b { font-weight: 800; color: #fff; }
+.rreport li span { text-align: right; color: #D9D4F0; font-variant-numeric: tabular-nums; }
+.rreport li.tip { grid-template-columns: 1fr; } .rreport li.tip span { text-align: left; color: #FFD84D; }
+.rreport li.unlock { background: rgba(168,255,62,0.12); } .rreport li.unlock b { color: #A8FF3E; }
+.rreport .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.rreport .btns button { border-radius: 12px; padding: 12px; font-weight: 800; font-size: 17px; }
+.rreport .ghost { background: rgba(255,255,255,0.1); color: #fff; }
+.rreport .go { background: linear-gradient(90deg, #FF4FB8, #B26BFF); color: #fff; }
+.roofbtn { background: linear-gradient(120deg, #1A0B33, #3B1458 60%, #5A1A6E) !important; box-shadow: 0 0 0 1px rgba(255,79,184,0.5), 0 0 22px rgba(255,79,184,0.25); }
+.roofbtn b { background: linear-gradient(90deg, #FF8AD0, #7FEFFF); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: 0.06em; }
+.looks { display: flex; flex-wrap: wrap; gap: 8px; }
+.looks button { display: inline-flex; align-items: center; gap: 8px; background: var(--ground); border: 1.5px solid var(--rule); border-radius: 999px; padding: 6px 12px 6px 6px; font-weight: 700; font-size: 13px; color: var(--ink); }
+.looks button i { width: 20px; height: 20px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); }
+.looks button[aria-pressed="true"] { border-color: var(--ink); background: var(--paper); }
+.looks button:disabled { opacity: 0.4; }
 
 /* broadcast look for the his-eyes screens (docs/STYLE.md): dark glass, condensed type, quiet controls */
 #rep .pill { background: rgba(8,12,22,0.82); border: 1px solid rgba(255,255,255,0.12); font-stretch: 78%; font-size: 14px; letter-spacing: 0.03em; padding: 7px 13px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 #rep .pill:first-child { background: linear-gradient(180deg, #C8102E, #8E0B21); border-color: rgba(255,255,255,0.18); font-size: 16px; }
 #rep .quit, #rep .look button { background: rgba(8,12,22,0.78); border: 1px solid rgba(255,255,255,0.14); font-stretch: 80%; letter-spacing: 0.03em; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-body.pocket .pthrows button { background: rgba(8,12,22,0.72); color: #FFFFFF; border: 1.5px solid rgba(255,255,255,0.32); box-shadow: 0 4px 14px rgba(0,0,0,0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-body.pocket .pthrows button:disabled { opacity: 0.3; }
-body.pocket .pthrows .away { background: rgba(8,12,22,0.72); color: #FFFFFF; font-stretch: 80%; letter-spacing: 0.05em; text-transform: uppercase; font-size: 12px; }
-body.pocket .ppad { background: radial-gradient(circle, rgba(8,12,22,0.35) 0 55%, rgba(8,12,22,0.6) 100%); border: 1.5px solid rgba(255,255,255,0.3); }
-body.pocket .ppad i { background: radial-gradient(circle at 35% 30%, #FFFFFF, #C9D3E6); }
 #rep .cue { background: linear-gradient(180deg, rgba(200,16,46,0.95), rgba(142,11,33,0.95)); font-stretch: 72%; letter-spacing: 0.08em; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
 
 /* breakdown */
-#breakdown, #pbreakdown { background: var(--ground); overflow: auto; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+#breakdown { background: var(--ground); overflow: auto; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
 .bd { max-width: 1100px; margin: 0 auto; display: grid; gap: 12px; }
 .bd-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .bd-head h2 { margin: 0; font-size: 24px; font-weight: 800; font-stretch: 80%; }
@@ -217,7 +256,8 @@ body.pocket .ppad i { background: radial-gradient(circle at 35% 30%, #FFFFFF, #C
       </div>
     </div>
     <button class="start" id="startBtn" type="button"><b>START WORKOUT</b><span id="startSub"></span></button>
-    <button class="start" id="pocketBtn" type="button" style="background:#2A3446"><b>POCKET INSTINCT</b><span id="pocketSub"></span></button>
+    <button class="start roofbtn" id="roofBtn" type="button"><b>ROOFTOP RUN</b><span id="roofSub"></span></button>
+    <div class="card" id="locker" hidden><div class="row"><b>Locker</b><span class="note" id="lockerNote"></span></div><div class="looks" id="lockJackets"></div><div class="looks" id="lockTrails"></div></div>
     <div class="card">
       <div class="row"><b>Level</b><div class="seg" id="tierSeg"><button type="button" data-tier="youth">Youth</button><button type="button" data-tier="jv">JV</button></div></div>
       <p class="note" id="tierNote"></p>
@@ -225,7 +265,7 @@ body.pocket .ppad i { background: radial-gradient(circle at 35% 30%, #FFFFFF, #C
     <div class="card">
       <b>How a rep works</b>
       <p class="note">First the call: see where everyone lines up and what each player does. Then break the huddle: you're at the line. Go through your whole routine on the play clock: check your alignment, read the defense (shell, box, corners, tells), count the rush, change up to two routes, set your key and escape lane, and pick your reads. Drag the field or use Look left / Look right to turn your head. The play stops at the snap: your drop, the coverage, the blitz, and whether to look off the safety. It stops again a second later with your eyes on your first read: throw, roll out, run, or throw it away.</p>
-      <p class="note"><b>Pocket Instinct:</b> one long run, snap after snap. Dodge the rush with the pad under your right thumb: climb away from an edge rush, slide away from a push inside, escape when it collapses, stay put when the pocket is clean. When an ally comes open (he glows green), throw to him with his button under your left thumb. Every completion makes the next snap faster. The run ends when you get hit or picked off. Hang as long as you can. On a computer: W A S D to move (hold Shift to run), Y U I O P to throw, left to right by where the receivers line up (Y the leftmost, P the rightmost; the key is on each receiver's tag), T to throw it away, Space to snap, or click a receiver. A game controller works too.</p>
+      <p class="note"><b>Rooftop Run:</b> you're a courier on the rooftops at night. Hunter drones come for you: wait until one locks on (its eye turns red), then cut sideways with the pad under your right thumb. Each friend has a watcher drone on him; when it drifts off, his lantern lights. Toss him the package with his button under your left thumb, before the watcher gets back. Watch the edges of the screen too: chevrons flicker when a drone comes from where you can't see. Every catch in a row lights up the city and adds to your streak; a drone that just misses you scores a near miss. A hit or a snatched package ends the run. On a computer: W A S D to move (hold Shift to sprint), Y U I O P to toss, left to right across the view (the key is on each friend's tag), Space to start, or click a friend. A game controller works too.</p>
     </div>
     <details class="card" id="parent">
       <summary><b>Parent settings</b></summary>
@@ -247,17 +287,6 @@ body.pocket .ppad i { background: radial-gradient(circle at 35% 30%, #FFFFFF, #C
     <div class="clock" id="clock" hidden><i id="clockBar"></i><b id="clockNum"></b></div>
     <h2 id="askQ"></h2>
     <div class="choices" id="choices"></div>
-  </div>
-  <div class="pocketui" id="pocketUI">
-    <div class="pthrows" id="pThrows" aria-label="Throw: one button per ally, always in the same place"></div>
-    <div class="ppad" id="pPad" aria-label="Move: up to climb, back to drop, sideways to slide, past the ring to run"><i id="pKnob"></i><span>inside the ring: shuffle · outside: run</span></div>
-    <div class="pready" id="pReady" hidden><div id="pCall"></div><button type="button" id="pSnap">SNAP</button></div>
-    <div class="result" id="pReport" role="dialog" aria-label="Run report">
-      <h2 id="pRepTitle"></h2>
-      <div class="big" id="pRepBig"></div>
-      <ul id="pRepList"></ul>
-      <div class="btns"><button class="ghost" id="pBd" type="button">Last snap</button><button class="ghost" id="pDone" type="button">Done</button><button class="go" id="pAgain" type="button">Run again</button></div>
-    </div>
   </div>
   <div class="result" id="result" role="dialog" aria-label="Result">
     <h2 id="resTitle"></h2>
@@ -296,17 +325,31 @@ body.pocket .ppad i { background: radial-gradient(circle at 35% 30%, #FFFFFF, #C
   </div>
 </section>
 
-<section class="screen" id="pbreakdown" aria-label="Pocket Breakdown">
-  <div class="bd">
-    <div class="bd-head"><h2 id="pbdTitle">Breakdown</h2><button class="plain" id="pbdClose" type="button">Back</button></div>
-    <div class="bd-main">
-      <div class="board">
-        <canvas id="pBoard"></canvas>
-        <div class="bd-ctl"><button class="plain" id="pbdPlay" type="button">Replay</button><input type="range" id="pbdScrub" min="0" max="1000" value="1000" aria-label="Time"><span id="pbdTime"></span></div>
-        <div class="legend"><span><i style="background:#1C2430"></i>Your path</span><span><i style="background:#2F7D4F"></i>The right move (allies ringed green when open)</span><span><i style="background:rgba(201,74,22,0.85)"></i>Rushers</span><span><i style="background:rgba(242,193,78,0.9)"></i>Pocket edge</span></div>
-      </div>
-      <div class="why" id="pWhy"></div>
-    </div>
+<section class="screen" id="roof" aria-label="Rooftop Run">
+  <canvas id="roofView"></canvas>
+  <div class="rvig"></div>
+  <div class="rhud">
+    <div class="rscore"><b id="rScore">0</b><span id="rMult">×1</span><span id="rLevel"></span></div>
+    <div class="rghost" id="rGhostWrap" hidden><i id="rGhostBar"></i><span id="rGhost"></span></div>
+  </div>
+  <div class="rbtns"><button type="button" id="rMute" class="rround" aria-label="Music">♪</button><button type="button" id="rQuit" class="rquit">End run</button></div>
+  <div class="rpop" id="rPop"></div>
+  <div class="rlevelup" id="rLevelUp"></div>
+  <div class="rclock" id="rClock" hidden><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" pathLength="100" class="bg"/><circle cx="20" cy="20" r="16" pathLength="100" id="rClockArc"/></svg><b id="rClockNum"></b></div>
+  <div class="rtoss" id="rToss" aria-label="Toss: one button per friend, always in the same place"></div>
+  <div class="rpad" id="rPad" aria-label="Move: push past the ring to sprint"><i id="rKnob"></i></div>
+  <div class="rready" id="rReady" hidden>
+    <h2>ROOFTOP RUN</h2>
+    <p>Cut when a drone's eye turns <b class="lock">red</b>. Toss when a lantern lights <b class="gold">gold</b>.</p>
+    <span id="rBest"></span>
+    <button type="button" id="rGo">GO</button>
+  </div>
+  <div class="rreport" id="rReport" role="dialog" aria-label="Run report" hidden>
+    <small id="rRepTitle"></small>
+    <div class="big" id="rRepBig"></div>
+    <span id="rRepSub"></span>
+    <ul id="rRepList"></ul>
+    <div class="btns"><button class="ghost" id="rDone" type="button">Done</button><button class="go" id="rAgain" type="button">Run again</button></div>
   </div>
 </section>
 

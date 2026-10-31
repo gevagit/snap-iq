@@ -36,9 +36,9 @@ a screenshot before it is pushed.
   stadium and his own line are muted.
 
 ## HUD
-- Broadcast feel: one compact score bug (hang time, multiplier, level), condensed type, no clutter.
+- Broadcast feel: one compact score bug, condensed type, no clutter.
 - Controls translucent and quiet; the open-receiver glow is the loudest signal and lives on the field, never on a
-  button (docs/plans/instinct.md).
+  button.
 - Minimum touch target 44 px; text contrast 4.5:1.
 
 ## Feel ("juice")
@@ -59,3 +59,8 @@ a screenshot before it is pushed.
 - No cartoon outlines, no neon arcade palettes, no flat fills.
 - No real NFL players, teams, logos or likenesses.
 - No separate-looking zone outside the sidelines.
+
+## Rooftop Run (the Pocket workout)
+Not football and not this look: a neon night city in first person (docs/plans/rooftop.md). Same rules carry over: the
+cue is the brightest thing (a lit lantern is gold, a locked-on drone's eye red), colour never works alone (shapes on
+the tags, chevrons at the edge), cached layers and glow sprites keep it inside the iPad budget.

@@ -1,5 +1,5 @@
 # Pocket rules (PRD §6.7): his feet, the rush and what each move is. Batch 4, signed off by the owner with defaults
-# (2026-10-28). Used by Pocket Instinct (content/instinct/rules.yaml), which replaced the Bubble rep types.
+# (2026-10-28). Not used by a drill since Rooftop Run replaced Pocket Instinct (2026-10-31); kept as Football Bible content.
 # Sides are by his throwing hand (content/offense/quarterback.yaml); nothing here says left or right.
 # Distances in yards, times in seconds after the snap, speeds in yards per second.
 version: 1
