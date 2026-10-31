@@ -5,7 +5,9 @@
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
 import { STEP, Run, idealPolicy, isLit, separation, tossKeys, report, unlocked, offSign, watched, GLYPHS, FRIEND_IDS } from '../rooftop';
 
-const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, 1], s: [0, -1], a: [-1, 0], d: [1, 0] };
+// keys by where they sit on the keyboard (e.code), not the letter they type, so they work with any layout (Hebrew too)
+const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, 1], KeyS: [0, -1], KeyA: [-1, 0], KeyD: [1, 0] };
+const TOSS_CODES = { KeyY: 'y', KeyU: 'u', KeyI: 'i', KeyO: 'o', KeyP: 'p' };
 // game controller (standard mapping): X Y A B RB toss, left to right like Y U I O P
 const PAD_TOSS = { 2: 'y', 3: 'u', 0: 'i', 1: 'o', 5: 'p' };
 // the d-pad steps: up, down, left, right
@@ -240,9 +242,9 @@ export function initRooftop(ctx) {
   function tossKey(k) { if (!run) return; const id = tossKeys(run.sim.round).get(k); if (id) toss(id); }
   window.addEventListener('keydown', (e) => {
     if (!on) return;
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === ' ') $('rAgain').click(); return; }
-    if ('yuiop'.includes(k) && k.length === 1) { tossKey(k); return; }
+    const k = e.code;
+    if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
+    if (TOSS_CODES[k]) { tossKey(TOSS_CODES[k]); return; }
     if (k === 'Escape') { $('rQuit').click(); return; }
     const v = MOVE_KEYS[k];
     if (v) { e.preventDefault(); if (!e.repeat) tap(v[0], v[1]); }
