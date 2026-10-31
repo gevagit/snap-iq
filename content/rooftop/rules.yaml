@@ -14,7 +14,8 @@ courier:
   step: 0.9            # one tap (a key or a swipe) moves him this far; tap fast to go further
   dash: 8              # how fast he covers a step
   accel: 90            # how fast he gets going and stops
-  tap_gap: 0.12        # the right play taps no faster than this (a person can tap about this fast)
+  tap_gap: 0.14        # the right play taps no faster than this (a person can tap about this fast)
+  power_max: 1.8       # a sharp flick of the joystick: up to this many times a step, that much faster
   start: [0, -0.8]
 
 drones:
@@ -30,7 +31,15 @@ drones:
   hit: 0.6             # closer than this, it gets him
   near: 1.8            # closer than this but not a hit: a near miss
   first: [1.1, 1.5]    # the first drone launches this long into a round
-  gap: [0.7, 1.1]      # between drones in a wave
+  gap: [0.7, 1.1]      # between drones in a wave (unless a wave says)
+  aims:
+    lane: 1.0          # a drone aimed at his lane goes for the spot this far beside him (one step)
+    depth: 1.2         # one aimed ahead of or behind him goes for the spot this far in front or back
+  dive:                # a diving drone: comes in high, locks on his spot, follows him sideways, dives onto the spot
+    height: 3.4        # how high it flies before it dives
+    drop: 0.9          # it dives over this last stretch (so a step up takes him under it while it is still high)
+    side_speed: 9      # how fast it slides sideways to stay over him (faster than he can step)
+    reach: 0.75        # it gets him if he is this close to its spot when it comes down
 
 friends:
   count: [3, 3, 4, 4, 5]   # by level (the last one holds)
@@ -53,16 +62,44 @@ toss:
   release: 0.12        # from the button to the package leaving his hand
   speed: 24
 
-# Each round is a wave. from: ahead, side (either side), throwing (his throwing-hand side), off (his off-hand side).
-# All of them launch in front of him, inside his view.
+# Each round is a wave, like a pass rush. A drone comes from ahead, a side (either), his throwing-hand side or his
+# off-hand side, always inside his view, and when it locks on it aims at him (you), at the lane one step beside him
+# on its own side (lane, an edge taking that escape away), at the lane on the other side (cross, like a stunt), or at
+# the spot in front of him (ahead) or behind him (behind). `after` is seconds after the drone before (0 = together).
+# needs: any (any dodge works), up_or_back (sideways alone is not enough: step up or drop back), combo (one direction
+# alone is not enough). Every round is checked for what it says. A wave shows the glossary term's name once the term
+# is signed off, its own name until then.
 patterns:
-  - { id: dive, from: 1, weight: 3, early: false, drones: [ahead] }
-  - { id: swoop, from: 1, weight: 3, early: false, drones: [side] }
-  - { id: early, from: 2, weight: 1.5, early: true, drones: [ahead] }
-  - { id: pincer, from: 3, weight: 2, early: false, drones: [throwing, off] }
-  - { id: blindside, from: 4, weight: 2, early: false, drones: [off, off] }
-  - { id: double, from: 5, weight: 1.5, early: false, drones: [ahead, side] }
-  - { id: swarm, from: 7, weight: 1.5, early: false, drones: [ahead, throwing, off] }
+  - { id: head_on, name: Head-on, from: 1, weight: 3, early: false, needs: any,
+      hint: "Wait for red, then step aside.",
+      drones: [{ from: ahead, aim: you }] }
+  - { id: edge, name: Edge rush, term: speed-rush, from: 1, weight: 3, early: false, needs: any,
+      hint: "Coming off the edge: step away from it.",
+      drones: [{ from: side, aim: you }] }
+  - { id: dive, name: Dive, from: 2, weight: 2.5, early: false, needs: up_or_back,
+      hint: "It's diving on your spot and follows you sideways: step up under it, or drop back.",
+      drones: [{ from: ahead, aim: dive }] }
+  - { id: hot, name: Free drone, term: free-rusher, from: 2, weight: 1.5, early: true, needs: any,
+      hint: "Nobody's on it: get the package out now (hot).",
+      drones: [{ from: ahead, aim: you, speed: 1.15 }] }
+  - { id: bull, name: Push up the middle, term: bull-rush, from: 3, weight: 2, early: false, needs: any,
+      hint: "Through the middle, and the edge takes one side: slide the other way.",
+      drones: [{ from: ahead, aim: you }, { from: side, aim: lane, after: 0 }] }
+  - { id: four, name: Four-drone rush, term: four-man-rush, from: 4, weight: 2, early: false, needs: combo,
+      hint: "Two edges and a dive: get off the line, then up or back.",
+      drones: [{ from: throwing, aim: lane }, { from: off, aim: lane, after: 0 }, { from: ahead, aim: you, after: 0.2 }, { from: ahead, aim: dive, after: 0.1 }] }
+  - { id: blitz, name: Blitz, term: blitz, from: 5, weight: 2, early: false, needs: combo,
+      hint: "One off the edge, one diving on your spot: off the line, then up or back.",
+      drones: [{ from: side, aim: you }, { from: ahead, aim: dive, after: 0.15 }] }
+  - { id: stunt, name: Crossfire, term: stunt, from: 6, weight: 1.5, early: false, needs: up_or_back,
+      hint: "They cross into your lanes, and one dives on your spot: step up or drop.",
+      drones: [{ from: throwing, aim: cross }, { from: off, aim: cross, after: 0 }, { from: ahead, aim: dive, after: 0.1 }] }
+  - { id: collapse, name: Pocket collapse, term: pocket-collapse, from: 7, weight: 1.5, early: false, needs: combo,
+      hint: "From everywhere: back, then around.",
+      drones: [{ from: ahead, aim: dive }, { from: throwing, aim: you, after: 0.15 }, { from: off, aim: lane, after: 0 }] }
+  - { id: all_out, name: Everybody comes, term: all-out-blitz, from: 8, weight: 1.5, early: false, needs: combo,
+      hint: "All of them, close together: two moves, fast.",
+      drones: [{ from: throwing, aim: you }, { from: ahead, aim: dive, after: 0.1, warn: 0.6 }, { from: off, aim: you, after: 0.35, speed: 1.1 }] }
 
 ramp:
   rounds_per_level: 3
@@ -75,6 +112,9 @@ scoring:
   hot_clock: 5         # hold the package past this and more drones come (one every swarm_every seconds)
   swarm_every: 1.4
   near_miss: 25        # a drone that just misses him, times the streak
+  clutch:              # it was on him when it locked on and he got clear only in the last moment: bonus, times the streak
+    window: 0.3        # got clear this close to it passing (the later, the more: full points in the last half)
+    points: 60
   streak_step: 0.25    # each catch in a row adds this to the streak multiplier
   streak_cap: 4
 

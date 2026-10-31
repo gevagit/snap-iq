@@ -48,7 +48,8 @@ if (!isMainThread) {
   }
   console.log('All football invariants pass.');
   // Rooftop Run (not football): its settings and that every round at every level is fair
-  const roof = sweepRooftop(makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand));
+  const glossaryIds = new Set((raw.glossary as { terms: { id: string }[] }).terms.map((t) => t.id));
+  const roof = sweepRooftop(makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand), 30, glossaryIds);
   console.log(`Rooftop Run sweep: ${roof.rounds} rounds (${Object.entries(roof.byPattern).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
   if (roof.failures.length) {
     console.error(`\n${roof.failures.length} Rooftop Run problem(s):`);

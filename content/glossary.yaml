@@ -2072,3 +2072,32 @@ terms:
     reviewed: true
     reviewer: owner
     reviewed_at: "2026-10-28"
+
+  # Batch 6 (2026-10-31): rush names for the Rooftop Run waves, for the owner to review. Until signed off the game
+  # shows each wave's own non-football name instead.
+  - id: four-man-rush
+    term: Four-man rush
+    category: pocket
+    batch: 6
+    definition: "Four defenders rush the quarterback, usually the defensive line, while the other seven drop into coverage."
+    aliases: [base rush, four-man pressure]
+    see: [blitz]
+    reviewed: false
+
+  - id: stunt
+    term: Stunt
+    category: pocket
+    batch: 6
+    definition: "Two rushers trade gaps after the snap: one crashes into his partner's gap while the other loops around behind him."
+    aliases: [twist, game]
+    see: [pocket-collapse]
+    reviewed: false
+
+  - id: all-out-blitz
+    term: All-out blitz
+    category: pocket
+    batch: 6
+    definition: "More rushers than the offense can block, with no deep safety behind them (often with Cover 0): the ball has to come out hot."
+    aliases: [zero blitz, max blitz]
+    see: [blitz, hot-route, cover-0]
+    reviewed: false

@@ -162,26 +162,28 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 #rClockArc { stroke: #FFFFFF; stroke-dasharray: 100; stroke-linecap: round; }
 .rclock.late #rClockArc { stroke: #FF9A3C; }
 .rclock b { font-size: 15px; font-weight: 800; font-stretch: 80%; font-variant-numeric: tabular-nums; }
-.rtoss { position: absolute; left: max(10px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); width: 250px; height: 250px; }
-.rtoss button { position: absolute; width: 66px; height: 66px; border-radius: 50%; color: #fff; background: rgba(10,8,24,0.66); border: 1.5px solid rgba(255,255,255,0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); touch-action: none; display: grid; place-items: center; }
-.rtoss button b { font-size: 28px; line-height: 1; }
-.rtoss button span { position: absolute; bottom: 5px; font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.7); }
-.rtoss button:disabled { opacity: 0.2; }
-.rtoss button.dim:not(:disabled) { opacity: 0.55; }
-/* the same place every time: an arc around his thumb, ◆ at the top to ★ at the far side */
-.rtoss [data-id="A"] { left: 6px; top: 0; } .rtoss [data-id="B"] { left: 74px; top: 22px; } .rtoss [data-id="C"] { left: 132px; top: 66px; }
-.rtoss [data-id="D"] { left: 168px; top: 128px; } .rtoss [data-id="E"] { left: 180px; top: 184px; }
-.rswipe { position: absolute; top: 64px; right: 0; bottom: 0; width: 50%; touch-action: none; display: grid; place-items: end; padding: 0 max(22px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) 0; }
-.rswipe span { pointer-events: none; display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 34px); place-items: center; width: 150px; height: 150px; place-content: center; border-radius: 50%; border: 1.5px dashed rgba(63,224,255,0.4); color: rgba(255,255,255,0.55); font-size: 22px; font-weight: 800; }
-.rswipe span b { grid-column: 1 / 4; grid-row: 4; font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.6); }
-.rswipe.flash span { animation: rflash 0.25s ease-out; }
-.rswipe[data-flash="l"].flash span i:nth-of-type(2), .rswipe[data-flash="r"].flash span i:nth-of-type(3), .rswipe[data-flash="u"].flash span i:nth-of-type(1), .rswipe[data-flash="d"].flash span i:nth-of-type(4) { color: #3FE0FF; text-shadow: 0 0 12px #3FE0FF; }
-.rswipe i { font-style: normal; }
-@keyframes rflash { from { border-color: #3FE0FF; box-shadow: 0 0 24px rgba(63,224,255,0.5) inset; } to { border-color: rgba(63,224,255,0.4); box-shadow: none; } }
-@media (pointer: fine) { .rswipe { display: none; } }
-body.roof-righty .rtoss { left: auto; right: max(10px, env(safe-area-inset-right)); transform: scaleX(-1); }
-body.roof-righty .rtoss button { transform: scaleX(-1); }
-body.roof-righty .rswipe { right: auto; left: 0; place-items: end start; padding: 0 0 max(22px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left)); }
+.rtoss { position: absolute; left: max(12px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 8px; }
+.rtoss button { width: 62px; height: 62px; border-radius: 14px; color: #fff; background: rgba(10,8,24,0.66); border: 1.5px solid rgba(255,255,255,0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); touch-action: none; font-size: 28px; font-weight: 800; font-stretch: 80%; }
+.rtoss button.dim:not(.lit) { opacity: 0.55; }
+.rstick { position: absolute; top: 64px; right: 0; bottom: 0; width: 50%; touch-action: none; }
+.rstick .base { position: absolute; left: calc(100% - 120px); top: calc(100% - 120px); width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%; border: 1.5px solid rgba(63,224,255,0.45); background: radial-gradient(circle, rgba(10,8,24,0.25) 0 55%, rgba(10,8,24,0.55) 100%); pointer-events: none; transition: opacity 0.2s; opacity: 0.6; }
+.rstick.held .base { opacity: 1; transition: none; }
+.rstick .knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFFFFF, #BFD7F2); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.rstick .base i { position: absolute; font-style: normal; font-weight: 800; color: rgba(255,255,255,0.45); font-size: 16px; }
+.rstick .base i.u { left: 50%; top: 4px; transform: translateX(-50%); } .rstick .base i.d { left: 50%; bottom: 4px; transform: translateX(-50%); }
+.rstick .base i.l { left: 6px; top: 50%; transform: translateY(-50%); } .rstick .base i.r { right: 6px; top: 50%; transform: translateY(-50%); }
+.rstick.flash .base { animation: rflash 0.25s ease-out; }
+.rstick.flash.sharp .base { animation: rflash2 0.3s ease-out; }
+.rstick[data-flash="l"].flash i.l, .rstick[data-flash="r"].flash i.r, .rstick[data-flash="u"].flash i.u, .rstick[data-flash="d"].flash i.d { color: #3FE0FF; text-shadow: 0 0 12px #3FE0FF; }
+@keyframes rflash { from { border-color: #3FE0FF; box-shadow: 0 0 24px rgba(63,224,255,0.5) inset; } to { border-color: rgba(63,224,255,0.45); box-shadow: none; } }
+@keyframes rflash2 { from { border-color: #FF4FB8; box-shadow: 0 0 30px rgba(255,79,184,0.7) inset; } to { border-color: rgba(63,224,255,0.45); box-shadow: none; } }
+@media (pointer: fine) { .rstick { display: none; } }
+.rwave { position: absolute; left: 50%; top: 11%; width: min(560px, 80vw); transform: translateX(-50%); text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.2s; display: grid; gap: 4px; }
+.rwave.on { opacity: 1; }
+.rwave b { font-size: 38px; font-weight: 800; font-stretch: 70%; letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 18px rgba(255,59,107,0.9), 0 2px 0 rgba(0,0,0,0.5); }
+.rwave span { font-size: 16px; font-weight: 700; color: #FFD84D; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+body.roof-righty .rtoss { left: auto; right: max(12px, env(safe-area-inset-right)); }
+body.roof-righty .rstick { right: auto; left: 0; }
 .rready, .rreport { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(10,8,24,0.86); border: 1px solid rgba(255,79,184,0.4); box-shadow: 0 0 40px rgba(255,79,184,0.25); border-radius: 18px; padding: 20px 22px; display: grid; gap: 10px; text-align: center; width: min(420px, 90vw); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .rready h2 { margin: 0; font-size: 34px; font-weight: 800; font-stretch: 70%; letter-spacing: 0.1em; background: linear-gradient(90deg, #FF4FB8, #3FE0FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .rready p { margin: 0; font-size: 15px; line-height: 1.45; color: #D9D4F0; }
@@ -193,10 +195,8 @@ body.roof-righty .rswipe { right: auto; left: 0; place-items: end start; padding
 .rguide.gold { color: #1A1206; background: #FFD84D; box-shadow: 0 0 24px rgba(255,216,77,0.7); }
 .rguide.warn { color: #BDF6FF; font-size: 19px; }
 .rtoss button.lit { background: #FFD84D; color: #1A1206; border-color: #FFF4C2; opacity: 1 !important; box-shadow: 0 0 22px rgba(255,216,77,0.85); animation: rpulse 0.6s ease-in-out infinite alternate; }
-.rtoss button.lit span { color: #1A1206; }
 @keyframes rpulse { from { transform: scale(1); } to { transform: scale(1.1); } }
-body.roof-righty .rtoss button.lit { animation-name: rpulse-r; }
-@keyframes rpulse-r { from { transform: scaleX(-1) scale(1); } to { transform: scaleX(-1) scale(1.1); } }
+
 .rready .lock { color: #FF3B6B; } .rready .gold { color: #FFD84D; }
 .rready span { color: #A99FCC; font-size: 13px; font-weight: 700; }
 .rready button { background: linear-gradient(90deg, #FF4FB8, #B26BFF); color: #fff; border-radius: 12px; font-weight: 800; font-stretch: 75%; font-size: 26px; padding: 12px; letter-spacing: 0.14em; box-shadow: 0 0 20px rgba(255,79,184,0.5); }
@@ -281,7 +281,7 @@ body.roof-righty .rtoss button.lit { animation-name: rpulse-r; }
     <div class="card">
       <b>How a rep works</b>
       <p class="note">First the call: see where everyone lines up and what each player does. Then break the huddle: you're at the line. Go through your whole routine on the play clock: check your alignment, read the defense (shell, box, corners, tells), count the rush, change up to two routes, set your key and escape lane, and pick your reads. Drag the field or use Look left / Look right to turn your head. The play stops at the snap: your drop, the coverage, the blitz, and whether to look off the safety. It stops again a second later with your eyes on your first read: throw, roll out, run, or throw it away.</p>
-      <p class="note"><b>Rooftop Run:</b> you're a courier on the rooftops at night, carrying a package. Hunter drones come at you from ahead, always where you can see them: each one blinks before it launches, then flies at you. When its ring turns red it's locked on and flies straight, so that's the moment to step sideways (move too early and it follows you). You move a step at a time: on the iPad, a quick swipe anywhere on the right half of the screen is one step in that direction, and you swipe again for another (where your thumb lands doesn't matter, only the direction). Your friends stand on the rooftops around you. When one raises a gold lantern, his button glows gold: tap it with your left thumb to toss him the package. A catch sends you leaping to the next roof, and catches in a row light up the city. Getting hit ends the run, and so does tossing to a friend whose watcher drone is still on him. For your first runs, prompts on screen tell you what to do. On a computer: tap W A S D (or the arrows) once per step, Y U I O P to toss, left to right across the view (the key is on each friend's tag), Space to start, or click a friend. A game controller works too (d-pad or a flick of the stick per step).</p>
+      <p class="note"><b>Rooftop Run:</b> you're a courier on the rooftops at night, carrying a package. Each wave of drones comes at you like a pass rush (a rush up the middle, off the edge, a blitz, everybody at once), always from in front where you can see them. When a drone turns red it's locked on: a darting one flies straight down its red line on the roof, so get off the line; a diving one comes down on the red ring on your spot and follows you sideways, so step up under it or drop back. Some waves need two or three moves, like up and then around. Move too early and they follow you; get clear at the last second for a bonus. Move with the arrow keys (one press, one step), or on the iPad put a finger down anywhere on the right half and flick: one flick is one step, and a sharp flick moves further and faster. Your friends stand on the rooftops around you, numbered 1, 2, 3… from left to right. When one raises a gold lantern, toss him the package with his number (the number keys, or the numbered buttons on the iPad). A catch sends you leaping to the next roof, and catches in a row light up the city. Getting hit ends the run, and so does tossing to a friend whose watcher drone is still on him. A game controller works too (d-pad or a flick of the stick to move).</p>
     </div>
     <details class="card" id="parent">
       <summary><b>Parent settings</b></summary>
@@ -353,14 +353,15 @@ body.roof-righty .rtoss button.lit { animation-name: rpulse-r; }
   <div class="rlevelup" id="rLevelUp"></div>
   <div class="rguide" id="rGuide" aria-live="polite"></div>
   <div class="rclock" id="rClock" hidden><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" pathLength="100" class="bg"/><circle cx="20" cy="20" r="16" pathLength="100" id="rClockArc"/></svg><b id="rClockNum"></b></div>
-  <div class="rtoss" id="rToss" aria-label="Toss: one button per friend, always in the same place"></div>
-  <div class="rswipe" id="rSwipe" aria-label="Move: swipe anywhere on this side, one swipe is one step"><span><i style="grid-area:1/2">↑</i><i style="grid-area:2/1">←</i><i style="grid-area:2/3">→</i><i style="grid-area:3/2">↓</i></span></div>
+  <div class="rtoss" id="rToss" aria-label="Toss: friends are numbered 1 to 5, left to right"></div>
+  <div class="rstick" id="rStick" aria-label="Move: put a finger down anywhere on this side and flick, one flick is one step, a sharp flick a longer one"><div class="base" id="rStickBase"><i class="u">↑</i><i class="l">←</i><i class="r">→</i><i class="d">↓</i><div class="knob" id="rStickKnob"></div></div></div>
+  <div class="rwave" id="rWave"><b id="rWaveName"></b><span id="rWaveHint"></span></div>
   <div class="rready" id="rReady" hidden>
     <h2>ROOFTOP RUN</h2>
     <ol class="rsteps">
-      <li><b>Drones come at you from ahead.</b> Each one blinks before it launches. When its ring turns <b class="lock">red</b>, step sideways: <b>one quick swipe</b> on the right side of the screen (or tap A / D) is one step; swipe or tap again to go further. Move too early and it follows you.</li>
-      <li><b>Watch your friends on the rooftops.</b> When one raises a <b class="gold">gold lantern</b>, his button glows: tap it to toss him the package.</li>
-      <li><b>Catch = jump to the next roof.</b> Catches in a row light up the city. Get hit, or toss to a friend who isn't lit, and the run can end.</li>
+      <li><b>Drones rush you, like a pass rush.</b> When one turns <b class="lock">red</b> it's locked on. Get off its red line on the roof. If a red ring lands on your spot, a drone is diving at it: step up or drop back.</li>
+      <li><b>Move with the arrow keys</b> (one press, one step), or on the iPad flick the joystick under your right thumb. A sharp flick moves further. Move too early and they follow you.</li>
+      <li><b>Toss with the numbers.</b> Friends are numbered 1, 2, 3… left to right. When one raises a <b class="gold">gold lantern</b>, hit his number. Dodge at the last second for a bonus.</li>
     </ol>
     <span id="rBest"></span>
     <button type="button" id="rGo">GO</button>

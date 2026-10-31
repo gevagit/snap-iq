@@ -84,7 +84,9 @@ $('resetBtn').addEventListener('click', () => { const keep = { tier: progress.ti
 // ---------------------------------------------------------------- the workout
 const canvas = $('view');
 const eyes = createEyes(canvas);
-const rooftop = initRooftop({ G, $, show, progress: () => progress, save, renderHome });
+// a wave shows its glossary term once the owner has signed it off, its own (non-football) name until then
+const waveName = (p) => (p.term && TERMS.get(p.term) && TERMS.get(p.term).reviewed ? TERMS.get(p.term).term : p.name);
+const rooftop = initRooftop({ G, $, show, progress: () => progress, save, renderHome, waveName });
 $('roofBtn').addEventListener('click', () => rooftop.start());
 let session = null;
 let rep = null; // as dealt (with any alignment fault)

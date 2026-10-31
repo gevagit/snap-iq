@@ -3,13 +3,15 @@
 // buttons, always in the same place), and keep the run going. The rules and every number live in src/rooftop and
 // content/rooftop/rules.yaml; this file draws the city, plays the sound, takes input (touch, keyboard, mouse, game
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
-import { STEP, Run, idealPolicy, isLit, separation, tossKeys, report, unlocked, offSign, watched, GLYPHS, FRIEND_IDS } from '../rooftop';
+import { STEP, Run, idealPolicy, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, watched } from '../rooftop';
 
-// keys by where they sit on the keyboard (e.code), not the letter they type, so they work with any layout (Hebrew too)
-const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, 1], KeyS: [0, -1], KeyA: [-1, 0], KeyD: [1, 0] };
-const TOSS_CODES = { KeyY: 'y', KeyU: 'u', KeyI: 'i', KeyO: 'o', KeyP: 'p' };
-// game controller (standard mapping): X Y A B RB toss, left to right like Y U I O P
-const PAD_TOSS = { 2: 'y', 3: 'u', 0: 'i', 1: 'o', 5: 'p' };
+// keys by where they sit on the keyboard (e.code), not what they type, so they work with any layout (Hebrew too):
+// the arrows move, one step a press
+const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+// friends are numbered left to right; the number keys toss (top row or keypad)
+const TOSS_CODES = { Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5' };
+// game controller (standard mapping): X Y A B RB toss to friends 1 to 5, left to right
+const PAD_TOSS = { 2: '1', 3: '2', 0: '3', 1: '4', 5: '5' };
 // the d-pad steps: up, down, left, right
 const PAD_STEP = { 12: [0, 1], 13: [0, -1], 14: [-1, 0], 15: [1, 0] };
 const GOLD = '#FFD84D', GOLD_CORE = '#FFF4C2', HUNT = '#3FE0FF', LOCK = '#FF3B6B', WATCH = '#FF9A3C';
@@ -22,7 +24,7 @@ const HORIZON = 0.43;
 function looks(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 export function initRooftop(ctx) {
-  const { G, $, show, progress, save, renderHome } = ctx;
+  const { G, $, show, progress, save, renderHome, waveName } = ctx;
   const R = G.r;
   const canvas = $('roofView');
   const g = canvas.getContext('2d');
@@ -183,6 +185,7 @@ export function initRooftop(ctx) {
   function onEvent(e, sim) {
     if (e.kind === 'near') { fx.nearT = run.clock; const d = sim.drones.find((x) => x.id === e.id); fx.nearSide = d ? Math.sign(d.x - sim.x) : 0; audio.near(); }
     if (e.kind === 'commit') { fx.commitT = run.clock; audio.lock(); }
+    if (e.kind === 'clutch') { fx.nearT = run.clock; audio.clutch(); }
     if (e.kind === 'release') audio.toss();
   }
   function onResult(res) {
@@ -214,7 +217,7 @@ export function initRooftop(ctx) {
     const fresh = [...after.jackets.filter((u) => !before.jackets.includes(u)).map((u) => `${u.name} jacket`), ...after.trails.filter((u) => !before.trails.includes(u)).map((u) => `${u.name} trail`)];
     const f1 = (v) => (v == null ? '–' : `${v.toFixed(2)} s`);
     const cause = rep.end === 'snatch' ? 'A watcher was still on him: toss only when his lantern glows gold.'
-      : rep.end === 'hit' ? 'Wait for the drone\'s ring to turn red, then step sideways: one quick tap or swipe. Move too early and it follows you.' : '';
+      : rep.end === 'hit' ? 'Wait for red, then move: off a drone\'s red line, or up or back from a ring on the roof. Move too early and it follows you.' : '';
     const side = (b, name) => `<li><b>${name}</b><span>${b.caught} of ${b.lit} lanterns${b.spot != null ? ` · spotted in ${f1(b.spot)}` : ''}</span></li>`;
     $('rRepTitle').textContent = newBest ? 'New best run!' : 'Run over';
     $('rRepBig').textContent = run.score.toLocaleString();
@@ -222,6 +225,7 @@ export function initRooftop(ctx) {
     $('rRepList').innerHTML = [
       `<li><b>Deliveries</b><span>${rep.deliveries} · level ${rep.level}</span></li>`,
       `<li><b>Near misses</b><span>${rep.nearMisses}</span></li>`,
+      `<li><b>Last-second dodges</b><span>${rep.clutches}</span></li>`,
       `<li><b>Drones dodged</b><span>${rep.dodged}${rep.cut != null ? ` · cut ${f1(rep.cut)} after lock-on` : ''}</span></li>`,
       side(rep.bySide.off, 'Blind side'), side(rep.bySide.throwing, 'Throwing side'),
       cause ? `<li class="tip"><span>${cause}</span></li>` : '',
@@ -236,7 +240,7 @@ export function initRooftop(ctx) {
   // ------------------------------------------------------------ input: taps (keys, swipes, game controller), mouse
   // Every tap is one step; holding does nothing more, so he taps fast to go further (owner, 2026-10-31).
   const taps = [];
-  function tap(x, z) { if (on && started && run && run.phase === 'live' && taps.length < 6) { taps.push({ x, z }); fx.tapT = run.clock; fx.tapX = x; fx.tapZ = z; } }
+  function tap(x, z, power = 1) { if (on && started && run && run.phase === 'live' && taps.length < 6) { taps.push({ x, z, power }); fx.tapT = run.clock; fx.tapX = x; fx.tapZ = z; } }
   function input() { const t = taps.shift(); return t ? { tap: t } : {}; }
   function toss(id) { if (on && started && run.phase === 'live' && run.sim.holding) run.act({ kind: 'toss', target: id }); }
   function tossKey(k) { if (!run) return; const id = tossKeys(run.sim.round).get(k); if (id) toss(id); }
@@ -268,24 +272,36 @@ export function initRooftop(ctx) {
       else if (Math.abs(v) < 0.3) stick[key] = 0;
     }
   }
-  // the swipe area (the half of the screen under his off-hand thumb): a flick in any direction is one step. Only the
-  // direction counts, never where the thumb lands, so he never has to look at it. Turning back mid-stroke is a new step.
-  const swipeEl = $('rSwipe');
+  // the joystick (one finger, the half of the screen under his off-hand thumb): it appears where the finger lands, so
+  // he never has to look for it; each flick is a step that way, a sharper (faster) flick a longer, faster step.
+  // Turning back mid-stroke is another step (owner's son, 2026-10-31).
+  const stickEl = $('rStick'), baseEl = $('rStickBase'), knobEl = $('rStickKnob');
   const strokes = new Map();
-  swipeEl.addEventListener('pointerdown', (e) => { e.preventDefault(); swipeEl.setPointerCapture(e.pointerId); strokes.set(e.pointerId, { x: e.clientX, y: e.clientY, dir: null }); });
-  swipeEl.addEventListener('pointermove', (e) => {
+  stickEl.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); stickEl.setPointerCapture(e.pointerId);
+    strokes.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), dir: null, ox: e.clientX, oy: e.clientY });
+    const r = stickEl.getBoundingClientRect();
+    baseEl.style.left = `${e.clientX - r.left}px`; baseEl.style.top = `${e.clientY - r.top}px`;
+    stickEl.classList.add('held'); knobEl.style.transform = '';
+  });
+  stickEl.addEventListener('pointermove', (e) => {
     const st = strokes.get(e.pointerId); if (!st) return;
-    const dx = e.clientX - st.x, dy = e.clientY - st.y;
-    if (Math.hypot(dx, dy) < 14) return;
+    // the knob follows the finger, held inside the ring
+    const kx = e.clientX - st.ox, ky = e.clientY - st.oy, km = Math.hypot(kx, ky), lim = 46, f = km > lim ? lim / km : 1;
+    knobEl.style.transform = `translate(${kx * f}px, ${ky * f}px)`;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y, dist = Math.hypot(dx, dy);
+    if (dist < 14) return;
     const dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : dy > 0 ? 'd' : 'u';
-    st.x = e.clientX; st.y = e.clientY;
+    const now = performance.now(), speed = dist / Math.max(8, now - st.t); // px per ms
+    st.x = e.clientX; st.y = e.clientY; st.t = now;
     if (dir === st.dir) return;
     st.dir = dir;
-    tap(dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'u' ? 1 : dir === 'd' ? -1 : 0);
-    swipeEl.dataset.flash = dir; swipeEl.classList.remove('flash'); void swipeEl.offsetWidth; swipeEl.classList.add('flash');
+    const power = Math.min(R.courier.power_max, Math.max(1, 1 + (speed - 0.5) * 0.9));
+    tap(dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'u' ? 1 : dir === 'd' ? -1 : 0, power);
+    stickEl.dataset.flash = dir; stickEl.classList.toggle('sharp', power > 1.3); stickEl.classList.remove('flash'); void stickEl.offsetWidth; stickEl.classList.add('flash');
   });
-  const strokeEnd = (e) => strokes.delete(e.pointerId);
-  swipeEl.addEventListener('pointerup', strokeEnd); swipeEl.addEventListener('pointercancel', strokeEnd);
+  const strokeEnd = (e) => { strokes.delete(e.pointerId); if (!strokes.size) { stickEl.classList.remove('held'); knobEl.style.transform = ''; } };
+  stickEl.addEventListener('pointerup', strokeEnd); stickEl.addEventListener('pointercancel', strokeEnd);
   // a click (or tap) on a friend tosses to him
   canvas.addEventListener('pointerdown', (e) => {
     if (!run || run.phase !== 'live') return;
@@ -295,18 +311,14 @@ export function initRooftop(ctx) {
     if (best) toss(best);
   });
 
-  // the toss buttons: one per friend, always in the same place, under his throwing thumb
+  // the toss buttons: 1 to 5 side by side, friends numbered left to right across his view, under his throwing thumb
   const tossEl = $('rToss');
-  tossEl.innerHTML = FRIEND_IDS.map((id) => `<button type="button" data-id="${id}" aria-label="Toss to ${GLYPHS[id]}"><b>${GLYPHS[id]}</b><span></span></button>`).join('');
-  tossEl.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (b) { e.preventDefault(); toss(b.dataset.id); } });
+  tossEl.innerHTML = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="Toss to friend ${n}">${n}</button>`).join('');
+  tossEl.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (b) { e.preventDefault(); tossKey(b.dataset.n); } });
   document.body.classList.toggle('roof-righty', G.hand === 'right');
   function renderToss() {
-    const map = new Map([...tossKeys(run.sim.round)].map(([k, id]) => [id, k]));
-    for (const b of tossEl.querySelectorAll('button')) {
-      const there = run.sim.round.friends.some((f) => f.id === b.dataset.id);
-      b.disabled = !there;
-      b.querySelector('span').textContent = fine && there ? map.get(b.dataset.id).toUpperCase() : '';
-    }
+    const n = run.sim.round.friends.length;
+    for (const b of tossEl.querySelectorAll('button')) b.hidden = Number(b.dataset.n) > n;
   }
 
   // ------------------------------------------------------------ HUD
@@ -343,11 +355,16 @@ export function initRooftop(ctx) {
     const lv = $('rLevelUp');
     lv.classList.toggle('on', run.clock - fx.levelT < 1.2);
     if (run.clock - fx.levelT < 1.2) setText('rLevelUp', `LEVEL ${fx.level}`);
+    const keys = tossKeys(s.round);
     for (const b of tossEl.querySelectorAll('button')) {
       b.classList.toggle('dim', !holding);
-      const f = holding && s.round.friends.find((x) => x.id === b.dataset.id);
+      const f = holding && s.round.friends.find((x) => x.id === keys.get(b.dataset.n));
       b.classList.toggle('lit', !!f && isLit(G, f, s.t));
     }
+    // the wave's name as it starts (and, on his first runs, what it asks of him)
+    const wave = run.phase === 'live' && started && s.t < 2.2;
+    $('rWave').classList.toggle('on', wave);
+    if (wave) { setText('rWaveName', waveName(s.round.pattern).toUpperCase()); setText('rWaveHint', guided ? s.round.pattern.hint : ''); }
     // first runs: say what to do right now
     guideText(s, holding);
   }
@@ -359,9 +376,11 @@ export function initRooftop(ctx) {
     if (guided && started && run.phase === 'live') {
       const live = s.drones.filter((d) => !d.gone && !d.passed);
       const lit = holding && s.round.friends.find((f) => isLit(G, f, s.t));
-      if (live.some((d) => d.committed)) { text = fine ? 'RED! TAP A STEP SIDEWAYS (A / D)' : 'RED! SWIPE SIDEWAYS'; kind = 'lock'; }
-      else if (lit) { const key = [...tossKeys(s.round)].find(([, id]) => id === lit.id); text = `GOLD! TOSS TO ${GLYPHS[lit.id]}${fine && key ? ` (${key[0].toUpperCase()})` : ''}`; kind = 'gold'; }
-      else if (live.some((d) => s.t >= d.launchT - R.drones.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN STEP ASIDE'; kind = 'warn'; }
+      const locked = live.filter((d) => d.committed);
+      if (locked.some((d) => d.aim === 'dive')) { text = fine ? 'DIVING ON YOUR SPOT! ↑ OR ↓' : 'DIVING ON YOUR SPOT! FLICK UP OR DOWN'; kind = 'lock'; }
+      else if (locked.length) { text = fine ? 'RED! OFF ITS LINE (ARROWS)' : 'RED! FLICK OFF ITS LINE'; kind = 'lock'; }
+      else if (lit) { text = `GOLD! TOSS TO ${friendNumber(s.round, lit.id)}`; kind = 'gold'; }
+      else if (s.t >= 2.2 && live.some((d) => s.t >= d.launchT - d.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN MOVE'; kind = 'warn'; }
       else if (holding) { text = 'WATCH FOR A GOLD LANTERN'; kind = 'warn'; }
     }
     if (shown.rGuide !== text) { shown.rGuide = text; el.textContent = text; el.className = 'rguide' + (text ? ' on ' + kind : ''); }
@@ -369,11 +388,12 @@ export function initRooftop(ctx) {
 
   // ------------------------------------------------------------ the camera and drawing
   let cam = { x: 0, y: 0, z: 0, bob: 0, yaw: 0 };
-  function project(x, y, z) {
+  function project(x, y, z, clampNear = false) {
     // his head may be turned (yaw, + to the right) toward a drone near the edge of his view
     const ox = x - cam.x, oz = z - cam.z, c = Math.cos(cam.yaw), sn = Math.sin(cam.yaw);
-    const rx = ox * c - oz * sn, dz = ox * sn + oz * c;
-    if (dz < 0.25) return null;
+    const rx = ox * c - oz * sn;
+    let dz = ox * sn + oz * c;
+    if (dz < 0.25) { if (!clampNear) return null; dz = 0.25; } // the roof under his feet: pinned to the near edge of the view
     const s = F / dz;
     return { x: W / 2 + rx * s, y: H * HORIZON - (y - cam.y) * s, s };
   }
@@ -418,7 +438,9 @@ export function initRooftop(ctx) {
     const D = -2 * R.roof.back + R.roof.gap;
     if (run.phase !== 'live') roof(D);
     roof(0);
-    for (const d of s.drones.filter((x) => !x.gone && (x.launched || s.t >= x.launchT - R.drones.warn)).sort((a, c) => c.z - a.z)) drone(d, s);
+    // a locked-on drone's path on the roof (a red line), a diving drone's landing spot (a red ring), so he can read the rush
+    for (const d of s.drones) if (d.committed && !d.passed && !d.gone) floorMark(d, s);
+    for (const d of s.drones.filter((x) => !x.gone && (x.launched || s.t >= x.launchT - x.warn)).sort((a, c) => c.z - a.z)) drone(d, s);
     pkg(s);
     rain(t);
     hands(s);
@@ -434,32 +456,33 @@ export function initRooftop(ctx) {
   function quad(pts, fill) { g.fillStyle = fill; g.beginPath(); g.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y); g.closePath(); g.fill(); }
   /** His roof (dz = 0) or the next one (dz = D): tar tiles, puddles that catch the neon, a lit parapet. */
   function roof(oz) {
+    const pc = (x, y, z) => project(x, y, z, true);
     const hw = R.roof.half_width, z0 = R.roof.back + oz, z1 = -R.roof.back + oz;
     const near = Math.max(z0, cam.z + 0.3); if (near >= z1) return;
-    const a = project(-hw, 0, near), b = project(hw, 0, near), c = project(hw, 0, z1), d = project(-hw, 0, z1);
+    const a = pc(-hw, 0, near), b = pc(hw, 0, near), c = pc(hw, 0, z1), d = pc(-hw, 0, z1);
     if (!a || !c) return;
     // the wall below the front edge, into the dark
-    const fl = project(-hw, -12, z1), fr = project(hw, -12, z1);
+    const fl = pc(-hw, -12, z1), fr = pc(hw, -12, z1);
     if (fl && fr) { const gr = g.createLinearGradient(0, d.y, 0, fl.y); gr.addColorStop(0, '#1A1030'); gr.addColorStop(1, 'rgba(10,6,20,0)'); quad([d, c, fr, fl], gr); }
     quad([a, b, c, d], '#140E22');
     // tiles
     g.strokeStyle = 'rgba(160,120,255,0.13)'; g.lineWidth = 1; g.beginPath();
-    for (let x = -hw + 1; x < hw; x += 1) { const p = project(x, 0, near), q = project(x, 0, z1); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); }
-    for (let z = Math.ceil(near); z < z1; z += 1) { const p = project(-hw, 0, z), q = project(hw, 0, z); if (p && q) { g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); } }
+    for (let x = -hw + 1; x < hw; x += 1) { const p = pc(x, 0, near), q = pc(x, 0, z1); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); }
+    for (let z = Math.ceil(near); z < z1; z += 1) { const p = pc(-hw, 0, z), q = pc(hw, 0, z); if (p && q) { g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); } }
     g.stroke();
     // puddles with the city in them
     g.globalCompositeOperation = 'lighter';
     for (const [px, pz, col] of [[-2.6, -1.6, layers.glow.pink], [2.2, 0.8, layers.glow.hunt], [-0.4, 2.1, layers.glow.pink]]) {
-      const p = project(px, 0, pz + oz); if (!p) continue;
+      const p = pc(px, 0, pz + oz); if (!p) continue;
       g.globalAlpha = 0.14 + 0.25 * streakGlow(); g.drawImage(col, p.x - p.s * 1.4, p.y - p.s * 0.25, p.s * 2.8, p.s * 0.5);
     }
     g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     // the parapet: a low wall with a neon strip on the front and the sides
     const h = 0.45, col = '#FF4FB8';
-    const tl = project(-hw, h, z1), tr = project(hw, h, z1);
+    const tl = pc(-hw, h, z1), tr = pc(hw, h, z1);
     if (tl && tr) { quad([d, c, tr, tl], '#22163A'); line(tl, tr, col, 2.5); }
     for (const sx of [-hw, hw]) {
-      const p = project(sx, h, near), q = project(sx, h, z1), p0 = project(sx, 0, near), q0 = project(sx, 0, z1);
+      const p = pc(sx, h, near), q = pc(sx, h, z1), p0 = pc(sx, 0, near), q0 = pc(sx, 0, z1);
       if (p && q) { quad([p0, q0, q, p], '#1C1230'); line(p, q, col, 2); }
     }
   }
@@ -506,8 +529,7 @@ export function initRooftop(ctx) {
     } else { g.globalAlpha = 0.45 * fade; g.drawImage(layers.glow.watch, hx - 6, hy - 6, 12, 12); }
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = fade;
     // his tag: his shape (and his key on a computer), gold when his lantern is lit
-    const keyOf = [...tossKeys(s.round)].find(([, id]) => id === f.id);
-    const label = GLYPHS[f.id] + (fine && keyOf ? ' ' + keyOf[0].toUpperCase() : '');
+    const label = String(friendNumber(s.round, f.id));
     const ty = feet.y - k * 2.5 - 16;
     g.font = `800 ${Math.round(Math.max(13, Math.min(20, k * 0.5)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
     const tw = g.measureText(label).width + 14;
@@ -529,10 +551,32 @@ export function initRooftop(ctx) {
     g.globalCompositeOperation = 'source-over';
   }
 
+  function floorMark(d, s) {
+    const blink = 0.55 + 0.45 * Math.sin(run.clock * 18);
+    g.save(); g.strokeStyle = LOCK; g.globalAlpha = 0.85 * blink;
+    if (d.aim === 'dive') {
+      // where it comes down: a ring on the roof under it, at the depth it locked on
+      const c = project(d.x, 0, d.aimZ), e1 = project(d.x - R.drones.dive.reach, 0, d.aimZ), e2 = project(d.x, 0, d.aimZ + R.drones.dive.reach);
+      if (c && e1 && e2) { g.lineWidth = 3; g.beginPath(); g.ellipse(c.x, c.y, Math.abs(c.x - e1.x), Math.max(3, Math.abs(c.y - e2.y)), 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha *= 0.25; g.fillStyle = LOCK; g.fill(); }
+    } else {
+      // its straight line along the roof, from under it on past him
+      g.lineWidth = 2.5; g.setLineDash([10, 8]); g.beginPath();
+      let first = true;
+      for (let k = 0; k <= 16; k++) {
+        const p = project(d.x + d.dx * k * 0.6, 0.02, d.z + d.dz * k * 0.6);
+        if (!p) { first = true; continue; }
+        if (first) { g.moveTo(p.x, p.y); first = false; } else g.lineTo(p.x, p.y);
+      }
+      g.stroke(); g.setLineDash([]);
+    }
+    g.restore();
+    void s;
+  }
+
   /** A hunter drone: four rotors, a body, an eye that turns from cyan (hunting) to red (locked on), a light trail.
    * Before it launches it hovers where it will come from, blinking inside a shrinking ring, so he sees it coming. */
   function drone(d, s) {
-    const y = R.drones.height + Math.sin(run.clock * 6 + d.x) * 0.05;
+    const y = d.h + Math.sin(run.clock * 6 + d.x) * 0.05;
     const p = project(d.x, y, d.z); if (!p) return;
     // trail
     let tr = trails.get(d); if (!tr) { tr = []; trails.set(d, tr); }
@@ -629,7 +673,7 @@ export function initRooftop(ctx) {
   function edges(s, t) {
     for (const d of s.drones) {
       if (!d.launched || d.gone || d.passed) continue;
-      const p = project(d.x, R.drones.height, d.z);
+      const p = project(d.x, d.h, d.z);
       if (p && p.x > 0 && p.x < W) continue;
       const side = Math.sign(d.x - s.x) || offSign(G), dist = Math.hypot(d.x - s.x, d.z - s.z);
       const near = Math.max(0, 1 - dist / R.drones.spawn), flick = d.committed ? (Math.sin(t * 40) > 0 ? 1 : 0.35) : 0.55;
@@ -696,6 +740,7 @@ function sound() {
     catch(n) { if (!ac) return; const b = 660 * Math.pow(2, Math.min(n, 8) / 12); tone(b, at(), 0.25, 'triangle', 0.18); tone(b * 1.5, at() + 0.08, 0.3, 'triangle', 0.15); },
     drop() { if (ac) tone(220, at(), 0.3, 'triangle', 0.12, 0.6); },
     near() { if (ac) { noise(at(), 0.25, 0.25, 1200); tone(900, at(), 0.2, 'sine', 0.08, 2); } },
+    clutch() { if (ac) { noise(at(), 0.3, 0.3, 900); [880, 1320, 1760].forEach((f, i) => tone(f, at() + i * 0.05, 0.18, 'square', 0.05)); } },
     lock() { if (ac) tone(1760, at(), 0.06, 'square', 0.04); },
     hit() { if (!ac) return; tone(120, at(), 0.5, 'sawtooth', 0.3, 0.3); noise(at(), 0.4, 0.3, 300); clearInterval(timer); },
     level() { if (!ac) return; [523, 659, 784].forEach((f, i) => tone(f, at() + i * 0.07, 0.2, 'triangle', 0.12)); },
