@@ -77,9 +77,41 @@ holding its placeholder is incomplete; a later run fills only those.
 
 ## 3. Shape Language
 
-[To be designed] — character silhouette philosophy (readable at thumbnail
-size, one distinguishing trait per archetype), environment geometry, UI shape
-grammar, and hero versus supporting shapes.
+**Governing idea:** simple masses, honest proportions, hard geometry on the field, and one soft shape reserved for the open receiver (1.1 the cue outranks the picture, 1.2 his eyes, 1.3 grounded broadcast, not cartoon).
+
+**Character silhouettes (read at 28 CSS px height, PRD §7.6)**
+- Thumbnail test: each player filled solid black at 28 px must still read by role in about 1 s from silhouette and posture. A pose or sizing change that fails it is blocked.
+- Heights are only 1.80–1.92 m, so roles differ by width, stance and lean, not height. One signature trait per role:
+  - **Linemen (OL, DL):** widest, lowest mass, shoulder bulk; static or short-stepping. Reads as a wall (target width-to-height about 0.55 in stance; confirm against the renderer).
+  - **Rushers (edge, blitzers):** a forward-leaning wedge toward the camera, arms spreading as he closes. The only role that leans toward Sahar.
+  - **Receivers (WR, TE, RB):** tall, narrow vertical line, arms swinging, small head; a TE is wider than a WR.
+  - **Defensive backs (CB, S):** slim, upright, square to the receiver; hip-turn or backpedal. A sliding upright shape mirroring a receiver.
+  - **LB:** mid-width upright block that steps forward or shuffles laterally; wider than a DB, less hunched than a DL.
+- Helmet and shoulders carry the read at distance; the helmet is the highest-contrast detail on a defender.
+- Real proportions only: no exaggerated heads or limbs, no outlines; edge darkening stays at 1 px.
+- His own players are see-through (alpha 0.34): a calm mass that never competes with the rush.
+
+**Environment geometry**
+- Field: strong horizontals (yard lines, mow stripes) converging to the horizon in true perspective; leading lines to the first read and the rush. The near field is mostly plain grass.
+- Line of scrimmage: the only continuous solid horizontal in broadcast blue.
+- Stadium: a low, dark, soft horizontal mass of stands. The four light towers are the only bright verticals, kept above the horizon band; tower glow never reaches the receiver band. The crowd is never brighter than the players.
+- One continuous field, no separate zone outside the sidelines (STYLE.md); no hard-edged signage in the sight lines.
+
+**UI shape grammar (the HUD echoes the broadcast look)**
+- Status (score bug, play clock, level): rounded rectangles on dark glass, 6–8 px radius, condensed type.
+- Controls (movement pad, throw buttons): circular thumb targets, at least 44 px, translucent.
+- Ally throw glyphs ◆ ● ▲ ■ ★: crisp-edged on small tags, never feathered or glowing.
+- Field markers: chevrons, arcs and dashed lines only. Blind-side marker: inward chevron wedges at the off-hand screen edge. Pocket edge: dashed, distinct from the solid line of scrimmage.
+- Boards (call, Breakdown, report) and the home screen: 12 px radius cards, thin rules, no flourishes.
+- At most 3 corner radii in the product: 6, 12, full circle.
+
+**Hero versus supporting shapes**
+1. Hero: the open-receiver glow (feathered ground ellipse with a faint upright rim), the nearest closing rusher, and at stop 2 the first-read target.
+2. Action: other defenders, the line of scrimmage, the hot-clock ring, the edge flicker.
+3. Supporting: his own line (see-through), yard lines and numbers, HUD chrome, throw tags.
+4. Ambient: sky, stands, crowd, light towers.
+- The open-receiver glow is the only soft, round, additive shape on the field; everything else is hard-edged or shaded, so the open man pops by curvature, not colour alone.
+- Hierarchy by size, lightness and motion first, colour second. Rush and blind-side cues are shapes (wedge, lean, chevron) so they survive colour loss.
 
 ## 4. Color System
 
