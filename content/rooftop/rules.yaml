@@ -17,15 +17,19 @@ courier:
   start: [0, -0.8]
 
 drones:
-  speed: { start: 8.5, end: 13.5 }   # by level
-  spawn: 20            # how far out a drone launches
+  speed: { start: 6.5, end: 10.5 }   # by level
+  spawn: 20            # how far out a drone launches: always in front of him, inside his view
+  ahead: 10            # a drone from ahead launches within this many degrees of straight ahead
+  side: [22, 38]       # one from a side, this many degrees off to that side
+  warn: 1.0            # it hovers there, blinking, this long before it launches: no drone comes out of nowhere
   height: 1.35         # they fly at chest height
-  turn: 2.4            # how hard they steer (radians a second) before they commit
-  commit: 3.4          # inside this a drone locks on and flies straight: the moment to cut
-  hit: 0.65            # closer than this, it gets him
+  turn: 2.4            # how hard they steer (radians a second) before they lock on
+  commit: { start: 0.85, end: 0.55 }  # it locks on (eye turns red) this long before it would reach him, by level: the moment to cut
+  react: 0.25          # every round must be beatable by someone who reacts this long after the lock-on and walks clear
+  hit: 0.6             # closer than this, it gets him
   near: 1.8            # closer than this but not a hit: a near miss
-  first: [0.6, 1.0]    # the first drone launches this long into a round
-  gap: [0.45, 0.85]    # between drones in a wave
+  first: [1.1, 1.5]    # the first drone launches this long into a round
+  gap: [0.7, 1.1]      # between drones in a wave
 
 friends:
   count: [3, 3, 4, 4, 5]   # by level (the last one holds)
@@ -39,7 +43,7 @@ friends:
   window:
     after: [0.15, 0.45]    # the first lantern lights this long after the last drone of the wave passes
     early: [0.45, 0.8]     # early rounds: it lights before the drones get there
-    length: { start: 1.7, end: 0.9 }
+    length: { start: 2.4, end: 1.2 }
     more: [1, 2]           # more lanterns later in the round, on other friends
     later: [0.5, 2.2]
   blind: { start: 0.35, end: 0.7 }   # how often the first lantern lights on his off-hand side
@@ -48,16 +52,16 @@ toss:
   release: 0.12        # from the button to the package leaving his hand
   speed: 24
 
-# Each round is a wave. from: ahead, side (either side), throwing (his throwing-hand side), off (his off-hand side),
-# behind (from behind, off his off-hand shoulder: the screen edge flickers).
+# Each round is a wave. from: ahead, side (either side), throwing (his throwing-hand side), off (his off-hand side).
+# All of them launch in front of him, inside his view.
 patterns:
   - { id: dive, from: 1, weight: 3, early: false, drones: [ahead] }
   - { id: swoop, from: 1, weight: 3, early: false, drones: [side] }
   - { id: early, from: 2, weight: 1.5, early: true, drones: [ahead] }
   - { id: pincer, from: 3, weight: 2, early: false, drones: [throwing, off] }
-  - { id: blind, from: 4, weight: 2, early: false, drones: [behind] }
+  - { id: blindside, from: 4, weight: 2, early: false, drones: [off, off] }
   - { id: double, from: 5, weight: 1.5, early: false, drones: [ahead, side] }
-  - { id: swarm, from: 7, weight: 1.5, early: false, drones: [ahead, side, behind] }
+  - { id: swarm, from: 7, weight: 1.5, early: false, drones: [ahead, throwing, off] }
 
 ramp:
   rounds_per_level: 3
