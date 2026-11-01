@@ -5,11 +5,22 @@
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
 import { STEP, Run, idealPolicy, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, watched } from '../rooftop';
 
-// keys by where they sit on the keyboard (e.code), not what they type, so they work with any layout (Hebrew too):
-// the arrows move, one step a press
-const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
-// friends are numbered left to right; the number keys toss (top row or keypad)
-const TOSS_CODES = { Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5' };
+// Two layouts (owner, 2026-11-01), keys by where they sit on the keyboard (e.code), not what they type, so they work
+// with any layout (Hebrew too). Righty: move with the right hand (arrows; the joystick on the right of the iPad), toss
+// with the left (Q W E R T; the buttons bottom left). Lefty, flipped: W A S D and the joystick on the left, Y U I O P
+// and the buttons bottom right. One press, one step; the number keys toss in both.
+const LAYOUTS = {
+  righty: {
+    move: { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }, moveName: 'the arrow keys', moveShort: 'ARROWS',
+    toss: { KeyQ: '1', KeyW: '2', KeyE: '3', KeyR: '4', KeyT: '5' }, letters: 'QWERT',
+  },
+  lefty: {
+    move: { KeyW: [0, 1], KeyS: [0, -1], KeyA: [-1, 0], KeyD: [1, 0] }, moveName: 'W A S D', moveShort: 'W A S D',
+    toss: { KeyY: '1', KeyU: '2', KeyI: '3', KeyO: '4', KeyP: '5' }, letters: 'YUIOP',
+  },
+};
+// friends are numbered left to right; the number keys toss too (top row or keypad)
+const TOSS_DIGITS = { Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5' };
 // game controller (standard mapping): X Y A B RB toss to friends 1 to 5, left to right
 const PAD_TOSS = { 2: '1', 3: '2', 0: '3', 1: '4', 5: '5' };
 // the d-pad steps: up, down, left, right
@@ -34,7 +45,7 @@ export function initRooftop(ctx) {
   let W = 0, H = 0, DPR = 1, F = 1, layers = null;
   let gpPrev = [];
   const fx = { tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
-  let ghost = null, look = { jacket: null, trail: null }, guided = true;
+  let ghost = null, look = { jacket: null, trail: null }, guided = true, layout = 'righty';
   const trails = new Map();
   const audio = sound();
 
@@ -136,6 +147,7 @@ export function initRooftop(ctx) {
     look.trail = (un.trails.find((u) => u.id === st.trail) || un.trails[0]).color;
     on = true; started = false;
     guided = (st.runs || 0) < 5;
+    setLayout(st.layout || 'righty');
     show('roof');
     $('rReport').hidden = true;
     $('rReady').hidden = false;
@@ -248,9 +260,10 @@ export function initRooftop(ctx) {
     if (!on) return;
     const k = e.code;
     if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
-    if (TOSS_CODES[k]) { tossKey(TOSS_CODES[k]); return; }
+    const L = LAYOUTS[layout], toss = L.toss[k] || TOSS_DIGITS[k];
+    if (toss) { tossKey(toss); return; }
     if (k === 'Escape') { $('rQuit').click(); return; }
-    const v = MOVE_KEYS[k];
+    const v = L.move[k];
     if (v) { e.preventDefault(); if (!e.repeat) tap(v[0], v[1]); }
   });
   function gamepad() { const list = navigator.getGamepads ? navigator.getGamepads() : []; for (const p of list) if (p) return p; return null; }
@@ -313,9 +326,25 @@ export function initRooftop(ctx) {
 
   // the toss buttons: 1 to 5 side by side, friends numbered left to right across his view, under his throwing thumb
   const tossEl = $('rToss');
-  tossEl.innerHTML = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="Toss to friend ${n}">${n}</button>`).join('');
+  tossEl.innerHTML = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="Toss to friend ${n}">${n}<small></small></button>`).join('');
   tossEl.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (b) { e.preventDefault(); tossKey(b.dataset.n); } });
-  document.body.classList.toggle('roof-righty', G.hand === 'right');
+  /** Righty or lefty: which side the joystick and the toss buttons are on, and which keys move and toss. */
+  function setLayout(l) {
+    layout = LAYOUTS[l] ? l : 'righty';
+    document.body.classList.toggle('roof-lefty', layout === 'lefty');
+    for (const b of document.querySelectorAll('#rLayout button')) b.setAttribute('aria-pressed', String(b.dataset.layout === layout));
+    const L = LAYOUTS[layout];
+    for (const b of tossEl.querySelectorAll('button')) b.querySelector('small').textContent = fine ? L.letters[Number(b.dataset.n) - 1] : '';
+    $('rKeys').textContent = fine
+      ? `Move: ${L.moveName}, one press, one step. Toss: ${L.letters.split('').join(' ')} (friends 1 to 5, left to right), or the number keys.`
+      : `Joystick on the ${layout === 'lefty' ? 'left' : 'right'}, toss buttons on the ${layout === 'lefty' ? 'right' : 'left'}.`;
+    if (run && layers) draw(); // the friends' tags show the new keys
+  }
+  $('rLayout').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-layout]'); if (!b) return;
+    setLayout(b.dataset.layout);
+    const p = progress(); p.rooftop = { ...(p.rooftop || {}), layout }; save();
+  });
   function renderToss() {
     const n = run.sim.round.friends.length;
     for (const b of tossEl.querySelectorAll('button')) b.hidden = Number(b.dataset.n) > n;
@@ -377,9 +406,10 @@ export function initRooftop(ctx) {
       const live = s.drones.filter((d) => !d.gone && !d.passed);
       const lit = holding && s.round.friends.find((f) => isLit(G, f, s.t));
       const locked = live.filter((d) => d.committed);
-      if (locked.some((d) => d.aim === 'dive')) { text = fine ? 'DIVING ON YOUR SPOT! ↑ OR ↓' : 'DIVING ON YOUR SPOT! FLICK UP OR DOWN'; kind = 'lock'; }
-      else if (locked.length) { text = fine ? 'RED! OFF ITS LINE (ARROWS)' : 'RED! FLICK OFF ITS LINE'; kind = 'lock'; }
-      else if (lit) { text = `GOLD! TOSS TO ${friendNumber(s.round, lit.id)}`; kind = 'gold'; }
+      const L = LAYOUTS[layout];
+      if (locked.some((d) => d.aim === 'dive')) { text = fine ? `DIVING ON YOUR SPOT! ${layout === 'lefty' ? 'W OR S' : '↑ OR ↓'}` : 'DIVING ON YOUR SPOT! FLICK UP OR DOWN'; kind = 'lock'; }
+      else if (locked.length) { text = fine ? `RED! OFF ITS LINE (${L.moveShort})` : 'RED! FLICK OFF ITS LINE'; kind = 'lock'; }
+      else if (lit) { const n = friendNumber(s.round, lit.id); text = `GOLD! TOSS TO ${n}${fine ? ` (${L.letters[n - 1]})` : ''}`; kind = 'gold'; }
       else if (s.t >= 2.2 && live.some((d) => s.t >= d.launchT - d.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN MOVE'; kind = 'warn'; }
       else if (holding) { text = 'WATCH FOR A GOLD LANTERN'; kind = 'warn'; }
     }
@@ -529,7 +559,7 @@ export function initRooftop(ctx) {
     } else { g.globalAlpha = 0.45 * fade; g.drawImage(layers.glow.watch, hx - 6, hy - 6, 12, 12); }
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = fade;
     // his tag: his shape (and his key on a computer), gold when his lantern is lit
-    const label = String(friendNumber(s.round, f.id));
+    const num = friendNumber(s.round, f.id), label = fine ? `${num} · ${LAYOUTS[layout].letters[num - 1]}` : String(num);
     const ty = feet.y - k * 2.5 - 16;
     g.font = `800 ${Math.round(Math.max(13, Math.min(20, k * 0.5)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
     const tw = g.measureText(label).width + 14;
