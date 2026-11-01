@@ -13,16 +13,42 @@ export const STEP = 1 / 120;
 const Range = z.tuple([z.number(), z.number()]).refine((r) => r[0] <= r[1], 'a range runs low to high');
 const StartEnd = z.object({ start: z.number(), end: z.number() }).strict();
 const FROM = ['ahead', 'side', 'throwing', 'off'] as const;
+/** Where a drone aims when it locks on, from where he stands (the pass rush, as drones): at him; at the lane beside
+ * him on its own side (an edge taking away that escape); at the lane on the other side (crossing, like a stunt); at
+ * the spot in front of him (closing the space he would step up into); at the spot behind him (the edge running to
+ * the spot behind the set point); or dive: it comes in high, locks on the spot where he stands, follows him sideways
+ * and dives onto that spot (like an edge keeping him in the pocket: sideways can't shake it, a step up takes him under
+ * it, a drop leaves it landing short). */
+const AIM = ['you', 'lane', 'cross', 'ahead', 'behind', 'dive'] as const;
+/** What a wave asks of him (checked on every round): any dodge; a step up or a drop back (sideways alone is not
+ * enough); or a combination of directions (one direction alone is not enough). */
+const NEEDS = ['any', 'up_or_back', 'combo'] as const;
 const Look = z.object({ id: z.string(), name: z.string(), color: z.string().regex(/^#[0-9A-Fa-f]{6}$/), at: z.number().min(0) }).strict();
+const Wave = z.object({
+  id: z.string(), name: z.string(), term: z.string().optional(), hint: z.string(),
+  from: z.number().int().positive(), weight: z.number().positive(), early: z.boolean(), needs: z.enum(NEEDS),
+  drones: z.array(z.object({
+    from: z.enum(FROM), aim: z.enum(AIM),
+    /** seconds after the drone before it (default: the drones.gap range); 0 = together */
+    after: z.number().min(0).optional(),
+    /** speed and warning as a share of the level's */
+    speed: z.number().positive().optional(), warn: z.number().min(0).optional(),
+  }).strict()).min(1),
+}).strict();
 export const RooftopRules = z
   .object({
     version: z.number().int(),
     roof: z.object({ half_width: z.number().positive(), back: z.number().negative(), gap: z.number().positive() }).strict(),
-    courier: z.object({ eye: z.number().positive(), walk: z.number().positive(), sprint: z.number().positive(), accel: z.number().positive(), start: z.tuple([z.number(), z.number()]) }).strict(),
+    courier: z.object({
+      eye: z.number().positive(), step: z.number().positive(), dash: z.number().positive(), accel: z.number().positive(),
+      tap_gap: z.number().positive(), power_max: z.number().min(1), start: z.tuple([z.number(), z.number()]),
+    }).strict(),
     drones: z.object({
       speed: StartEnd, spawn: z.number().positive(), height: z.number().positive(), turn: z.number().positive(),
       commit: StartEnd, warn: z.number().min(0), ahead: z.number().min(0), side: Range,
       hit: z.number().positive(), near: z.number().positive(), first: Range, gap: Range, react: z.number().min(0),
+      aims: z.object({ lane: z.number().positive(), depth: z.number().positive() }).strict(),
+      dive: z.object({ height: z.number().positive(), drop: z.number().positive(), side_speed: z.number().positive(), reach: z.number().positive() }).strict(),
     }).strict(),
     friends: z.object({
       count: z.array(z.number().int().min(1).max(5)).min(1),
@@ -33,11 +59,12 @@ export const RooftopRules = z
       blind: StartEnd,
     }).strict(),
     toss: z.object({ release: z.number().min(0), speed: z.number().positive() }).strict(),
-    patterns: z.array(z.object({ id: z.string(), from: z.number().int().positive(), weight: z.number().positive(), early: z.boolean(), drones: z.array(z.enum(FROM)).min(1) }).strict()).min(1),
+    patterns: z.array(Wave).min(1),
     ramp: z.object({ rounds_per_level: z.number().int().positive(), levels: z.number().int().positive(), restart_below: z.number().int().min(0) }).strict(),
     scoring: z.object({
       delivery: z.number().min(0), quick: z.number().min(0), hot_clock: z.number().positive(), swarm_every: z.number().positive(),
       near_miss: z.number().min(0), streak_step: z.number().min(0), streak_cap: z.number().min(1),
+      clutch: z.object({ window: z.number().positive(), points: z.number().min(0) }).strict(),
     }).strict(),
     beats: z.object({ result: z.number().min(0), jump: z.number().positive(), over: z.number().min(0) }).strict(),
     unlocks: z.object({ jackets: z.array(Look).min(1), trails: z.array(Look).min(1) }).strict(),
@@ -46,6 +73,7 @@ export const RooftopRules = z
   .strict();
 export type Rules = z.infer<typeof RooftopRules>;
 export type From = (typeof FROM)[number];
+export type Aim = (typeof AIM)[number];
 export type Pattern = Rules['patterns'][number];
 
 /** The game's settings plus his throwing hand (his blind side is his off-hand side). */
@@ -54,18 +82,23 @@ export function makeGame(raw: unknown, hand: 'left' | 'right'): Game { return { 
 /** +1 when his off-hand side is to the right of the view (a left-handed courier), -1 otherwise. */
 export const offSign = (g: Game) => (g.hand === 'left' ? 1 : -1);
 
-/** Settings checks beyond the schema; each message says what to fix. */
-export function checkRules(r: Rules): string[] {
+/** Settings checks beyond the schema; each message says what to fix. `terms` are the glossary ids a wave may name. */
+export function checkRules(r: Rules, terms?: Set<string>): string[] {
   const e: string[] = [];
   const file = 'rooftop/rules.yaml';
-  if (!r.patterns.some((p) => p.from === 1)) e.push(`${file}: no pattern at level 1`);
+  if (!r.patterns.some((p) => p.from === 1)) e.push(`${file}: no wave at level 1`);
+  for (const p of r.patterns) {
+    if (terms && p.term && !terms.has(p.term)) e.push(`${file}: wave ${p.id} names unknown glossary term ${p.term}`);
+    if (!p.early && !p.drones.some((d) => d.aim === 'you' || d.aim === 'dive')) e.push(`${file}: wave ${p.id} has no drone aimed at him, so standing still would be safe`);
+  }
   if (r.friends.watcher.open <= r.friends.watcher.tight) e.push(`${file}: a watcher off its friend must be farther than on him`);
   if (r.friends.snatch >= r.friends.watcher.tight + r.friends.lit * (r.friends.watcher.open - r.friends.watcher.tight)) e.push(`${file}: snatch reach must be closer than a lit lantern's watcher`);
   if (r.drones.near <= r.drones.hit) e.push(`${file}: a near miss must reach farther than a hit`);
   if (r.drones.commit.end * r.drones.speed.end <= r.drones.hit * 2) e.push(`${file}: drones must lock on well before they are close enough to hit`);
-  // after a lock-on he always has time to see it, react and walk clear, even at the top level
-  const room = r.courier.walk * (r.drones.commit.end - r.drones.react);
-  if (room < r.drones.hit * 1.5) e.push(`${file}: at the top level a walk only gets him ${room.toFixed(2)} m clear after a lock-on and his reaction; lock on earlier`);
+  // after a lock-on he always has time to see it, react and tap once clear, even at the top level
+  if (r.courier.step < r.drones.hit + 0.2) e.push(`${file}: one tap must step him clear of a drone (step more than hit + 0.2 m)`);
+  const left = r.drones.commit.end - r.drones.react - r.courier.step / r.courier.dash;
+  if (left < 0.1) e.push(`${file}: at the top level one tap after his reaction lands only ${left.toFixed(2)} s before the drone arrives; lock on earlier`);
   if (r.drones.side[1] + 2 >= VIEW / 2) e.push(`${file}: drones must launch inside his view (within ${VIEW / 2 - 2} degrees)`);
   const ids = new Set<string>();
   for (const k of ['jackets', 'trails'] as const) {
@@ -75,17 +108,17 @@ export function checkRules(r: Rules): string[] {
   return e;
 }
 
-// ------------------------------------------------------------------ friends: always the same shape and button
-/** Friends in button order; each always wears the same shape (◆ ● ▲ ■ ★). */
+// ------------------------------------------------------------------ friends: numbered left to right
 export const FRIEND_IDS = ['A', 'B', 'C', 'D', 'E'] as const;
-export const GLYPHS: Record<string, string> = { A: '◆', B: '●', C: '▲', D: '■', E: '★' };
-/** The toss keys on a computer, left to right across the view. With fewer friends the outside keys stay outside. */
-export const TOSS_KEYS = ['y', 'u', 'i', 'o', 'p'] as const;
-const KEYS_FOR: Record<number, readonly string[]> = { 1: ['i'], 2: ['y', 'p'], 3: ['y', 'i', 'p'], 4: ['y', 'u', 'o', 'p'], 5: TOSS_KEYS };
+/** The toss keys and buttons: 1 to the number of friends, left to right across his view (owner's son, 2026-10-31). */
 export function tossKeys(round: Round): Map<string, string> {
   const order = [...round.friends].sort((a, b) => a.x - b.x);
-  const keys = KEYS_FOR[order.length]!;
-  return new Map(order.map((f, k) => [keys[k]!, f.id]));
+  return new Map(order.map((f, k) => [String(k + 1), f.id]));
+}
+/** A friend's number this round (1 = the leftmost). */
+export function friendNumber(round: Round, id: string): number {
+  for (const [k, fid] of tossKeys(round)) if (fid === id) return Number(k);
+  return 0;
 }
 
 export interface Friend {
@@ -98,7 +131,7 @@ export interface Friend {
   /** when his lantern can light: [start, end] seconds into the round (the watcher is off him in between) */
   windows: [number, number][];
 }
-export interface Launch { id: string; from: From; t: number; x: number; z: number; speed: number; commit: number }
+export interface Launch { id: string; from: From; aim: Aim; side: number; t: number; x: number; z: number; speed: number; commit: number; warn: number }
 export interface Round {
   seed: number; level: number; pattern: Pattern;
   friends: Friend[];
@@ -131,7 +164,7 @@ function launchPoint(g: Game, from: From, rand: () => number): { x: number; z: n
   const side = from === 'throwing' ? -off : from === 'off' ? off : rand() < 0.5 ? -1 : 1;
   const deg = from === 'ahead' ? between(rand, [-r.ahead, r.ahead]) : side * between(rand, r.side);
   const a = (deg * Math.PI) / 180;
-  return { x: sx + d * Math.sin(a), z: sz + d * Math.cos(a), side: from === 'ahead' ? 0 : side };
+  return { x: sx + d * Math.sin(a), z: sz + d * Math.cos(a), side };
 }
 
 /** Deal a round: a wave by level, friends across his view, when each lantern lights. Not yet checked: see makeRound. */
@@ -144,10 +177,10 @@ export function draftRound(g: Game, level: number, seed: number): Round {
   const speed = lerp(r.drones.speed.start, r.drones.speed.end, u), commit = lerp(r.drones.commit.start, r.drones.commit.end, u);
   const launches: Launch[] = [];
   let t = between(rand, r.drones.first);
-  pattern.drones.forEach((from, k) => {
-    const p = launchPoint(g, from, rand);
-    launches.push({ id: `H${k + 1}`, from, t, x: p.x, z: p.z, speed, commit });
-    t += between(rand, r.drones.gap);
+  pattern.drones.forEach((spec, k) => {
+    if (k > 0) t += spec.after ?? between(rand, r.drones.gap);
+    const p = launchPoint(g, spec.from, rand);
+    launches.push({ id: `H${k + 1}`, from: spec.from, aim: spec.aim, side: p.side, t, x: p.x, z: p.z, speed: speed * (spec.speed ?? 1), commit, warn: r.drones.warn * (spec.warn ?? 1) });
   });
   // friends, spread across his view, never too close together
   const n = r.friends.count[Math.min(level, r.friends.count.length) - 1]!;
@@ -181,15 +214,19 @@ export function draftRound(g: Game, level: number, seed: number): Round {
 }
 
 // ------------------------------------------------------------------ one round, live
-export interface Input { mx: number; mz: number; sprint?: boolean }
+/** One tap moves him one step: x across (-1 left, +1 right), z ahead (+1) or back (-1); a sharper flick (power above
+ * 1) is a longer, faster step. No tap: he stays where his taps put him. */
+export interface Input { tap?: { x: number; z: number; power?: number } }
 export type Action = { kind: 'toss'; target: string };
 export interface Drone {
-  id: string; from: From; x: number; z: number; dx: number; dz: number; speed: number;
-  /** when it launches (it hovers, blinking, for a moment before), and how long before it would reach him it locks on */
-  launchT: number; commitIn: number;
+  id: string; from: From; aim: Aim; side: number; x: number; z: number; dx: number; dz: number; speed: number;
+  /** when it launches (it hovers, blinking, for `warn` seconds before), and how long before it would reach him it locks on */
+  launchT: number; commitIn: number; warn: number;
   launched: boolean; committed: boolean; commitT: number | null; passed: boolean; gone: boolean; minD: number;
-  /** his distance off the drone's line when it committed, and when he had cut clear of it */
-  perp0: number; cutT: number | null; near: boolean; swarm: boolean;
+  /** where it aimed when it locked on (a diving drone: the spot it dives onto); how high it flies */
+  aimX: number; aimZ: number; h: number;
+  /** his distance off its line when it locked on; when he was clear of it (off its line by a hit); when he had cut well clear */
+  perp0: number; clearT: number | null; cutT: number | null; near: boolean; clutch: boolean; swarm: boolean;
 }
 export type Result =
   | { kind: 'catch'; target: string; t: number; release: number; held: number }
@@ -197,27 +234,44 @@ export type Result =
   | { kind: 'snatch'; target: string; t: number; release: number; held: number }
   | { kind: 'hit'; by: string; t: number; held: number };
 export interface Toss { target: string; press: number; release: number; arrive: number; kind: 'catch' | 'drop' | 'snatch' }
+export type SimEvent = { kind: 'near' | 'commit' | 'launch' | 'release'; id: string } | { kind: 'clutch'; id: string; margin: number };
 
 export class RoundSim {
   t = 0;
   x: number; z: number; vx = 0; vz = 0;
+  /** where his taps have sent him, and how fast he goes there (a sharp flick is faster) */
+  tx: number; tz: number; dash: number;
+  taps = 0;
   drones: Drone[] = [];
   toss: Toss | null = null;
   result: Result | null = null;
-  /** events this step, for sound and effects: near misses, commits, swarm launches */
-  events: { kind: 'near' | 'commit' | 'launch' | 'release'; id: string }[] = [];
+  /** events this step, for sound and effects */
+  events: SimEvent[] = [];
   nearMisses = 0;
-  private nextSwarm: number;
-  private swarmN = 0;
-  private srand: () => number;
+  clutches = 0;
+  nextSwarm: number;
+  swarmN = 0;
   constructor(readonly g: Game, readonly round: Round) {
     [this.x, this.z] = g.r.courier.start;
-    for (const l of round.launches) this.drones.push(this.drone(l.id, l.from, l.x, l.z, l.speed, l.commit, false, l.t));
+    [this.tx, this.tz] = g.r.courier.start;
+    this.dash = g.r.courier.dash;
+    for (const l of round.launches) this.drones.push(this.drone(l.id, l.from, l.aim, l.side, l.x, l.z, l.speed, l.commit, l.warn, false, l.t));
     this.nextSwarm = g.r.scoring.hot_clock;
-    this.srand = rng(round.seed ^ 0x5eed);
   }
-  private drone(id: string, from: From, x: number, z: number, speed: number, commitIn: number, swarm: boolean, t: number): Drone {
-    return { id, from, x, z, dx: 0, dz: -1, speed, launchT: t, commitIn, launched: false, committed: false, commitT: null, passed: false, gone: false, minD: Infinity, perp0: 0, cutT: null, near: false, swarm };
+  private drone(id: string, from: From, aim: Aim, side: number, x: number, z: number, speed: number, commitIn: number, warn: number, swarm: boolean, t: number): Drone {
+    return {
+      id, from, aim, side, x, z, dx: 0, dz: -1, speed, launchT: t, commitIn, warn, launched: false, committed: false, commitT: null,
+      passed: false, gone: false, minD: Infinity, aimX: 0, aimZ: 0, h: aim === 'dive' ? this.g.r.drones.dive.height : this.g.r.drones.height, perp0: 0, clearT: null, cutT: null, near: false, clutch: false, swarm,
+    };
+  }
+  /** A copy to look ahead with (the right play tries tap combos on it). */
+  clone(): RoundSim {
+    const c = Object.create(RoundSim.prototype) as RoundSim;
+    Object.assign(c, this);
+    c.drones = this.drones.map((d) => ({ ...d }));
+    c.toss = this.toss && { ...this.toss };
+    c.events = [];
+    return c;
   }
   get holding() { return !this.toss && !this.result; }
   friend(id: string) { return this.round.friends.find((f) => f.id === id); }
@@ -237,34 +291,41 @@ export class RoundSim {
     if (this.result) return;
     const r = this.g.r, dt = STEP;
     this.events = [];
-    // his feet: the pad sets where he wants to go, he gets there almost at once
-    const m = Math.hypot(u.mx, u.mz), cap = u.sprint || m > 1.001 ? r.courier.sprint : r.courier.walk;
-    const k = m > 1 ? 1 / m : 1;
-    const tx = u.mx * k * cap, tz = u.mz * k * cap;
-    const dv = Math.hypot(tx - this.vx, tz - this.vz), a = r.courier.accel * dt;
-    if (dv <= a) { this.vx = tx; this.vz = tz; } else { this.vx += ((tx - this.vx) / dv) * a; this.vz += ((tz - this.vz) / dv) * a; }
-    this.x = clamp(this.x + this.vx * dt, -r.roof.half_width + 0.4, r.roof.half_width - 0.4);
-    this.z = clamp(this.z + this.vz * dt, r.roof.back + 0.4, -r.roof.back - 0.4);
-    if (Math.abs(this.x) >= r.roof.half_width - 0.4 - 1e-9) this.vx = 0;
-    if (Math.abs(this.z) >= -r.roof.back - 0.4 - 1e-9) this.vz = 0;
-    // hold it past the hot clock and more drones come
+    // his feet: each tap sends him one step further (a sharp flick further and faster); he dashes there and stops
+    const hw = r.roof.half_width - 0.4, zb = r.roof.back + 0.4, zf = -r.roof.back - 0.4;
+    if (u.tap && (u.tap.x || u.tap.z)) {
+      const pw = clamp(u.tap.power ?? 1, 1, r.courier.power_max), m = Math.hypot(u.tap.x, u.tap.z);
+      this.tx = clamp(this.tx + (u.tap.x / m) * r.courier.step * pw, -hw, hw);
+      this.tz = clamp(this.tz + (u.tap.z / m) * r.courier.step * pw, zb, zf);
+      this.dash = r.courier.dash * pw;
+      this.taps++;
+    }
+    const ex = this.tx - this.x, ez = this.tz - this.z, ed = Math.hypot(ex, ez);
+    const want = ed < 1e-4 ? 0 : Math.min(this.dash, Math.sqrt(2 * r.courier.accel * ed), ed / dt);
+    const wx = ed < 1e-4 ? 0 : (ex / ed) * want, wz = ed < 1e-4 ? 0 : (ez / ed) * want;
+    const dv = Math.hypot(wx - this.vx, wz - this.vz), a = r.courier.accel * dt * (this.dash / r.courier.dash);
+    if (dv <= a) { this.vx = wx; this.vz = wz; } else { this.vx += ((wx - this.vx) / dv) * a; this.vz += ((wz - this.vz) / dv) * a; }
+    this.x = clamp(this.x + this.vx * dt, -hw, hw);
+    this.z = clamp(this.z + this.vz * dt, zb, zf);
+    // hold it past the hot clock and more drones come, straight at him
     if (this.holding && this.t >= this.nextSwarm) {
-      const id = `S${++this.swarmN}`, from: From = this.srand() < 0.5 ? 'ahead' : 'side';
-      const p = launchPoint(this.g, from, this.srand);
+      const rand = rng((this.round.seed ^ 0x5eed) + this.swarmN * 7919);
+      const id = `S${++this.swarmN}`, from: From = rand() < 0.5 ? 'ahead' : 'side';
+      const p = launchPoint(this.g, from, rand);
       const l0 = this.round.launches[0]!;
-      const d = this.drone(id, from, p.x, p.z, l0.speed, l0.commit, true, this.t + r.drones.warn);
-      this.drones.push(d);
+      this.drones.push(this.drone(id, from, 'you', p.side, p.x, p.z, l0.speed, l0.commit, r.drones.warn, true, this.t + r.drones.warn));
       this.nextSwarm += r.scoring.swarm_every;
     }
     for (const d of this.drones) this.fly(d, dt);
     this.t += dt;
     if (this.toss && this.t >= this.toss.release && this.t - dt < this.toss.release) this.events.push({ kind: 'release', id: this.toss.target });
-    // a hit counts until the package lands
+    // a hit counts until the package lands (a diving drone only once it is down at his height)
     for (const d of this.drones) {
       if (!d.launched || d.gone) continue;
       const dist = Math.hypot(d.x - this.x, d.z - this.z);
+      if (d.aim === 'dive' && d.h > 0.9) continue; // still above him: it only gets him low in its dive
       d.minD = Math.min(d.minD, dist);
-      if (dist < r.drones.hit) { this.result = { kind: 'hit', by: d.id, t: this.t, held: this.held() }; return; }
+      if (dist < (d.aim === 'dive' && d.h <= 1e-6 ? r.drones.dive.reach : r.drones.hit)) { this.result = { kind: 'hit', by: d.id, t: this.t, held: this.held() }; return; }
     }
     if (this.toss && this.t >= this.toss.arrive) {
       const { kind, target, release } = this.toss;
@@ -273,24 +334,38 @@ export class RoundSim {
   }
   held() { return this.toss ? this.toss.release : this.t; }
 
+  /** Where a drone is going: at him (leading him while it hunts), or at a spot beside, ahead of or behind him. */
+  aimPoint(d: Drone, lead: number): { x: number; z: number } {
+    const a = this.g.r.drones.aims;
+    switch (d.aim) {
+      case 'you': return { x: this.x + this.vx * lead, z: this.z + this.vz * lead };
+      case 'lane': return { x: this.x + d.side * a.lane, z: this.z };
+      case 'cross': return { x: this.x - d.side * a.lane, z: this.z };
+      case 'ahead': return { x: this.x, z: this.z + a.depth };
+      case 'behind': return { x: this.x, z: this.z - a.depth };
+      case 'dive': return { x: this.x, z: this.z };
+    }
+  }
+
   private fly(d: Drone, dt: number) {
     const r = this.g.r;
     if (d.gone) return;
     if (!d.launched) {
       if (this.t < d.launchT) return;
       d.launched = true;
-      const h = Math.hypot(this.x - d.x, this.z - d.z) || 1;
-      d.dx = (this.x - d.x) / h; d.dz = (this.z - d.z) / h;
+      const p = this.aimPoint(d, 0), h = Math.hypot(p.x - d.x, p.z - d.z) || 1;
+      d.dx = (p.x - d.x) / h; d.dz = (p.z - d.z) / h;
       this.events.push({ kind: 'launch', id: d.id });
     }
+    if (d.aim === 'dive') { this.dive(d, dt); return; }
     const rx = this.x - d.x, rz = this.z - d.z, dist = Math.hypot(rx, rz);
     if (!d.committed) {
-      // steer for where he will be (lead), at a limited turn rate
-      const tti = dist / d.speed;
-      const ax = this.x + this.vx * tti - d.x, az = this.z + this.vz * tti - d.z, ah = Math.hypot(ax, az) || 1;
+      // steer for its aim point (leading him when it aims at him), at a limited turn rate
+      const p0 = this.aimPoint(d, 0), tti = Math.hypot(p0.x - d.x, p0.z - d.z) / d.speed;
+      const p = this.aimPoint(d, tti), ax = p.x - d.x, az = p.z - d.z, ah = Math.hypot(ax, az) || 1;
       if (tti <= d.commitIn) {
-        // lock on: straight at where he would be, no more steering. This is the moment to cut.
-        d.dx = ax / ah; d.dz = az / ah; d.committed = true; d.commitT = this.t;
+        // lock on: straight at that point, no more steering. This is the moment to move.
+        d.dx = ax / ah; d.dz = az / ah; d.committed = true; d.commitT = this.t; d.aimX = p.x; d.aimZ = p.z;
         d.perp0 = Math.abs(rx * d.dz - rz * d.dx);
         this.events.push({ kind: 'commit', id: d.id });
       } else {
@@ -303,61 +378,155 @@ export class RoundSim {
     d.x += d.dx * d.speed * dt; d.z += d.dz * d.speed * dt;
     if (d.committed) {
       const perp = Math.abs(rx * d.dz - rz * d.dx);
+      if (d.clearT == null && perp >= r.drones.hit) d.clearT = this.t;
+      if (perp < r.drones.hit) d.clearT = null; // back on its line: not clear yet
       if (d.cutT == null && perp >= r.drones.hit + 0.3 && perp > d.perp0) d.cutT = this.t;
       if (!d.passed && rx * d.dx + rz * d.dz < 0) {
         d.passed = true;
-        if (d.minD < r.drones.near && !this.result) { d.near = true; this.nearMisses++; this.events.push({ kind: 'near', id: d.id }); }
+        if (!this.result) {
+          if (d.minD < r.drones.near) { d.near = true; this.nearMisses++; this.events.push({ kind: 'near', id: d.id }); }
+          // it was on him when it locked on and he got clear only at the last moment: a clutch dodge
+          if (d.perp0 < r.drones.hit && d.clearT != null && this.t - d.clearT <= r.scoring.clutch.window) {
+            d.clutch = true; this.clutches++; this.events.push({ kind: 'clutch', id: d.id, margin: this.t - d.clearT });
+          }
+        }
       }
       if (d.passed && dist > 30) d.gone = true;
     }
   }
+
+  /** A diving drone: high while it hunts; once locked on it flies on to the spot he stood on, following him sideways,
+   * and dives onto it in its last stretch. He is safe if he is off that spot's depth by a hit when it comes down. */
+  private dive(d: Drone, dt: number) {
+    const r = this.g.r, dv = r.drones.dive;
+    if (!d.committed) {
+      const rx = this.x - d.x, rz = this.z - d.z, dist = Math.hypot(rx, rz) || 1;
+      d.dx = rx / dist; d.dz = rz / dist;
+      if (dist / d.speed <= d.commitIn) {
+        d.committed = true; d.commitT = this.t; d.aimX = this.x; d.aimZ = this.z;
+        d.perp0 = 0;
+        this.events.push({ kind: 'commit', id: d.id });
+      } else { d.x += d.dx * d.speed * dt; d.z += d.dz * d.speed * dt; return; }
+    }
+    // on to the spot's depth, sliding sideways to stay over him
+    const toZ = d.aimZ - d.z, rem = Math.abs(toZ);
+    const stepZ = Math.min(rem, d.speed * dt) * Math.sign(toZ);
+    const side = clamp(this.x - d.x, -dv.side_speed * dt, dv.side_speed * dt);
+    d.dx = side / dt / d.speed; d.dz = Math.sign(toZ) || -1;
+    d.z += stepZ; d.x += side; d.aimX = d.x;
+    d.h = rem > dv.drop ? dv.height : dv.height * (rem / dv.drop);
+    const off = Math.abs(this.z - d.aimZ);
+    if (d.clearT == null && off >= r.drones.hit) d.clearT = this.t;
+    if (off < r.drones.hit) d.clearT = null;
+    if (rem <= 1e-6 && !d.passed) {
+      // down: on him, or it missed
+      const dist = Math.hypot(d.x - this.x, d.z - this.z);
+      if (dist < dv.reach) return; // the hit check below takes it
+      d.passed = true; d.gone = true;
+      if (!this.result) {
+        if (dist < r.drones.near) { d.near = true; this.nearMisses++; this.events.push({ kind: 'near', id: d.id }); }
+        if (d.clearT != null && this.t - d.clearT <= r.scoring.clutch.window) {
+          d.clutch = true; this.clutches++; this.events.push({ kind: 'clutch', id: d.id, margin: this.t - d.clearT });
+        }
+      }
+    }
+  }
+}
+
+const DIRS = [{ x: 1, z: 0 }, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 }] as const;
+type Dir = (typeof DIRS)[number];
+/** The drones that can still get him: hovering before launch, hunting him, or locked on with its line on him. Every
+ * one of them must be in his view (a drone that will miss may fly past his shoulder). */
+export const watched = (g: Game, s: RoundSim) => s.drones.filter((d) => {
+  if (d.gone || d.passed || !(d.launched || s.t >= d.launchT - d.warn)) return false;
+  if (!d.committed) return true;
+  // locked on: still a threat only while its straight line runs at him (a diving drone: while he is on its spot's depth)
+  if (d.aim === 'dive') return Math.abs(s.z - d.aimZ) < g.r.drones.hit + 0.3;
+  return Math.abs((s.x - d.x) * d.dz - (s.z - d.z) * d.dx) < g.r.drones.hit + 0.3;
+});
+/** Whether a drone he has to deal with is inside his view (it hovers or hunts in front of him until it is close). */
+export function inView(g: Game, s: RoundSim, d: Drone, margin = 3): boolean {
+  const dz = d.z - s.z, dx = Math.abs(d.x - s.x);
+  // the last moment of a locked-on drone's run (a quarter second or so) may be at the edge; his head turns to it
+  if (Math.hypot(dx, dz) <= (d.committed ? g.r.drones.near * 1.5 : g.r.drones.near)) return true;
+  return dz > 0 && (Math.atan2(dx, dz) * 180) / Math.PI <= VIEW / 2 - margin;
 }
 
 /**
- * The right play: stand until a drone locks on, then cut square off its line (back toward the middle of the roof when
- * either way works); toss to the first friend whose lantern is lit at release. With `react` it waits that long after
- * a lock-on and with `walk` it never sprints: what every round must allow a person to do. Used to check every round,
- * for the autoplay demo and as the tests' good player.
+ * The right play. When a drone locks on (after `react`, a person's reaction), it looks ahead: it tries short combos of
+ * taps (one, two, three taps, a tap every `tap_gap` seconds) on a copy of the round and keeps the shortest one that
+ * gets him through everything coming, with the most room. `moves` limits what it may try: 'lateral' only sideways,
+ * 'single' one direction for the whole round (used to check that a wave really needs a step up, a drop or a
+ * combination); either way it then never steps back to its spot.
+ * Between waves it steps back toward his spot; it tosses to the first friend whose lantern is lit at release. Used to
+ * check every round, for the autoplay demo and as the tests' good player.
  */
-export function idealPolicy(g: Game, how: { react?: number; walk?: boolean } = {}): (s: RoundSim) => Input & { action?: Action } {
-  const react = how.react ?? 0, speed = how.walk ? 1 : 1.5;
-  const r = g.r;
-  const cutSide = new WeakMap<Drone, number>();
-  const room = (v: number, n: number, lo: number, hi: number) => (n > 0 ? hi - v : n < 0 ? v - lo : Infinity) / Math.max(1e-6, Math.abs(n));
-  return (s) => {
-    let mx = 0, mz = 0, threat = Infinity;
-    for (const d of s.drones) {
-      if (!d.launched || !d.committed || d.passed || d.gone || s.t - d.commitT! < react - 1e-9) continue;
-      const rx = s.x - d.x, rz = s.z - d.z, along = rx * d.dx + rz * d.dz;
-      if (along <= 0) continue;
-      // which side of its line he is on (the line's normal is (-dz, dx))
-      const off = rx * -d.dz + rz * d.dx;
-      if (Math.abs(off) >= r.drones.hit + 0.45 || along / d.speed > threat) continue;
-      threat = along / d.speed;
-      // pick a side once and stick to it: the side he is already on, toward the middle of the roof when he is dead
-      // on the line, the other way if the roof edge is in the way
-      let side = cutSide.get(d);
-      if (side == null) {
-        side = Math.abs(off) > 0.05 ? Math.sign(off) : -s.x * -d.dz - (s.z - r.roof.back / 2) * d.dx >= 0 ? 1 : -1;
-        const nx = -d.dz * side, nz = d.dx * side;
-        const here = Math.min(room(s.x, nx, -r.roof.half_width + 0.4, r.roof.half_width - 0.4), room(s.z, nz, r.roof.back + 0.4, -r.roof.back - 0.4));
-        if (here < r.drones.hit + 0.5 - Math.abs(off)) side = -side;
-        cutSide.set(d, side);
-      }
-      mx = -d.dz * side * speed; mz = d.dx * side * speed;
+export function idealPolicy(g: Game, how: { react?: number; moves?: 'all' | 'lateral' | 'single' } = {}): (s: RoundSim) => Input & { action?: Action } {
+  const react = how.react ?? 0, moves = how.moves ?? 'all', r = g.r, gap = r.courier.tap_gap;
+  let dirs: readonly Dir[] = moves === 'lateral' ? DIRS.slice(0, 2) : DIRS;
+  let plan: { at: number; tap: Dir }[] = [], seen = new Set<string>(), last = -Infinity, t0 = Infinity;
+  /** Play a combo of taps (from now) on a copy until every drone in the air is past or 2 s; how close the nearest came. */
+  const trial = (s: RoundSim, combo: Dir[]) => {
+    const c = s.clone(), end = c.t + 2;
+    let k = 0, next = c.t, worst = Infinity;
+    while (!c.result && c.t < end) {
+      const tap = k < combo.length && c.t >= next - 1e-9 ? combo[k++] : undefined;
+      if (tap) next = c.t + gap;
+      c.step(tap ? { tap } : {});
+      for (const d of c.drones) if (d.launched && !d.gone && !d.passed) worst = Math.min(worst, Math.hypot(d.x - c.x, d.z - c.z));
+      if (c.drones.every((d) => d.passed || d.gone || (!d.launched && d.launchT > end))) break;
     }
-    if (threat === Infinity) {
-      // nothing locked on: drift back toward the start spot so there is room to cut
-      const [sx, sz] = r.courier.start, dx = sx - s.x, dz = sz - s.z, h = Math.hypot(dx, dz);
-      const safe = s.drones.every((d) => !d.launched || d.passed || d.gone || Math.hypot(d.x - s.x, d.z - s.z) > d.speed * d.commitIn * 2.2);
-      if (h > 0.4 && safe) { mx = (dx / h) * 0.6; mz = (dz / h) * 0.6; }
+    const hit = c.result?.kind === 'hit';
+    return { ok: !hit, room: worst };
+  };
+  const replan = (s: RoundSim) => {
+    let best: { combo: Dir[]; room: number } | null = null, fallback: { combo: Dir[]; room: number } | null = null;
+    const combos: Dir[][] = [[]];
+    for (let n = 1; n <= 3 && !best; n++) {
+      const level: Dir[][] = [];
+      for (const d of dirs) for (const prev of n === 1 ? [[] as Dir[]] : combosOf(n - 1)) level.push([...prev, d]);
+      for (const combo of level) {
+        if (moves === 'single' && combo.some((d) => d !== combo[0])) continue;
+        const res = trial(s, combo);
+        if (res.ok && (!best || res.room > best.room)) best = { combo, room: res.room };
+        if (!fallback || res.room > fallback.room) fallback = { combo, room: res.room };
+      }
+      combos.push(...level);
+    }
+    function combosOf(n: number) { return combos.filter((c) => c.length === n); }
+    const pick = best ?? fallback!;
+    plan = pick.combo.map((tap, k) => ({ at: s.t + k * gap, tap }));
+  };
+  return (s) => {
+    if (s.t < t0) { plan = []; seen = new Set(); last = -Infinity; dirs = moves === 'lateral' ? DIRS.slice(0, 2) : DIRS; } // a new round
+    t0 = s.t;
+    // a drone he has seen lock on (after his reaction): plan again with it in mind
+    const fresh = s.drones.filter((d) => d.committed && !d.passed && !d.gone && !seen.has(d.id) && s.t - d.commitT! >= react - 1e-9);
+    if (fresh.length) {
+      for (const d of fresh) seen.add(d.id);
+      // standing still is fine if nothing locked on is on him and nothing else will be
+      const safe = trial(s, []);
+      if (safe.ok && !plan.length) plan = [];
+      else replan(s);
+    }
+    let tap: Input['tap'];
+    if (plan.length && plan[0]!.at <= s.t + 1e-9) { tap = plan.shift()!.tap; last = s.t; if (moves === 'single') dirs = [tap as Dir]; }
+    if (!tap && !plan.length && moves === 'all') {
+      // nothing coming: step back toward his spot, a tap at a time, so there is room for the next wave
+      const quiet = s.drones.every((d) => d.passed || d.gone || (!d.committed && Math.hypot(d.x - s.x, d.z - s.z) > d.speed * d.commitIn * 2.2));
+      const [sx, sz] = r.courier.start;
+      if (quiet && s.t - last > 0.35) {
+        if (Math.abs(sx - s.tx) > r.courier.step * 0.75) tap = { x: Math.sign(sx - s.tx), z: 0 };
+        else if (Math.abs(sz - s.tz) > r.courier.step * 0.75) tap = { x: 0, z: Math.sign(sz - s.tz) };
+        if (tap) last = s.t;
+      }
     }
     let action: Action | undefined;
     if (s.holding) {
       const f = s.round.friends.find((ff) => isLit(g, ff, s.t + r.toss.release));
       if (f) action = { kind: 'toss', target: f.id };
     }
-    return { mx, mz, sprint: !how.walk, ...(action ? { action } : {}) };
+    return { ...(tap ? { tap } : {}), ...(action ? { action } : {}) };
   };
 }
 
@@ -371,7 +540,7 @@ export function runRound(g: Game, round: Round, policy: (s: RoundSim) => Input &
   }
   return s;
 }
-const still = () => ({ mx: 0, mz: 0 });
+const still = (): Input => ({});
 /** Stand still and toss to the first lit lantern: what the right move has to beat. */
 export function standPolicy(g: Game): (s: RoundSim) => Input & { action?: Action } {
   return (s) => {
@@ -383,18 +552,28 @@ export function standPolicy(g: Game): (s: RoundSim) => Input & { action?: Action
 /** Why a drafted round fails the invariants (empty: it is a fair round). */
 export function roundProblems(g: Game, round: Round): string[] {
   const p: string[] = [];
-  // fair to a person: seeing the lock-on, reacting and walking (no sprint) clear is enough
-  const human = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, walk: true }));
-  if (human.result?.kind !== 'catch') p.push(`reacting to the lock-on and walking clear does not complete it (${human.result?.kind ?? 'no result'})`);
+  const react = g.r.drones.react;
+  // fair to a person: seeing the lock-on, reacting and tapping a short combo is enough, and every drone stays in view
+  let unseen = '';
+  const humanPlay = idealPolicy(g, { react });
+  const human = runRound(g, round, (s) => { for (const d of watched(g, s)) if (!unseen && !inView(g, s, d)) unseen = `${d.id} at ${s.t.toFixed(2)} s`; return humanPlay(s); });
+  if (human.result?.kind !== 'catch') { p.push(`reacting to the lock-on and tapping a combo does not complete it (${human.result?.kind ?? 'no result'})`); return p; }
+  if (unseen) p.push(`a drone leaves his view before it reaches him (${unseen})`);
   if (!round.pattern.early) {
     const stand = runRound(g, round, standPolicy(g));
     if (stand.result?.kind !== 'hit') p.push(`standing still is not punished (${stand.result?.kind ?? 'no result'})`);
+  }
+  // the wave asks for what it says: a step up or a drop (sideways alone fails), or a combination (one direction fails)
+  const needs = round.pattern.needs;
+  if (needs !== 'any') {
+    const limited = runRound(g, round, idealPolicy(g, { react, moves: needs === 'up_or_back' ? 'lateral' : 'single' }));
+    if (limited.result?.kind === 'catch') p.push(needs === 'up_or_back' ? 'sideways alone gets through it' : 'one direction alone gets through it');
   }
   return p;
 }
 /** Deal a fair round: drafts until one passes the invariants (deterministic: the k-th draft uses seed + k). */
 export function makeRound(g: Game, level: number, seed: number): Round {
-  for (let k = 0; k < 40; k++) {
+  for (let k = 0; k < 60; k++) {
     const round = draftRound(g, level, (seed + k * 7919) >>> 0);
     if (!roundProblems(g, round).length) return round;
   }
@@ -415,6 +594,7 @@ export class Run {
   rounds = 0;
   deliveries = 0;
   nearMisses = 0;
+  clutches = 0;
   log: Log[] = [];
   /** score at each whole second of the run, for the best-run ghost */
   timeline: number[] = [0];
@@ -436,7 +616,11 @@ export class Run {
     if (this.phase === 'live') {
       const s = this.sim;
       s.step(u);
-      for (const e of s.events) if (e.kind === 'near') this.add(sc.near_miss * this.multiplier, 'NEAR MISS');
+      for (const e of s.events) {
+        if (e.kind === 'near') this.add(sc.near_miss * this.multiplier, 'NEAR MISS');
+        // the later he got clear, the bigger the bonus
+        if (e.kind === 'clutch') this.add(sc.clutch.points * (1 - 0.5 * (e.margin / sc.clutch.window)) * this.multiplier, e.margin <= sc.clutch.window / 2 ? 'LAST SECOND!' : 'CLOSE CALL');
+      }
       if (!s.result) return;
       const res = s.result;
       let points = 0;
@@ -447,6 +631,7 @@ export class Run {
         this.add(points, this.streak > 1 ? `STREAK ×${this.multiplier.toFixed(2).replace(/\.?0+$/, '')}` : 'DELIVERED');
       } else if (res.kind === 'drop') this.streak = 0;
       this.nearMisses += s.nearMisses;
+      this.clutches += s.clutches;
       this.log.push({ round: s.round, result: res, points, near: s.nearMisses, drones: s.drones, pressT: s.toss?.press ?? null });
       this.rounds++;
       this.phase = res.kind === 'hit' || res.kind === 'snatch' ? 'over' : 'result';
@@ -484,7 +669,7 @@ export function report(run: Run) {
   const last = run.log.at(-1);
   const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
   return {
-    score: run.score, rounds: run.rounds, deliveries: run.deliveries, nearMisses: run.nearMisses, level: run.level,
+    score: run.score, rounds: run.rounds, deliveries: run.deliveries, nearMisses: run.nearMisses, clutches: run.clutches, level: run.level,
     dodged, cut: avg(cuts), bySide: { throwing: { ...bySide.throwing, spot: avg(bySide.throwing.spot) }, off: { ...bySide.off, spot: avg(bySide.off.spot) } },
     end: last?.result.kind ?? null, endBy: last?.result.kind === 'hit' ? last.drones.find((d) => d.id === (last.result as { by: string }).by)?.from ?? null : null,
   };
@@ -496,8 +681,8 @@ export function unlocked(g: Game, best: number) {
 }
 
 /** Invariant sweep for validation: every round at every level is fair. */
-export function sweepRooftop(g: Game, perLevel = 30): { rounds: number; byPattern: Record<string, number>; failures: string[] } {
-  const failures = checkRules(g.r), byPattern: Record<string, number> = {};
+export function sweepRooftop(g: Game, perLevel = 30, terms?: Set<string>): { rounds: number; byPattern: Record<string, number>; failures: string[] } {
+  const failures = checkRules(g.r, terms), byPattern: Record<string, number> = {};
   let rounds = 0;
   for (let level = 1; level <= g.r.ramp.levels; level++) {
     for (let i = 0; i < perLevel; i++) {
@@ -508,5 +693,7 @@ export function sweepRooftop(g: Game, perLevel = 30): { rounds: number; byPatter
       } catch (err) { failures.push(String((err as Error).message)); }
     }
   }
+  // every wave turns up somewhere: one that can never be dealt fairly is a settings problem
+  for (const p of g.r.patterns) if (!byPattern[p.id]) failures.push(`rooftop/rules.yaml: wave ${p.id} never comes out fair at any level (check its drones and what it needs)`);
   return { rounds, byPattern, failures };
 }

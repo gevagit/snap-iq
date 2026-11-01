@@ -1,13 +1,30 @@
 // Rooftop Run (docs/plans/rooftop.md): the Pocket workout. A courier on neon rooftops at night, seen through his own
-// eyes: dodge the hunter drones with the pad, toss the package to a friend the moment his lantern lights (fixed
+// eyes: dodge the hunter drones by tapping a step at a time (keys or swipes), toss the package to a friend the moment his lantern lights (fixed
 // buttons, always in the same place), and keep the run going. The rules and every number live in src/rooftop and
 // content/rooftop/rules.yaml; this file draws the city, plays the sound, takes input (touch, keyboard, mouse, game
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
-import { STEP, Run, idealPolicy, isLit, separation, tossKeys, report, unlocked, offSign, GLYPHS, FRIEND_IDS } from '../rooftop';
+import { STEP, Run, idealPolicy, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, watched } from '../rooftop';
 
-const MOVE_KEYS = { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, 1], s: [0, -1], a: [-1, 0], d: [1, 0] };
-// game controller (standard mapping): X Y A B RB toss, left to right like Y U I O P
-const PAD_TOSS = { 2: 'y', 3: 'u', 0: 'i', 1: 'o', 5: 'p' };
+// Two layouts (owner, 2026-11-01), keys by where they sit on the keyboard (e.code), not what they type, so they work
+// with any layout (Hebrew too). Righty: move with the right hand (arrows; the joystick on the right of the iPad), toss
+// with the left (Q W E R T; the buttons bottom left). Lefty, flipped: W A S D and the joystick on the left, Y U I O P
+// and the buttons bottom right. One press, one step; the number keys toss in both.
+const LAYOUTS = {
+  righty: {
+    move: { ArrowUp: [0, 1], ArrowDown: [0, -1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }, moveName: 'the arrow keys', moveShort: 'ARROWS',
+    toss: { KeyQ: '1', KeyW: '2', KeyE: '3', KeyR: '4', KeyT: '5' }, letters: 'QWERT',
+  },
+  lefty: {
+    move: { KeyW: [0, 1], KeyS: [0, -1], KeyA: [-1, 0], KeyD: [1, 0] }, moveName: 'W A S D', moveShort: 'W A S D',
+    toss: { KeyY: '1', KeyU: '2', KeyI: '3', KeyO: '4', KeyP: '5' }, letters: 'YUIOP',
+  },
+};
+// friends are numbered left to right; the number keys toss too (top row or keypad)
+const TOSS_DIGITS = { Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5' };
+// game controller (standard mapping): X Y A B RB toss to friends 1 to 5, left to right
+const PAD_TOSS = { 2: '1', 3: '2', 0: '3', 1: '4', 5: '5' };
+// the d-pad steps: up, down, left, right
+const PAD_STEP = { 12: [0, 1], 13: [0, -1], 14: [-1, 0], 15: [1, 0] };
 const GOLD = '#FFD84D', GOLD_CORE = '#FFF4C2', HUNT = '#3FE0FF', LOCK = '#FF3B6B', WATCH = '#FF9A3C';
 const NEON = ['#FF4FB8', '#3FE0FF', '#A8FF3E', '#B26BFF', '#FF9A3C'];
 const FONT = '"Archivo", "Helvetica Neue", Arial, sans-serif';
@@ -18,7 +35,7 @@ const HORIZON = 0.43;
 function looks(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 export function initRooftop(ctx) {
-  const { G, $, show, progress, save, renderHome } = ctx;
+  const { G, $, show, progress, save, renderHome, waveName } = ctx;
   const R = G.r;
   const canvas = $('roofView');
   const g = canvas.getContext('2d');
@@ -26,11 +43,9 @@ export function initRooftop(ctx) {
   const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
   let run = null, raf = 0, last = 0, acc = 0, policy = null, policySim = null, on = false, started = false;
   let W = 0, H = 0, DPR = 1, F = 1, layers = null;
-  const keys = new Set();
-  let pad = { mx: 0, mz: 0, id: null };
   let gpPrev = [];
-  const fx = { shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
-  let ghost = null, look = { jacket: null, trail: null }, guided = true;
+  const fx = { tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
+  let ghost = null, look = { jacket: null, trail: null }, guided = true, layout = 'righty';
   const trails = new Map();
   const audio = sound();
 
@@ -47,27 +62,28 @@ export function initRooftop(ctx) {
   /** The sky, the far skyline in three layers (with a lit-window copy that brightens with the streak), the street glow. */
   function city(w, h) {
     const mk = (cw, ch) => { const c = document.createElement('canvas'); c.width = Math.round(cw * DPR); c.height = Math.round(ch * DPR); const x = c.getContext('2d'); x.scale(DPR, DPR); return [c, x]; };
-    const hy = h * HORIZON;
-    const [sky, s] = mk(w, h);
+    // wider than the view, so the city slides when his head turns
+    const hy = h * HORIZON, VW = w * 1.6;
+    const [sky, s] = mk(VW, h);
     let gr = s.createLinearGradient(0, 0, 0, h);
     gr.addColorStop(0, '#05030F'); gr.addColorStop(0.32, '#1A0B33'); gr.addColorStop(HORIZON, '#3B1458'); gr.addColorStop(HORIZON + 0.02, '#160A26'); gr.addColorStop(1, '#030208');
-    s.fillStyle = gr; s.fillRect(0, 0, w, h);
+    s.fillStyle = gr; s.fillRect(0, 0, VW, h);
     const rnd = looks(7);
     s.fillStyle = '#FFFFFF';
-    for (let i = 0; i < 140; i++) { s.globalAlpha = 0.2 + rnd() * 0.6; const r = rnd() * 1.2 + 0.3; s.fillRect(rnd() * w, rnd() * hy * 0.8, r, r); }
+    for (let i = 0; i < 140; i++) { s.globalAlpha = 0.2 + rnd() * 0.6; const r = rnd() * 1.2 + 0.3; s.fillRect(rnd() * VW, rnd() * hy * 0.8, r, r); }
     s.globalAlpha = 1;
     // the moon, haloed
-    const mx = w * 0.78, my = h * 0.12, mr = Math.max(14, h * 0.035);
+    const mx = VW * 0.68, my = h * 0.12, mr = Math.max(14, h * 0.035);
     gr = s.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 5); gr.addColorStop(0, 'rgba(255,214,240,0.25)'); gr.addColorStop(1, 'rgba(255,214,240,0)');
     s.fillStyle = gr; s.fillRect(mx - mr * 5, my - mr * 5, mr * 10, mr * 10);
     s.fillStyle = '#FBE9F7'; s.beginPath(); s.arc(mx, my, mr, 0, Math.PI * 2); s.fill();
     // a magenta haze along the horizon
     gr = s.createLinearGradient(0, hy - h * 0.18, 0, hy + h * 0.06); gr.addColorStop(0, 'rgba(255,79,184,0)'); gr.addColorStop(0.75, 'rgba(255,79,184,0.32)'); gr.addColorStop(1, 'rgba(255,79,184,0)');
-    s.fillStyle = gr; s.fillRect(0, hy - h * 0.18, w, h * 0.24);
-    // skyline layers, wider than the view so they can slide with his steps
+    s.fillStyle = gr; s.fillRect(0, hy - h * 0.18, VW, h * 0.24);
+    // skyline layers
     const sky3 = [];
     for (let L = 0; L < 3; L++) {
-      const lw = w * 1.4, top = hy - h * (0.2 - L * 0.045), base = hy + h * (0.05 + L * 0.06);
+      const lw = VW, top = hy - h * (0.2 - L * 0.045), base = hy + h * (0.05 + L * 0.06);
       const [dark, d] = mk(lw, h), [lit, l] = mk(lw, h);
       const r2 = looks(31 + L * 17);
       const shade = ['#120A22', '#0D0719', '#080512'][L];
@@ -91,16 +107,16 @@ export function initRooftop(ctx) {
     }
     // bake the skyline into the sky (one image), and its lit windows plus the horizon glow into a second one whose
     // brightness follows the streak: two full-screen copies a frame on the iPad instead of nine
-    const [litAll, la] = mk(w, h);
-    for (const L of sky3) { const ox = -(L.lw - w) / 2; s.drawImage(L.dark, ox, 0, L.lw, h); la.drawImage(L.lit, ox, 0, L.lw, h); }
+    const [litAll, la] = mk(VW, h);
+    for (const L of sky3) { s.drawImage(L.dark, 0, 0, L.lw, h); la.drawImage(L.lit, 0, 0, L.lw, h); }
     // glow sprites (soft round light), drawn with 'lighter'
     const sprite = (col) => { const [c, x] = mk(64, 64); const gg = x.createRadialGradient(32, 32, 0, 32, 32, 32); gg.addColorStop(0, col); gg.addColorStop(0.35, col.replace(/[\d.]+\)$/, '0.35)')); gg.addColorStop(1, col.replace(/[\d.]+\)$/, '0)')); x.fillStyle = gg; x.fillRect(0, 0, 64, 64); return c; };
     gr = la.createLinearGradient(0, hy - h * 0.16, 0, hy + h * 0.1); gr.addColorStop(0, 'rgba(255,79,184,0)'); gr.addColorStop(0.7, 'rgba(255,79,184,0.4)'); gr.addColorStop(1, 'rgba(255,79,184,0)');
-    la.globalCompositeOperation = 'lighter'; la.fillStyle = gr; la.fillRect(0, hy - h * 0.16, w, h * 0.26); la.globalCompositeOperation = 'source-over';
+    la.globalCompositeOperation = 'lighter'; la.fillStyle = gr; la.fillRect(0, hy - h * 0.16, VW, h * 0.26); la.globalCompositeOperation = 'source-over';
     const rain = []; const r3 = looks(99);
     for (let i = 0; i < 110; i++) rain.push([r3(), r3(), 0.5 + r3() * 0.8]);
     return {
-      sky, litAll, rain,
+      sky, litAll, VW, rain,
       glow: { gold: sprite('rgba(255,216,77,1)'), white: sprite('rgba(255,250,235,1)'), hunt: sprite('rgba(63,224,255,1)'), lock: sprite('rgba(255,59,107,1)'), watch: sprite('rgba(255,154,60,1)'), pink: sprite('rgba(255,79,184,1)') },
     };
   }
@@ -131,6 +147,7 @@ export function initRooftop(ctx) {
     look.trail = (un.trails.find((u) => u.id === st.trail) || un.trails[0]).color;
     on = true; started = false;
     guided = (st.runs || 0) < 5;
+    setLayout(st.layout || 'righty');
     show('roof');
     $('rReport').hidden = true;
     $('rReady').hidden = false;
@@ -148,14 +165,14 @@ export function initRooftop(ctx) {
   }
   $('rGo').addEventListener('click', go);
 
-  let blds = [];
+  let blds = [], frameDt = 1 / 60;
   function newRound() {
     blds = buildings(run.sim.round); trails.clear();
     renderToss();
   }
 
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now; acc += dt;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; acc += dt; frameDt = dt;
     pollPad();
     while (acc >= STEP && run.phase !== 'over') {
       acc -= STEP;
@@ -180,6 +197,7 @@ export function initRooftop(ctx) {
   function onEvent(e, sim) {
     if (e.kind === 'near') { fx.nearT = run.clock; const d = sim.drones.find((x) => x.id === e.id); fx.nearSide = d ? Math.sign(d.x - sim.x) : 0; audio.near(); }
     if (e.kind === 'commit') { fx.commitT = run.clock; audio.lock(); }
+    if (e.kind === 'clutch') { fx.nearT = run.clock; audio.clutch(); }
     if (e.kind === 'release') audio.toss();
   }
   function onResult(res) {
@@ -211,7 +229,7 @@ export function initRooftop(ctx) {
     const fresh = [...after.jackets.filter((u) => !before.jackets.includes(u)).map((u) => `${u.name} jacket`), ...after.trails.filter((u) => !before.trails.includes(u)).map((u) => `${u.name} trail`)];
     const f1 = (v) => (v == null ? '–' : `${v.toFixed(2)} s`);
     const cause = rep.end === 'snatch' ? 'A watcher was still on him: toss only when his lantern glows gold.'
-      : rep.end === 'hit' ? 'Wait for the drone\'s ring to turn red, then step sideways. Move too early and it follows you.' : '';
+      : rep.end === 'hit' ? 'Wait for red, then move: off a drone\'s red line, or up or back from a ring on the roof. Move too early and it follows you.' : '';
     const side = (b, name) => `<li><b>${name}</b><span>${b.caught} of ${b.lit} lanterns${b.spot != null ? ` · spotted in ${f1(b.spot)}` : ''}</span></li>`;
     $('rRepTitle').textContent = newBest ? 'New best run!' : 'Run over';
     $('rRepBig').textContent = run.score.toLocaleString();
@@ -219,6 +237,7 @@ export function initRooftop(ctx) {
     $('rRepList').innerHTML = [
       `<li><b>Deliveries</b><span>${rep.deliveries} · level ${rep.level}</span></li>`,
       `<li><b>Near misses</b><span>${rep.nearMisses}</span></li>`,
+      `<li><b>Last-second dodges</b><span>${rep.clutches}</span></li>`,
       `<li><b>Drones dodged</b><span>${rep.dodged}${rep.cut != null ? ` · cut ${f1(rep.cut)} after lock-on` : ''}</span></li>`,
       side(rep.bySide.off, 'Blind side'), side(rep.bySide.throwing, 'Throwing side'),
       cause ? `<li class="tip"><span>${cause}</span></li>` : '',
@@ -230,48 +249,72 @@ export function initRooftop(ctx) {
   $('rAgain').addEventListener('click', () => { canvas.classList.remove('over'); start(); });
   $('rDone').addEventListener('click', end);
 
-  // ------------------------------------------------------------ input: pad, keys, mouse, game controller
-  function input() {
-    if (pad.id != null) return { mx: pad.mx, mz: pad.mz, sprint: Math.hypot(pad.mx, pad.mz) > 1 };
-    let mx = 0, mz = 0;
-    for (const k of keys) { const v = MOVE_KEYS[k]; if (v) { mx += v[0]; mz += v[1]; } }
-    const gp = gamepad();
-    if (gp && Math.hypot(gp.axes[0] || 0, gp.axes[1] || 0) > 0.2) { mx = gp.axes[0]; mz = -gp.axes[1]; return { mx, mz, sprint: Math.hypot(mx, mz) > 0.9 }; }
-    const m = Math.hypot(mx, mz);
-    return m ? { mx: mx / m, mz: mz / m, sprint: keys.has('Shift') } : { mx: 0, mz: 0 };
-  }
+  // ------------------------------------------------------------ input: taps (keys, swipes, game controller), mouse
+  // Every tap is one step; holding does nothing more, so he taps fast to go further (owner, 2026-10-31).
+  const taps = [];
+  function tap(x, z, power = 1) { if (on && started && run && run.phase === 'live' && taps.length < 6) { taps.push({ x, z, power }); fx.tapT = run.clock; fx.tapX = x; fx.tapZ = z; } }
+  function input() { const t = taps.shift(); return t ? { tap: t } : {}; }
   function toss(id) { if (on && started && run.phase === 'live' && run.sim.holding) run.act({ kind: 'toss', target: id }); }
   function tossKey(k) { if (!run) return; const id = tossKeys(run.sim.round).get(k); if (id) toss(id); }
   window.addEventListener('keydown', (e) => {
     if (!on) return;
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === ' ') $('rAgain').click(); return; }
-    if ('yuiop'.includes(k) && k.length === 1) { tossKey(k); return; }
+    const k = e.code;
+    if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
+    const L = LAYOUTS[layout], toss = L.toss[k] || TOSS_DIGITS[k];
+    if (toss) { tossKey(toss); return; }
     if (k === 'Escape') { $('rQuit').click(); return; }
-    keys.add(k === 'Shift' ? 'Shift' : k);
+    const v = L.move[k];
+    if (v) { e.preventDefault(); if (!e.repeat) tap(v[0], v[1]); }
   });
-  window.addEventListener('keyup', (e) => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; keys.delete(k); });
-  window.addEventListener('blur', () => keys.clear());
   function gamepad() { const list = navigator.getGamepads ? navigator.getGamepads() : []; for (const p of list) if (p) return p; return null; }
+  let stick = { x: 0, z: 0 };
   function pollPad() {
     const gp = gamepad(); if (!gp) return;
     const now = gp.buttons.map((b) => b.pressed);
-    now.forEach((p, i) => { if (p && !gpPrev[i]) { if (PAD_TOSS[i]) tossKey(PAD_TOSS[i]); if (i === 9) go(); } });
+    now.forEach((p, i) => {
+      if (!p || gpPrev[i]) return;
+      if (PAD_TOSS[i]) tossKey(PAD_TOSS[i]);
+      if (i === 9) go();
+      if (PAD_STEP[i]) tap(...PAD_STEP[i]);
+    });
     gpPrev = now;
+    // the stick: a flick past the middle is one step, it has to come back before the next
+    const ax = gp.axes[0] || 0, az = -(gp.axes[1] || 0);
+    for (const [v, key, step] of [[ax, 'x', [Math.sign(ax), 0]], [az, 'z', [0, Math.sign(az)]]]) {
+      if (Math.abs(v) > 0.6 && Math.sign(v) !== stick[key]) { stick[key] = Math.sign(v); tap(...step); }
+      else if (Math.abs(v) < 0.3) stick[key] = 0;
+    }
   }
-  const padEl = $('rPad'), knob = $('rKnob');
-  function padMove(e) {
-    const r = padEl.getBoundingClientRect(), rad = r.width / 2;
-    let dx = (e.clientX - r.left - rad) / (rad * 0.72), dz = -(e.clientY - r.top - rad) / (rad * 0.72);
-    const m = Math.hypot(dx, dz); if (m > 1.35) { dx *= 1.35 / m; dz *= 1.35 / m; }
-    pad.mx = dx; pad.mz = dz;
-    knob.style.transform = `translate(${dx * rad * 0.55}px, ${-dz * rad * 0.55}px)`;
-    padEl.classList.toggle('sprint', Math.hypot(dx, dz) > 1);
-  }
-  padEl.addEventListener('pointerdown', (e) => { e.preventDefault(); pad.id = e.pointerId; padEl.setPointerCapture(e.pointerId); padMove(e); });
-  padEl.addEventListener('pointermove', (e) => { if (e.pointerId === pad.id) padMove(e); });
-  const padUp = (e) => { if (e.pointerId !== pad.id) return; pad = { mx: 0, mz: 0, id: null }; knob.style.transform = ''; padEl.classList.remove('sprint'); };
-  padEl.addEventListener('pointerup', padUp); padEl.addEventListener('pointercancel', padUp);
+  // the joystick (one finger, the half of the screen under his off-hand thumb): it appears where the finger lands, so
+  // he never has to look for it; each flick is a step that way, a sharper (faster) flick a longer, faster step.
+  // Turning back mid-stroke is another step (owner's son, 2026-10-31).
+  const stickEl = $('rStick'), baseEl = $('rStickBase'), knobEl = $('rStickKnob');
+  const strokes = new Map();
+  stickEl.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); stickEl.setPointerCapture(e.pointerId);
+    strokes.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), dir: null, ox: e.clientX, oy: e.clientY });
+    const r = stickEl.getBoundingClientRect();
+    baseEl.style.left = `${e.clientX - r.left}px`; baseEl.style.top = `${e.clientY - r.top}px`;
+    stickEl.classList.add('held'); knobEl.style.transform = '';
+  });
+  stickEl.addEventListener('pointermove', (e) => {
+    const st = strokes.get(e.pointerId); if (!st) return;
+    // the knob follows the finger, held inside the ring
+    const kx = e.clientX - st.ox, ky = e.clientY - st.oy, km = Math.hypot(kx, ky), lim = 46, f = km > lim ? lim / km : 1;
+    knobEl.style.transform = `translate(${kx * f}px, ${ky * f}px)`;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y, dist = Math.hypot(dx, dy);
+    if (dist < 14) return;
+    const dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : dy > 0 ? 'd' : 'u';
+    const now = performance.now(), speed = dist / Math.max(8, now - st.t); // px per ms
+    st.x = e.clientX; st.y = e.clientY; st.t = now;
+    if (dir === st.dir) return;
+    st.dir = dir;
+    const power = Math.min(R.courier.power_max, Math.max(1, 1 + (speed - 0.5) * 0.9));
+    tap(dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'u' ? 1 : dir === 'd' ? -1 : 0, power);
+    stickEl.dataset.flash = dir; stickEl.classList.toggle('sharp', power > 1.3); stickEl.classList.remove('flash'); void stickEl.offsetWidth; stickEl.classList.add('flash');
+  });
+  const strokeEnd = (e) => { strokes.delete(e.pointerId); if (!strokes.size) { stickEl.classList.remove('held'); knobEl.style.transform = ''; } };
+  stickEl.addEventListener('pointerup', strokeEnd); stickEl.addEventListener('pointercancel', strokeEnd);
   // a click (or tap) on a friend tosses to him
   canvas.addEventListener('pointerdown', (e) => {
     if (!run || run.phase !== 'live') return;
@@ -281,18 +324,30 @@ export function initRooftop(ctx) {
     if (best) toss(best);
   });
 
-  // the toss buttons: one per friend, always in the same place, under his throwing thumb
+  // the toss buttons: 1 to 5 side by side, friends numbered left to right across his view, under his throwing thumb
   const tossEl = $('rToss');
-  tossEl.innerHTML = FRIEND_IDS.map((id) => `<button type="button" data-id="${id}" aria-label="Toss to ${GLYPHS[id]}"><b>${GLYPHS[id]}</b><span></span></button>`).join('');
-  tossEl.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (b) { e.preventDefault(); toss(b.dataset.id); } });
-  document.body.classList.toggle('roof-righty', G.hand === 'right');
+  tossEl.innerHTML = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="Toss to friend ${n}">${n}<small></small></button>`).join('');
+  tossEl.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (b) { e.preventDefault(); tossKey(b.dataset.n); } });
+  /** Righty or lefty: which side the joystick and the toss buttons are on, and which keys move and toss. */
+  function setLayout(l) {
+    layout = LAYOUTS[l] ? l : 'righty';
+    document.body.classList.toggle('roof-lefty', layout === 'lefty');
+    for (const b of document.querySelectorAll('#rLayout button')) b.setAttribute('aria-pressed', String(b.dataset.layout === layout));
+    const L = LAYOUTS[layout];
+    for (const b of tossEl.querySelectorAll('button')) b.querySelector('small').textContent = fine ? L.letters[Number(b.dataset.n) - 1] : '';
+    $('rKeys').textContent = fine
+      ? `Move: ${L.moveName}, one press, one step. Toss: ${L.letters.split('').join(' ')} (friends 1 to 5, left to right), or the number keys.`
+      : `Joystick on the ${layout === 'lefty' ? 'left' : 'right'}, toss buttons on the ${layout === 'lefty' ? 'right' : 'left'}.`;
+    if (run && layers) draw(); // the friends' tags show the new keys
+  }
+  $('rLayout').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-layout]'); if (!b) return;
+    setLayout(b.dataset.layout);
+    const p = progress(); p.rooftop = { ...(p.rooftop || {}), layout }; save();
+  });
   function renderToss() {
-    const map = new Map([...tossKeys(run.sim.round)].map(([k, id]) => [id, k]));
-    for (const b of tossEl.querySelectorAll('button')) {
-      const there = run.sim.round.friends.some((f) => f.id === b.dataset.id);
-      b.disabled = !there;
-      b.querySelector('span').textContent = fine && there ? map.get(b.dataset.id).toUpperCase() : '';
-    }
+    const n = run.sim.round.friends.length;
+    for (const b of tossEl.querySelectorAll('button')) b.hidden = Number(b.dataset.n) > n;
   }
 
   // ------------------------------------------------------------ HUD
@@ -329,11 +384,16 @@ export function initRooftop(ctx) {
     const lv = $('rLevelUp');
     lv.classList.toggle('on', run.clock - fx.levelT < 1.2);
     if (run.clock - fx.levelT < 1.2) setText('rLevelUp', `LEVEL ${fx.level}`);
+    const keys = tossKeys(s.round);
     for (const b of tossEl.querySelectorAll('button')) {
       b.classList.toggle('dim', !holding);
-      const f = holding && s.round.friends.find((x) => x.id === b.dataset.id);
+      const f = holding && s.round.friends.find((x) => x.id === keys.get(b.dataset.n));
       b.classList.toggle('lit', !!f && isLit(G, f, s.t));
     }
+    // the wave's name as it starts (and, on his first runs, what it asks of him)
+    const wave = run.phase === 'live' && started && s.t < 2.2;
+    $('rWave').classList.toggle('on', wave);
+    if (wave) { setText('rWaveName', waveName(s.round.pattern).toUpperCase()); setText('rWaveHint', guided ? s.round.pattern.hint : ''); }
     // first runs: say what to do right now
     guideText(s, holding);
   }
@@ -345,26 +405,40 @@ export function initRooftop(ctx) {
     if (guided && started && run.phase === 'live') {
       const live = s.drones.filter((d) => !d.gone && !d.passed);
       const lit = holding && s.round.friends.find((f) => isLit(G, f, s.t));
-      if (live.some((d) => d.committed)) { text = 'RED! STEP SIDEWAYS'; kind = 'lock'; }
-      else if (lit) { const key = [...tossKeys(s.round)].find(([, id]) => id === lit.id); text = `GOLD! TOSS TO ${GLYPHS[lit.id]}${fine && key ? ` (${key[0].toUpperCase()})` : ''}`; kind = 'gold'; }
-      else if (live.some((d) => s.t >= d.launchT - R.drones.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN STEP'; kind = 'warn'; }
+      const locked = live.filter((d) => d.committed);
+      const L = LAYOUTS[layout];
+      if (locked.some((d) => d.aim === 'dive')) { text = fine ? `DIVING ON YOUR SPOT! ${layout === 'lefty' ? 'W OR S' : '↑ OR ↓'}` : 'DIVING ON YOUR SPOT! FLICK UP OR DOWN'; kind = 'lock'; }
+      else if (locked.length) { text = fine ? `RED! OFF ITS LINE (${L.moveShort})` : 'RED! FLICK OFF ITS LINE'; kind = 'lock'; }
+      else if (lit) { const n = friendNumber(s.round, lit.id); text = `GOLD! TOSS TO ${n}${fine ? ` (${L.letters[n - 1]})` : ''}`; kind = 'gold'; }
+      else if (s.t >= 2.2 && live.some((d) => s.t >= d.launchT - d.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN MOVE'; kind = 'warn'; }
       else if (holding) { text = 'WATCH FOR A GOLD LANTERN'; kind = 'warn'; }
     }
     if (shown.rGuide !== text) { shown.rGuide = text; el.textContent = text; el.className = 'rguide' + (text ? ' on ' + kind : ''); }
   }
 
   // ------------------------------------------------------------ the camera and drawing
-  let cam = { x: 0, y: 0, z: 0, bob: 0 };
-  function project(x, y, z) {
-    const dz = z - cam.z; if (dz < 0.25) return null;
+  let cam = { x: 0, y: 0, z: 0, bob: 0, yaw: 0 };
+  function project(x, y, z, clampNear = false) {
+    // his head may be turned (yaw, + to the right) toward a drone near the edge of his view
+    const ox = x - cam.x, oz = z - cam.z, c = Math.cos(cam.yaw), sn = Math.sin(cam.yaw);
+    const rx = ox * c - oz * sn;
+    let dz = ox * sn + oz * c;
+    if (dz < 0.25) { if (!clampNear) return null; dz = 0.25; } // the roof under his feet: pinned to the near edge of the view
     const s = F / dz;
-    return { x: W / 2 + (x - cam.x) * s, y: H * HORIZON - (y - cam.y) * s, s };
+    return { x: W / 2 + rx * s, y: H * HORIZON - (y - cam.y) * s, s };
   }
   function camera() {
     const s = run.sim, eye = R.courier.eye;
     const speed = Math.hypot(s.vx, s.vz);
-    cam.bob = run.phase === 'live' ? Math.sin(run.clock * 11) * 0.025 * Math.min(1, speed / 4) : 0;
+    cam.bob = run.phase === 'live' ? Math.sin(run.clock * 22) * 0.03 * Math.min(1, speed / 4) : 0;
     cam.x = s.x; cam.y = eye + cam.bob; cam.z = s.z;
+    // his head turns a little toward a drone that can still get him when it nears the edge of his view
+    let want = 0;
+    if (run.phase === 'live') for (const d of watched(G, s)) {
+      const b = Math.atan2(d.x - s.x, Math.max(0.2, d.z - s.z)), edge = (36 * Math.PI) / 180;
+      if (Math.abs(b) > edge && Math.abs(Math.abs(b) - edge) > Math.abs(want)) want = Math.sign(b) * Math.min((25 * Math.PI) / 180, Math.abs(b) - edge);
+    }
+    cam.yaw += (want - cam.yaw) * Math.min(1, frameDt * 8);
     if (run.phase === 'jump') {
       const u = Math.min(1, run.phaseT / R.beats.jump), D = -2 * R.roof.back + R.roof.gap, [sx, sz] = R.courier.start;
       const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
@@ -383,9 +457,10 @@ export function initRooftop(ctx) {
     const sk = t - fx.shakeT;
     if (sk >= 0 && sk < 0.35) { const a = 9 * (1 - sk / 0.35) ** 2; g.translate(a * Math.sin(t * 83), a * Math.cos(t * 71)); }
     const glow = streakGlow();
-    g.drawImage(layers.sky, 0, 0, W, H);
+    const bx = -(layers.VW - W) / 2 - Math.tan(cam.yaw) * F;
+    g.drawImage(layers.sky, bx, 0, layers.VW, H);
     // the city's windows, neon and horizon glow brighten as the streak builds
-    g.globalAlpha = 0.35 + 0.65 * glow; g.drawImage(layers.litAll, 0, 0, W, H); g.globalAlpha = 1;
+    g.globalAlpha = 0.35 + 0.65 * glow; g.drawImage(layers.litAll, bx, 0, layers.VW, H); g.globalAlpha = 1;
     const s = run.sim, fade = run.phase === 'jump' ? Math.max(0, 1 - run.phaseT / (R.beats.jump * 0.5)) : run.phase === 'live' && started ? Math.min(1, s.t / 0.4) : 1;
     // far to near: friends' buildings (with friends and watchers), the next roof once the round is done, his roof,
     // then the drones (always nearer than the buildings' fronts while they hunt him)
@@ -393,7 +468,9 @@ export function initRooftop(ctx) {
     const D = -2 * R.roof.back + R.roof.gap;
     if (run.phase !== 'live') roof(D);
     roof(0);
-    for (const d of s.drones.filter((x) => !x.gone && (x.launched || s.t >= x.launchT - R.drones.warn)).sort((a, c) => c.z - a.z)) drone(d, s);
+    // a locked-on drone's path on the roof (a red line), a diving drone's landing spot (a red ring), so he can read the rush
+    for (const d of s.drones) if (d.committed && !d.passed && !d.gone) floorMark(d, s);
+    for (const d of s.drones.filter((x) => !x.gone && (x.launched || s.t >= x.launchT - x.warn)).sort((a, c) => c.z - a.z)) drone(d, s);
     pkg(s);
     rain(t);
     hands(s);
@@ -409,32 +486,33 @@ export function initRooftop(ctx) {
   function quad(pts, fill) { g.fillStyle = fill; g.beginPath(); g.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y); g.closePath(); g.fill(); }
   /** His roof (dz = 0) or the next one (dz = D): tar tiles, puddles that catch the neon, a lit parapet. */
   function roof(oz) {
+    const pc = (x, y, z) => project(x, y, z, true);
     const hw = R.roof.half_width, z0 = R.roof.back + oz, z1 = -R.roof.back + oz;
     const near = Math.max(z0, cam.z + 0.3); if (near >= z1) return;
-    const a = project(-hw, 0, near), b = project(hw, 0, near), c = project(hw, 0, z1), d = project(-hw, 0, z1);
+    const a = pc(-hw, 0, near), b = pc(hw, 0, near), c = pc(hw, 0, z1), d = pc(-hw, 0, z1);
     if (!a || !c) return;
     // the wall below the front edge, into the dark
-    const fl = project(-hw, -12, z1), fr = project(hw, -12, z1);
+    const fl = pc(-hw, -12, z1), fr = pc(hw, -12, z1);
     if (fl && fr) { const gr = g.createLinearGradient(0, d.y, 0, fl.y); gr.addColorStop(0, '#1A1030'); gr.addColorStop(1, 'rgba(10,6,20,0)'); quad([d, c, fr, fl], gr); }
     quad([a, b, c, d], '#140E22');
     // tiles
     g.strokeStyle = 'rgba(160,120,255,0.13)'; g.lineWidth = 1; g.beginPath();
-    for (let x = -hw + 1; x < hw; x += 1) { const p = project(x, 0, near), q = project(x, 0, z1); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); }
-    for (let z = Math.ceil(near); z < z1; z += 1) { const p = project(-hw, 0, z), q = project(hw, 0, z); if (p && q) { g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); } }
+    for (let x = -hw + 1; x < hw; x += 1) { const p = pc(x, 0, near), q = pc(x, 0, z1); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); }
+    for (let z = Math.ceil(near); z < z1; z += 1) { const p = pc(-hw, 0, z), q = pc(hw, 0, z); if (p && q) { g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); } }
     g.stroke();
     // puddles with the city in them
     g.globalCompositeOperation = 'lighter';
     for (const [px, pz, col] of [[-2.6, -1.6, layers.glow.pink], [2.2, 0.8, layers.glow.hunt], [-0.4, 2.1, layers.glow.pink]]) {
-      const p = project(px, 0, pz + oz); if (!p) continue;
+      const p = pc(px, 0, pz + oz); if (!p) continue;
       g.globalAlpha = 0.14 + 0.25 * streakGlow(); g.drawImage(col, p.x - p.s * 1.4, p.y - p.s * 0.25, p.s * 2.8, p.s * 0.5);
     }
     g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     // the parapet: a low wall with a neon strip on the front and the sides
     const h = 0.45, col = '#FF4FB8';
-    const tl = project(-hw, h, z1), tr = project(hw, h, z1);
+    const tl = pc(-hw, h, z1), tr = pc(hw, h, z1);
     if (tl && tr) { quad([d, c, tr, tl], '#22163A'); line(tl, tr, col, 2.5); }
     for (const sx of [-hw, hw]) {
-      const p = project(sx, h, near), q = project(sx, h, z1), p0 = project(sx, 0, near), q0 = project(sx, 0, z1);
+      const p = pc(sx, h, near), q = pc(sx, h, z1), p0 = pc(sx, 0, near), q0 = pc(sx, 0, z1);
       if (p && q) { quad([p0, q0, q, p], '#1C1230'); line(p, q, col, 2); }
     }
   }
@@ -481,8 +559,7 @@ export function initRooftop(ctx) {
     } else { g.globalAlpha = 0.45 * fade; g.drawImage(layers.glow.watch, hx - 6, hy - 6, 12, 12); }
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = fade;
     // his tag: his shape (and his key on a computer), gold when his lantern is lit
-    const keyOf = [...tossKeys(s.round)].find(([, id]) => id === f.id);
-    const label = GLYPHS[f.id] + (fine && keyOf ? ' ' + keyOf[0].toUpperCase() : '');
+    const num = friendNumber(s.round, f.id), label = fine ? `${num} · ${LAYOUTS[layout].letters[num - 1]}` : String(num);
     const ty = feet.y - k * 2.5 - 16;
     g.font = `800 ${Math.round(Math.max(13, Math.min(20, k * 0.5)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
     const tw = g.measureText(label).width + 14;
@@ -504,10 +581,32 @@ export function initRooftop(ctx) {
     g.globalCompositeOperation = 'source-over';
   }
 
+  function floorMark(d, s) {
+    const blink = 0.55 + 0.45 * Math.sin(run.clock * 18);
+    g.save(); g.strokeStyle = LOCK; g.globalAlpha = 0.85 * blink;
+    if (d.aim === 'dive') {
+      // where it comes down: a ring on the roof under it, at the depth it locked on
+      const c = project(d.x, 0, d.aimZ), e1 = project(d.x - R.drones.dive.reach, 0, d.aimZ), e2 = project(d.x, 0, d.aimZ + R.drones.dive.reach);
+      if (c && e1 && e2) { g.lineWidth = 3; g.beginPath(); g.ellipse(c.x, c.y, Math.abs(c.x - e1.x), Math.max(3, Math.abs(c.y - e2.y)), 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha *= 0.25; g.fillStyle = LOCK; g.fill(); }
+    } else {
+      // its straight line along the roof, from under it on past him
+      g.lineWidth = 2.5; g.setLineDash([10, 8]); g.beginPath();
+      let first = true;
+      for (let k = 0; k <= 16; k++) {
+        const p = project(d.x + d.dx * k * 0.6, 0.02, d.z + d.dz * k * 0.6);
+        if (!p) { first = true; continue; }
+        if (first) { g.moveTo(p.x, p.y); first = false; } else g.lineTo(p.x, p.y);
+      }
+      g.stroke(); g.setLineDash([]);
+    }
+    g.restore();
+    void s;
+  }
+
   /** A hunter drone: four rotors, a body, an eye that turns from cyan (hunting) to red (locked on), a light trail.
    * Before it launches it hovers where it will come from, blinking inside a shrinking ring, so he sees it coming. */
   function drone(d, s) {
-    const y = R.drones.height + Math.sin(run.clock * 6 + d.x) * 0.05;
+    const y = d.h + Math.sin(run.clock * 6 + d.x) * 0.05;
     const p = project(d.x, y, d.z); if (!p) return;
     // trail
     let tr = trails.get(d); if (!tr) { tr = []; trails.set(d, tr); }
@@ -604,7 +703,7 @@ export function initRooftop(ctx) {
   function edges(s, t) {
     for (const d of s.drones) {
       if (!d.launched || d.gone || d.passed) continue;
-      const p = project(d.x, R.drones.height, d.z);
+      const p = project(d.x, d.h, d.z);
       if (p && p.x > 0 && p.x < W) continue;
       const side = Math.sign(d.x - s.x) || offSign(G), dist = Math.hypot(d.x - s.x, d.z - s.z);
       const near = Math.max(0, 1 - dist / R.drones.spawn), flick = d.committed ? (Math.sin(t * 40) > 0 ? 1 : 0.35) : 0.55;
@@ -671,6 +770,7 @@ function sound() {
     catch(n) { if (!ac) return; const b = 660 * Math.pow(2, Math.min(n, 8) / 12); tone(b, at(), 0.25, 'triangle', 0.18); tone(b * 1.5, at() + 0.08, 0.3, 'triangle', 0.15); },
     drop() { if (ac) tone(220, at(), 0.3, 'triangle', 0.12, 0.6); },
     near() { if (ac) { noise(at(), 0.25, 0.25, 1200); tone(900, at(), 0.2, 'sine', 0.08, 2); } },
+    clutch() { if (ac) { noise(at(), 0.3, 0.3, 900); [880, 1320, 1760].forEach((f, i) => tone(f, at() + i * 0.05, 0.18, 'square', 0.05)); } },
     lock() { if (ac) tone(1760, at(), 0.06, 'square', 0.04); },
     hit() { if (!ac) return; tone(120, at(), 0.5, 'sawtooth', 0.3, 0.3); noise(at(), 0.4, 0.3, 300); clearInterval(timer); },
     level() { if (!ac) return; [523, 659, 784].forEach((f, i) => tone(f, at() + i * 0.07, 0.2, 'triangle', 0.12)); },

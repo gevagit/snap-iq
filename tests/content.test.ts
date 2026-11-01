@@ -22,13 +22,15 @@ describe('Football Bible content (batch 1)', () => {
     expect(r.counts.toConfirm).toBe(0);
   });
 
-  it('records the owner sign-off on batches 1-4 (defaults accepted)', () => {
+  it('records the owner sign-off on batches 1-4 (defaults accepted); batch 6 (rush names) waits for review', () => {
     const r = validateContent(raw);
-    const g = raw.glossary as { terms: { reviewed: boolean; reviewer?: string }[] };
-    expect(g.terms.every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
+    const g = raw.glossary as { terms: { id: string; batch?: number; reviewed: boolean; reviewer?: string }[] };
+    expect(g.terms.filter((t) => (t.batch ?? 1) <= 5).every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
+    const pending = g.terms.filter((t) => !t.reviewed);
+    expect(pending.every((t) => t.batch === 6)).toBe(true);
     expect((raw.pocket as { reviewed: boolean }).reviewed).toBe(true);
     expect(r.counts.batch2.needsReview).toBe(0);
-    expect(r.counts.needsReview).toBe(0);
+    expect(r.counts.needsReview).toBe(pending.length);
   });
 
   it('rejects a duplicate glossary id', () => {

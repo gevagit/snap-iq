@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
+import { rng } from '../src/game/drill';
 import { parsePlayContent } from '../src/play/content';
 import {
-  Run, RoundSim, STEP, VIEW, checkRules, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
+  Run, RoundSim, STEP, VIEW, checkRules, friendNumber, inView, watched, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
   type Action, type Input, type Round,
 } from '../src/rooftop';
 
 const raw = loadRawContent();
 const g = makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand);
-const still = () => ({ mx: 0, mz: 0 });
+const still = (): Input => ({});
+const RIGHT = { x: 1, z: 0 };
 
 /** Play a run with a controller until it is over (or a time limit). */
 function play(run: Run, policy: (r: Run) => Input & { action?: Action }, limit = 120) {
@@ -42,7 +44,7 @@ describe('Rooftop Run', () => {
   });
 
   it('is deterministic: the same seed and inputs give the same run (golden replay)', () => {
-    const script = () => { const i = ideal(); return (r: Run) => (r.clock > 1.2 && r.clock < 1.6 ? { mx: 0.6, mz: 0.3 } : i(r)); };
+    const script = () => { const i = ideal(); return (r: Run) => (r.clock >= 1.2 && r.clock < 1.2 + STEP ? { tap: RIGHT } : i(r)); };
     const a = play(new Run(g, 4242, 1), script(), 40), b = play(new Run(g, 4242, 1), script(), 40);
     expect(b.score).toBe(a.score);
     expect(b.log.map((l) => [l.round.pattern.id, l.result.kind, l.result.t])).toEqual(a.log.map((l) => [l.round.pattern.id, l.result.kind, l.result.t]));
@@ -63,13 +65,14 @@ describe('Rooftop Run', () => {
     expect(run.log.at(-1)!.result.kind).toBe('hit');
   });
 
-  it('a drone that commits flies straight: cutting after the commit beats it, cutting before does not', () => {
-    const round = roundOf('dive', 3), r = g.r;
-    // stand, then cut at the commit: a miss
-    const late = runRound(g, round, (s) => (s.drones[0]!.committed ? { mx: 1.5, mz: 0 } : still()), 6);
+  it('a drone that locks on flies straight: one tap after the lock-on beats it, a tap before does not', () => {
+    const round = roundOf('head_on', 3), r = g.r;
+    const once = (when: (s: RoundSim) => boolean) => { let done = false; return (s: RoundSim): Input => (!done && when(s) ? ((done = true), { tap: RIGHT }) : still()); };
+    // stand, then one tap at the lock-on: a miss
+    const late = runRound(g, round, once((s) => s.drones[0]!.committed), 6);
     expect(late.drones[0]!.passed).toBe(true);
-    // cut early and hold the same line: it steers onto him
-    const early = runRound(g, round, (s) => (s.t > round.launches[0]!.t + 0.2 ? { mx: 0.6, mz: 0 } : still()), 6);
+    // one tap early: it steers onto him
+    const early = runRound(g, round, once((s) => s.t > round.launches[0]!.t + 0.2), 6);
     expect(early.result?.kind).toBe('hit');
     expect(r.drones.commit.end * r.drones.speed.end).toBeGreaterThan(r.drones.hit);
   });
@@ -86,7 +89,7 @@ describe('Rooftop Run', () => {
   it('a toss into a watcher still on his friend is snatched and ends the run', () => {
     const run = play(new Run(g, 11, 1), (r) => {
       const s = r.sim, f = s.round.friends.find((ff) => separation(g, ff, s.t + g.r.toss.release) < g.r.friends.snatch);
-      return s.holding && f && s.t > 0.2 ? { mx: 0, mz: 0, action: { kind: 'toss', target: f.id } } : still();
+      return s.holding && f && s.t > 0.2 ? { action: { kind: 'toss', target: f.id } } : still();
     });
     expect(run.log.at(-1)!.result.kind).toBe('snatch');
     expect(run.phase).toBe('over');
@@ -110,7 +113,7 @@ describe('Rooftop Run', () => {
   });
 
   it('holding the package past the hot clock brings more drones', () => {
-    const round = roundOf('swoop', 1);
+    const round = roundOf('edge', 1);
     const s = new RoundSim(g, round), p = idealPolicy(g);
     while (!s.result && s.t < g.r.scoring.hot_clock + g.r.scoring.swarm_every * 1.5) { const u = p(s); s.step(u); } // never tosses
     expect(s.drones.some((d) => d.swarm)).toBe(true);
@@ -127,17 +130,101 @@ describe('Rooftop Run', () => {
     }
   });
 
-  it('a person always has time: react to the lock-on a beat late, walk (no sprint) clear', () => {
+  it('a person always has time: tap a beat after the lock-on and it misses', () => {
     for (let level = 1; level <= g.r.ramp.levels; level += 3) for (let i = 0; i < 8; i++) {
       const round = makeRound(g, level, 900 + 10 * level + i);
-      const s = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, walk: true }));
+      const s = runRound(g, round, idealPolicy(g, { react: g.r.drones.react }));
       expect(s.result?.kind, `level ${level} ${round.pattern.id}`).toBe('catch');
     }
   });
 
-  it('blindside waves come from his off-hand side', () => {
-    const round = roundOf('blindside');
-    for (const l of round.launches) expect(Math.sign(l.x - g.r.courier.start[0])).toBe(offSign(g));
+  it('he moves by taps: each tap is one step, holding does nothing more, tapping fast goes further', () => {
+    const round = makeRound(g, 1, 5), r = g.r;
+    const s = new RoundSim(g, round), x0 = s.x;
+    s.step({ tap: RIGHT });
+    for (let k = 0; k < 60; k++) s.step(still()); // half a second, no more taps
+    expect(s.x - x0).toBeCloseTo(r.courier.step, 3);
+    expect(Math.hypot(s.vx, s.vz)).toBeLessThan(1e-6);
+    // three quick taps: three steps, quickly
+    const q = new RoundSim(g, round);
+    for (let k = 0; k < 36; k++) q.step(k % 12 === 0 ? { tap: RIGHT } : still());
+    for (let k = 0; k < 30; k++) q.step(still());
+    expect(q.x - x0).toBeCloseTo(3 * r.courier.step, 3);
+    expect(q.taps).toBe(3);
+  });
+
+  it('a drone that can still get him stays in his view, however he moves (random tapping)', () => {
+    let rounds = 0, out = 0, hunting = 0;
+    for (let level = 1; level <= g.r.ramp.levels; level += 2) for (let i = 0; i < 20; i++) {
+      const round = makeRound(g, level, 7000 + level * 100 + i), rand = rng(level * 31 + i);
+      let next = 0.2, seen = true;
+      runRound(g, round, (s) => {
+        for (const d of watched(g, s)) if (!inView(g, s, d)) { seen = false; if (!d.committed) hunting++; }
+        if (s.t < next) return still();
+        next = s.t + 0.15 + rand() * 0.6;
+        const k = Math.floor(rand() * 5);
+        return k < 4 ? { tap: [RIGHT, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 }][k]! } : still();
+      }, 12);
+      rounds++; if (!seen) out++;
+    }
+    // a hunting drone never leaves his view; a locked-on one only right at the edge in its last moment, rarely
+    expect(hunting).toBe(0);
+    expect(out / rounds).toBeLessThan(0.02);
+  });
+
+  it('waves from his off-hand side come from that side', () => {
+    const round = roundOf('collapse', 9), l = round.launches.find((x) => x.from === 'off')!;
+    expect(Math.sign(l.x - g.r.courier.start[0])).toBe(offSign(g));
+  });
+
+  it('a diving drone follows him sideways: a step sideways is caught, a step up takes him under it, a drop leaves it short', () => {
+    const round = roundOf('dive', 3);
+    const once = (tap: { x: number; z: number }) => { let done = false; return (s: RoundSim): Input => (!done && s.drones[0]!.committed ? ((done = true), { tap }) : still()); };
+    expect(runRound(g, round, once(RIGHT), 8).result?.kind).toBe('hit');
+    expect(runRound(g, round, once({ x: -1, z: 0 }), 8).result?.kind).toBe('hit');
+    for (const tap of [{ x: 0, z: 1 }, { x: 0, z: -1 }]) {
+      const s = runRound(g, round, once(tap), 8);
+      expect(s.result?.kind, JSON.stringify(tap)).not.toBe('hit');
+      expect(s.drones[0]!.passed).toBe(true);
+    }
+  });
+
+  it('every wave asks for what it says: up-or-back waves beat sideways-only play, combo waves beat one-direction play', () => {
+    for (const p of g.r.patterns) {
+      if (p.needs === 'any') continue;
+      const round = roundOf(p.id, 10);
+      const limited = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, moves: p.needs === 'up_or_back' ? 'lateral' : 'single' }));
+      expect(limited.result?.kind, p.id).not.toBe('catch');
+      expect(runRound(g, round, idealPolicy(g, { react: g.r.drones.react })).result?.kind, p.id).toBe('catch');
+    }
+  });
+
+  it('getting clear only at the last moment is a clutch dodge and scores a bonus', () => {
+    const round = roundOf('head_on', 3), d0 = round.launches[0]!;
+    // stand until the drone is about to arrive, then one sharp step
+    let done = false;
+    const s = runRound(g, round, (sim) => {
+      const d = sim.drones[0]!;
+      if (!done && d.committed && Math.hypot(d.x - sim.x, d.z - sim.z) / d.speed < 0.2) { done = true; return { tap: { x: 1, z: 0, power: g.r.courier.power_max } }; }
+      return still();
+    }, 8);
+    expect(s.result?.kind).not.toBe('hit');
+    expect(s.clutches).toBe(1);
+    expect(d0.speed).toBeGreaterThan(0);
+    // and a run scores it
+    const run = new Run(g, 1, 1);
+    expect(g.r.scoring.clutch.points).toBeGreaterThan(0);
+    expect(run.clutches).toBe(0);
+  });
+
+  it('a sharp flick is a longer, faster step', () => {
+    const round = makeRound(g, 1, 5), r = g.r;
+    const soft = new RoundSim(g, round), sharp = new RoundSim(g, round);
+    soft.step({ tap: RIGHT }); sharp.step({ tap: { ...RIGHT, power: r.courier.power_max } });
+    for (let k = 0; k < 12; k++) { soft.step(still()); sharp.step(still()); }
+    expect(sharp.x - r.courier.start[0]).toBeGreaterThan(soft.x - r.courier.start[0]);
+    for (let k = 0; k < 120; k++) { soft.step(still()); sharp.step(still()); }
+    expect(sharp.x - r.courier.start[0]).toBeCloseTo(r.courier.step * r.courier.power_max, 3);
   });
 
   it('a toss to a friend who is not out this round does nothing', () => {
@@ -149,11 +236,11 @@ describe('Rooftop Run', () => {
     expect(STEP).toBeGreaterThan(0);
   });
 
-  it('Y U I O P go left to right across his view: Y the leftmost friend, P the rightmost', () => {
-    const want: Record<number, string> = { 1: 'i', 2: 'yp', 3: 'yip', 4: 'yuop', 5: 'yuiop' };
+  it('friends are numbered 1, 2, 3... left to right across his view (the toss keys and buttons)', () => {
     for (let level = 1; level <= 8; level++) for (let i = 0; i < 4; i++) {
       const round = makeRound(g, level, 300 + 10 * level + i), keys = tossKeys(round);
-      expect([...keys.keys()].join('')).toBe(want[round.friends.length]);
+      expect([...keys.keys()].join('')).toBe('12345'.slice(0, round.friends.length));
+      for (const [k, id] of keys) expect(friendNumber(round, id)).toBe(Number(k));
       const xs = [...keys.values()].map((id) => round.friends.find((f) => f.id === id)!.x);
       expect([...xs].sort((a, b) => a - b)).toEqual(xs);
     }

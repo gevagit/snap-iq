@@ -12,24 +12,32 @@ running and leaping to the next roof, a little faster each time. **A hit or a sn
 
 | Pocket idea | Rooftop Run |
 |---|---|
-| Rusher | Hunter drone (cyan eye while it hunts) |
-| The moment to move | The drone **locks on** (eye turns red) and flies straight: cut sideways then, not before |
-| Edge, push, collapse, free rusher | Patterns: swoop (from a side), dive (head-on), pincer (both sides), blindside (two from his off-hand side), double, swarm, early (a lantern lights before the wave gets there). Every drone launches in front of him, inside his view, and blinks there for a second first (owner, 2026-10-31: no drone out of nowhere) |
-| Open receiver | A friend whose lantern lights |
+| Rusher | A drone. A **darting** drone locks on (eye and ring turn red) and flies a straight line, drawn red on the roof: get off the line. A **diving** drone comes in high, locks on his spot, follows him sideways and dives onto it, with a red ring on the roof: step up under it or drop back (sideways can't shake it, like an edge keeping him in the pocket) |
+| Rush concepts | Waves, named after the rush they copy (the glossary term once signed off, a plain name until then): head-on, edge rush (speed rush), dive, free drone (free rusher: throw hot), push up the middle (bull rush), four-drone rush, blitz, crossfire (stunt), pocket collapse, everybody comes (all-out blitz). Drones aim at him, at the lane one step beside him (an edge taking it away), across (a stunt), or at the spot in front of or behind him |
+| What a wave asks | Checked on every round: `any` dodge; `up_or_back` (a sideways-only player fails); `combo` (a one-direction player fails: up then around, back then around) |
+| Open receiver | A friend whose lantern lights; friends are numbered 1, 2, 3... left to right |
 | Interception | A toss while the watcher is still on him: snatched, the run ends |
 | Incompletion | A toss before the lantern is fully lit: dropped, the streak starts over |
 | Hot clock | Hold the package past 5 s and more drones come |
 
-- **Feet (pad, his off-hand thumb):** move on his roof; past the ring to sprint. Drones lead him while they hunt, so
-  running in a straight line does not work: wait for the lock-on (ring turns red), then step sideways. The lock-on
-  comes 0.85 s before impact at level 1 and never later than 0.55 s; every round is checked to be beatable by someone
-  who reacts 0.25 s after the lock-on and only walks (owner, 2026-10-31: the controls must always be quick enough).
-- **Guide:** for his first five runs, prompts say what to do now (drone coming, step sideways, toss to ◆), and the
-  lit friend's button glows gold.
-- **Eyes:** 3-5 friends across his view; lanterns light anywhere, often on his blind (off-hand) side as levels go up.
-- **Hands (his throwing thumb):** fixed buttons, one per friend, each with the shape over that friend (◆ ● ▲ ■ ★),
-  always in the same place. On a computer: W A S D move (Shift sprints), Y U I O P toss left to right across the
-  view, Space starts, click a friend. A game controller works (left stick, X Y A B RB).
+- **Feet (owner's son, 2026-10-31):** one step per key press (holding does nothing more); on the iPad a one-finger
+  joystick that appears where the finger lands on its half of the screen: each flick is a step, a sharp flick a
+  longer, faster one.
+- **Righty or lefty (owner, 2026-11-01),** picked on the start card and remembered: righty moves with the arrows and
+  the joystick on the right, tosses with Q W E R T and the buttons bottom left; lefty is flipped as-is, W A S D and
+  the joystick on the left, Y U I O P and the buttons bottom right. The number keys toss in both. Controller: d-pad or a flick of the stick. Drones lead him while they hunt, so
+  moving early does not work. The lock-on comes 0.85 s before impact at level 1 and never later than 0.55 s.
+- **The right play** looks ahead when a drone locks on (after a person's 0.25 s reaction): it tries combos of up to
+  three taps on a copy of the round and keeps the shortest that gets him through. Every round must be beatable that
+  way, every wave must ask for what it says, and standing still must get him hit.
+- **Always in view:** drones launch within 28 degrees of straight ahead; a drone that can still get him stays in view
+  (checked on every round and by a random-tapping test); his head turns toward a locked-on one at the edge.
+- **Last-second dodge:** a drone that was on him when it locked on, dodged in the last 0.3 s: a bonus, bigger the
+  later he got clear ("LAST SECOND!" / "CLOSE CALL").
+- **Guide:** for his first five runs each wave's hint shows with its name, prompts say what to do now, and the lit
+  friend's number button glows gold.
+- **Hands:** numbered buttons 1-5 side by side; on a computer Q W E R T or Y U I O P (by layout) or the number keys. A game controller
+  works (X Y A B RB toss the 1st to 5th from the left).
 
 ## Hooks (owner: all four)
 - **Near miss:** a drone that passes close without hitting scores points (times the streak).
