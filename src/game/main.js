@@ -11,6 +11,12 @@ import { initRooftop } from './rooftop.js';
 import { makeGame, unlocked } from '../rooftop';
 
 const C = parsePlayContent(raw);
+
+// No zooming on the iPad (owner, 2026-11-01): Safari ignores user-scalable=no, so cancel its pinch gestures, any
+// two-finger move and a double tap; the CSS (touch-action) keeps single taps and the home screen's scrolling.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
 // Rooftop Run, the Pocket workout (not football): its own settings, his throwing hand from his football profile
 const G = makeGame(raw.rooftop, C.quarterback.throwing_hand);
 const R = C.drills.routine;

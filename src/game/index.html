@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <title>SNAP IQ</title>
 <meta name="theme-color" content="#1C2430">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,7 +27,12 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
-html, body { margin: 0; height: 100%; background: var(--ink); color: var(--ink); font-family: var(--font); overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+html, body { margin: 0; height: 100%; background: var(--ink); color: var(--ink); font-family: var(--font); overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+/* no zooming on the iPad: no double-tap zoom anywhere (taps stay quick), and no gesture at all on the game screens */
+html, body, * { touch-action: manipulation; }
+#rep, #roof, #rep *, #roof * { touch-action: none; }
+#rep .ask, #rep .ask *, #rep .result, #rep .result *, #roof .rreport, #roof .rreport * { touch-action: pan-y; } /* panels that scroll */
+* { -webkit-touch-callout: none; }
 button { font: inherit; cursor: pointer; border: 0; touch-action: manipulation; }
 button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 .screen { position: fixed; inset: 0; display: none; }
