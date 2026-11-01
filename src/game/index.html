@@ -21,6 +21,8 @@
   --off: #1F5FD1; --def: #C94A16; --ok: #2F7D4F; --bad: #B42318; --gold: #C9971C;
   --panel: rgba(16, 20, 26, 0.86); --panel-ink: #FFFFFF; --panel-ink-2: #AEB7C3;
   --font: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  /* room at the bottom for the host's "Powered by Netlify" badge (bottom right): controls sit above it */
+  --badge: 60px;
   color-scheme: light;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -89,7 +91,7 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 .clock i { position: absolute; inset: 0 auto 0 0; background: #F2C14E; }
 .clock.out i { background: #F97066; width: 100% !important; }
 .clock b { position: relative; display: block; text-align: center; font-size: 14px; line-height: 22px; color: var(--ink); font-variant-numeric: tabular-nums; }
-.look { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 6px; }
+.look { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--badge)); display: flex; gap: 6px; }
 .look button { background: var(--panel); color: #fff; border-radius: 12px; padding: 12px 14px; font-weight: 800; font-size: 15px; }
 .pill.call { position: absolute; top: 40px; left: 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .result ul { grid-template-columns: 1fr 1fr; }
@@ -155,18 +157,18 @@ button:focus-visible { outline: 3px solid #7FA6F2; outline-offset: 2px; }
 .rpop { top: 20%; font-size: 26px; color: #fff; text-shadow: 0 0 14px rgba(255,79,184,0.9), 0 2px 0 rgba(0,0,0,0.5); }
 .rpop.on, .rlevelup.on { opacity: 1; }
 .rlevelup { top: 34%; font-size: 44px; color: #A8FF3E; text-shadow: 0 0 20px rgba(168,255,62,0.8); }
-.rclock { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: 58px; height: 58px; display: grid; place-items: center; pointer-events: none; }
+.rclock { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--badge)); transform: translateX(-50%); width: 58px; height: 58px; display: grid; place-items: center; pointer-events: none; }
 .rclock svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .rclock circle { fill: none; stroke-width: 4; }
 .rclock circle.bg { stroke: rgba(255,255,255,0.15); fill: rgba(10,8,24,0.55); }
 #rClockArc { stroke: #FFFFFF; stroke-dasharray: 100; stroke-linecap: round; }
 .rclock.late #rClockArc { stroke: #FF9A3C; }
 .rclock b { font-size: 15px; font-weight: 800; font-stretch: 80%; font-variant-numeric: tabular-nums; }
-.rtoss { position: absolute; left: max(12px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 8px; }
+.rtoss { position: absolute; left: max(12px, env(safe-area-inset-left)); bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--badge)); display: flex; gap: 8px; }
 .rtoss button { width: 62px; height: 62px; border-radius: 14px; color: #fff; background: rgba(10,8,24,0.66); border: 1.5px solid rgba(255,255,255,0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); touch-action: none; font-size: 28px; font-weight: 800; font-stretch: 80%; }
 .rtoss button.dim:not(.lit) { opacity: 0.55; }
-.rstick { position: absolute; top: 64px; right: 0; bottom: 0; width: 50%; touch-action: none; }
-.rstick .base { position: absolute; left: calc(100% - 120px); top: calc(100% - 120px); width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%; border: 1.5px solid rgba(63,224,255,0.45); background: radial-gradient(circle, rgba(10,8,24,0.25) 0 55%, rgba(10,8,24,0.55) 100%); pointer-events: none; transition: opacity 0.2s; opacity: 0.6; }
+.rstick { position: absolute; top: 64px; right: 0; bottom: var(--badge); width: 50%; touch-action: none; }
+.rstick .base { position: absolute; left: calc(100% - 120px); top: calc(100% - 90px); width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%; border: 1.5px solid rgba(63,224,255,0.45); background: radial-gradient(circle, rgba(10,8,24,0.25) 0 55%, rgba(10,8,24,0.55) 100%); pointer-events: none; transition: opacity 0.2s; opacity: 0.6; }
 .rstick.held .base { opacity: 1; transition: none; }
 .rstick .knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFFFFF, #BFD7F2); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
 .rstick .base i { position: absolute; font-style: normal; font-weight: 800; color: rgba(255,255,255,0.45); font-size: 16px; }
