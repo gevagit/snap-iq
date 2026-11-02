@@ -52,8 +52,8 @@ whose lantern lights; a catch sends him leaping to the next roof. **A hit or a s
 - **Feet:** one step per key press or joystick flick (a sharp flick is a longer step); righty or lefty layout.
 - **Last-second dodge:** getting clear of a drone that was on him only in the last 0.3 s scores a bonus.
 - **Guide:** for his first five runs, prompts say what to do now (step up, off its line, toss to 2...).
-- **Hands:** numbered buttons, friends numbered left to right (the RB too when he runs a route); before the snap the
-  same buttons pick the threat for the RB.
+- **Hands:** numbered buttons, friends numbered left to right (the RB too when he runs a route). Before the snap he
+  taps a back-row drone to keep the RB on it (on a computer, its number key); no buttons show then on the iPad.
 
 ## Hooks (owner: all four)
 - **Near miss:** a drone that passes close without hitting scores points (times the streak).
