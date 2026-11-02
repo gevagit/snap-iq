@@ -94,10 +94,10 @@ export function checkRules(r: Rules): string[] {
   if (r.friends.snatch >= lit) e.push(`${file}: snatch reach must be closer than a lit lantern's watcher`);
   if (r.friends.length[0] < 1 || r.friends.length[1] > 3) e.push(`${file}: a lantern stays lit 1 to 3 seconds (owner)`);
   for (const b of r.rush.boxes) {
-    if (b.front + b.back > 8 || b.front + b.back < 3) e.push(`${file}: box ${b.id} has ${b.front + b.back} drones (the box holds 3 to 8)`);
-    if (b.front < 2) e.push(`${file}: box ${b.id} needs at least 2 drones on the line`);
+    if (b.front + b.back > 8 || b.front + b.back < 3) e.push(`${file}: set-up ${b.id} has ${b.front + b.back} drones (3 to 8)`);
+    if (b.front < 2) e.push(`${file}: set-up ${b.id} needs at least 2 drones in the front row`);
   }
-  if (!r.rush.boxes.some((b) => b.from === 1)) e.push(`${file}: no box at level 1`);
+  if (!r.rush.boxes.some((b) => b.from === 1)) e.push(`${file}: no set-up at level 1`);
   const ids = new Set<string>();
   for (const k of ['jackets', 'trails'] as const) {
     if (!r.unlocks[k].some((u) => u.at === 0)) e.push(`${file}: no ${k} look free from the start`);
@@ -151,12 +151,12 @@ export const isLit = (g: Game, f: Friend, t: number) => separation(g, f, t) >= l
 /** How wide his view is (degrees, across). */
 export const VIEW = 100;
 export interface Protector { id: string; x: number; z: number; strength: number; rb: boolean }
-/** A drone in the box. On the line (front) it nearly always rushes (one may drop out); at the second level (back) it is
- * a threat: it may blitz (maybe a beat late: delay) or drop out, and may show a tell (creeping in). */
+/** A drone. In the front row it nearly always comes (one may hang back); in the back row it is a threat: it may come
+ * (maybe a beat late: delay) or hang back, and may show a tell (creeping in). */
 export interface Rusher { id: string; x: number; z: number; threat: boolean; blitz: boolean; tell: boolean; edge: boolean; side: -1 | 1; delay: number }
 export interface Round {
   seed: number; level: number;
-  /** the box's front: how many on the line and how many at the second level (like 4-3) */
+  /** the drones' set-up: how many in the front row and how many in the back row (like 4-3) */
   box: string;
   protectors: Protector[]; rb: Protector;
   rushers: Rusher[]; threats: Rusher[];
@@ -176,7 +176,7 @@ export function draftRound(g: Game, level: number, seed: number): Round {
     id: `P${k + 1}`, x: sx + (k - (P.linemen - 1) / 2) * P.spacing, z: sz + P.ahead, strength: Math.round(between(rand, str)), rb: false,
   }));
   const rb: Protector = { id: 'RB', x: sx + off * 1.4, z: sz + 1.3, strength: Math.round(between(rand, rangeAt(P.rb_strength, u))), rb: true };
-  // the box: drones on the line and at the second level (no DBs), in a front picked by level (like 4-3, 3-3, 5-3)
+  // the drones: a front row and a back row, in a set-up picked by level (like 4 and 3, 3 and 3, 5 and 3)
   const R = r.rush;
   const fronts = R.boxes.filter((x) => x.from <= level);
   let pick = rand() * fronts.reduce((a, x) => a + x.weight, 0);
@@ -592,10 +592,10 @@ export function makeRound(g: Game, level: number, seed: number): Round {
 
 /** The glossary terms the game names plays with (checked by npm run validate). */
 export const PLAY_TERMS = ['blitz-pickup', 'check-release'] as const;
-/** What the play is: the box and how many of it rush. */
+/** What the play is: how many drones come at him. */
 export function playKind(sim: RoundSim): { term: string | null; name: string } {
-  const rushing = sim.drones.filter((d) => d.freeT !== Infinity).length, box = sim.round.box;
-  return { term: null, name: `${box} box · ${rushing} rushing` };
+  const coming = sim.drones.filter((d) => d.freeT !== Infinity).length;
+  return { term: null, name: `${coming} coming` };
 }
 
 // ------------------------------------------------------------------ a run: play after play until a hit or a snatch

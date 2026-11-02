@@ -128,7 +128,7 @@ describe('Rooftop Run: the protection', () => {
     expect(picked).toBe(true);
   });
 
-  it('the box: every front by level, 3 to 8 drones, line drones rushing, second-level drones blitzing or dropping, some late', () => {
+  it('front and back rows: every set-up by level, 3 to 8 drones, front-row drones coming, back-row drones coming or hanging back, some late', () => {
     const seen = new Set<string>();
     let late = 0, onTime = 0;
     for (let i = 0; i < 1200; i++) {
