@@ -1,263 +1,228 @@
 import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
-import { rng } from '../src/game/drill';
 import { parsePlayContent } from '../src/play/content';
 import {
-  Run, RoundSim, STEP, VIEW, checkRules, friendNumber, inView, watched, idealPolicy, isLit, makeGame, makeRound, offSign, report, runRound, separation, standPolicy, sweepRooftop, tossKeys, unlocked,
+  Run, RoundSim, STEP, checkRules, draftRound, friendNumber, friendsOf, idealPolicy, idealRb, isLit, makeGame, makeRound,
+  report, runRound, separation, sweepRooftop, tossKeys, unlocked, RB_ID,
   type Action, type Input, type Round,
 } from '../src/rooftop';
 
 const raw = loadRawContent();
 const g = makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand);
 const still = (): Input => ({});
-const RIGHT = { x: 1, z: 0 };
+const UP = { x: 0, z: 1 }, RIGHT = { x: 1, z: 0 }, LEFT = { x: -1, z: 0 };
 
-/** Play a run with a controller until it is over (or a time limit). */
-function play(run: Run, policy: (r: Run) => Input & { action?: Action }, limit = 120) {
+/** Play a run with a controller until it is over (or a time limit); it calls the RB and snaps each play. */
+function play(run: Run, policy: (r: Run) => Input & { action?: Action }, limit = 120, rb: (r: Round) => string | null = idealRb) {
   while (run.phase !== 'over' && run.clock < limit) {
+    if (run.phase === 'pre') { run.callRb(rb(run.round)); run.snap(); }
     const u: Input & { action?: Action } = run.phase === 'live' ? policy(run) : still();
     if (u.action) run.act(u.action);
     run.step(u);
   }
   return run;
 }
-/** the good player: the right play, a fresh one each round */
 function ideal() {
   let sim: RoundSim | null = null, p: ReturnType<typeof idealPolicy> | null = null;
-  return (r: Run) => { if (r.sim !== sim) { sim = r.sim; p = idealPolicy(g); } return p!(r.sim); };
+  return (r: Run) => { if (r.sim !== sim) { sim = r.sim; p = idealPolicy(g, { react: g.r.drones.react }); } return p!(r.sim); };
 }
-function roundOf(pattern: string, level = 8): Round {
-  for (let i = 0; i < 300; i++) { const r = makeRound(g, level, 77 + i); if (r.pattern.id === pattern) return r; }
-  throw new Error(`no ${pattern} round`);
+/** A dealt play matching a test, searched over seeds. */
+function find(level: number, ok: (r: Round) => boolean, fair = true): Round {
+  for (let i = 0; i < 2000; i++) { const r = fair ? makeRound(g, level, 50 + i) : draftRound(g, level, 50 + i); if (ok(r)) return r; }
+  throw new Error('no such play');
+}
+/** A copy of a play where only one drone ever breaks free (the rest held all play). */
+function alone(r: Round, pick: (s: RoundSim) => string) {
+  const s = new RoundSim(g, r, null), id = pick(s);
+  for (const d of s.drones) if (d.id !== id) d.freeT = Infinity; // the rest drop out
+  return { s, id };
+}
+/** Run a copy to the moment that drone is past him (or a hit), tapping once after he sees it lock on (if `when` says). */
+function through(base: RoundSim, id: string, tap: Input['tap'] | null, when: (s: RoundSim) => boolean = (s) => { const d = s.drones.find((x) => x.id === id)!; return d.committed && s.t - d.commitT! >= g.r.drones.react; }) {
+  const s = base.clone();
+  let done = false;
+  while (!s.result && s.t < 8 && !s.drones.find((d) => d.id === id)!.passed) s.step(tap && !done && when(s) ? ((done = true), { tap }) : still());
+  return s;
 }
 
-describe('Rooftop Run', () => {
+describe('Rooftop Run: the protection', () => {
   it('has settings that make sense', () => {
     expect(checkRules(g.r)).toEqual([]);
   });
 
-  it('every round at every level is fair: the right play completes it, standing still does not', () => {
-    const s = sweepRooftop(g, 12);
+  it('every play at every level is fair whatever the RB call: a person who reacts a beat late gets through', () => {
+    const s = sweepRooftop(g, 4);
     expect(s.failures).toEqual([]);
-    expect(s.rounds).toBe(12 * g.r.ramp.levels);
-    for (const p of g.r.patterns) expect(s.byPattern[p.id] ?? 0, p.id).toBeGreaterThan(0);
+    expect(s.rounds).toBe(4 * g.r.ramp.levels);
   });
 
-  it('is deterministic: the same seed and inputs give the same run (golden replay)', () => {
-    const script = () => { const i = ideal(); return (r: Run) => (r.clock >= 1.2 && r.clock < 1.2 + STEP ? { tap: RIGHT } : i(r)); };
-    const a = play(new Run(g, 4242, 1), script(), 40), b = play(new Run(g, 4242, 1), script(), 40);
+  it('is deterministic: the same seed, RB calls and inputs give the same run (golden replay)', () => {
+    const script = () => { const i = ideal(); return (r: Run) => (r.sim.t >= 0.5 && r.sim.t < 0.5 + STEP ? { tap: RIGHT } : i(r)); };
+    const a = play(new Run(g, 4242, 3), script(), 40), b = play(new Run(g, 4242, 3), script(), 40);
     expect(b.score).toBe(a.score);
-    expect(b.log.map((l) => [l.round.pattern.id, l.result.kind, l.result.t])).toEqual(a.log.map((l) => [l.round.pattern.id, l.result.kind, l.result.t]));
+    expect(b.log.map((l) => [l.rb, l.result.kind, l.result.t])).toEqual(a.log.map((l) => [l.rb, l.result.kind, l.result.t]));
   });
 
-  it('the right play keeps a run going round after round, level after level, and the streak builds', () => {
-    const run = play(new Run(g, 7, 1), ideal(), 90);
+  it('waits for GO before every play, then the right play keeps a run going level after level', () => {
+    const run = new Run(g, 7, 1);
+    for (let k = 0; k < 240; k++) run.step(still());
+    expect(run.phase).toBe('pre');
+    expect(run.sim.t).toBe(0);
+    play(run, ideal(), 120);
     expect(run.log.length).toBeGreaterThan(8);
     expect(run.log.every((l) => l.result.kind === 'catch')).toBe(true);
     expect(run.level).toBeGreaterThan(1);
-    expect(run.multiplier).toBeCloseTo(Math.min(g.r.scoring.streak_cap, 1 + run.streak * g.r.scoring.streak_step), 5);
-    expect(run.timeline.length).toBeGreaterThan(10);
   });
 
-  it('standing still gets him hit, and the run ends', () => {
-    const run = play(new Run(g, 9, 1), (r) => standPolicy(g)(r.sim));
-    expect(run.phase).toBe('over');
-    expect(run.log.at(-1)!.result.kind).toBe('hit');
-  });
-
-  it('a drone that locks on flies straight: one tap after the lock-on beats it, a tap before does not', () => {
-    const round = roundOf('head_on', 3), r = g.r;
-    const once = (when: (s: RoundSim) => boolean) => { let done = false; return (s: RoundSim): Input => (!done && when(s) ? ((done = true), { tap: RIGHT }) : still()); };
-    // stand, then one tap at the lock-on: a miss
-    const late = runRound(g, round, once((s) => s.drones[0]!.committed), 6);
-    expect(late.drones[0]!.passed).toBe(true);
-    // one tap early: it steers onto him
-    const early = runRound(g, round, once((s) => s.t > round.launches[0]!.t + 0.2), 6);
-    expect(early.result?.kind).toBe('hit');
-    expect(r.drones.commit.end * r.drones.speed.end).toBeGreaterThan(r.drones.hit);
-  });
-
-  it('a drone that just misses him is a near miss and scores', () => {
-    let found = false;
-    for (let i = 0; i < 60 && !found; i++) {
-      const run = play(new Run(g, 300 + i, 2), ideal(), 30);
-      if (run.nearMisses > 0) { found = true; expect(run.score).toBeGreaterThan(run.deliveries * g.r.scoring.delivery); }
+  it('a stronger protector holds his drone longer, never more than 4 s', () => {
+    for (let i = 0; i < 40; i++) {
+      const s = new RoundSim(g, draftRound(g, 6, 900 + i), null);
+      for (const d of s.drones) if (d.blocker && d.freeT !== Infinity) expect(d.freeT).toBeLessThanOrEqual(g.r.protection.engage + g.r.protection.hold_max + 1e-9);
     }
-    expect(found).toBe(true);
+    // the same play with one lineman made stronger: his drone breaks free later
+    const r = find(4, (x) => !x.bust && x.rushers.length >= 4, false);
+    const d0 = new RoundSim(g, r, null).drones.find((d) => d.blocker && d.blocker !== 'RB' && d.freeT < g.r.protection.engage + 3)!;
+    const stronger: Round = { ...r, protectors: r.protectors.map((p) => (p.id === d0.blocker ? { ...p, strength: Math.min(99, p.strength + 30) } : p)) };
+    expect(new RoundSim(g, stronger, null).drones.find((d) => d.id === d0.id)!.freeT).toBeGreaterThan(d0.freeT);
+  });
+
+  it('a drone nobody blocks comes free at the snap and gets there in about a second', () => {
+    const r = find(12, (x) => new RoundSim(g, x, null).drones.some((d) => d.freeT === 0), false);
+    const s = runRound(g, r, () => still(), null, 6);
+    expect(s.result?.kind).toBe('hit');
+    expect((s.result as { t: number }).t).toBeLessThan(1.8);
+  });
+
+  it('an edge goes around him: standing still or sliding gets him hit, a step up makes it overrun behind him', () => {
+    const r = find(12, (x) => new RoundSim(g, x, null).drones.some((d) => d.edge && d.blocker && d.freeT !== Infinity), false);
+    const { s, id } = alone(r, (x) => x.drones.find((d) => d.edge && d.blocker && d.freeT !== Infinity)!.id);
+    expect(through(s, id, null).result?.kind).toBe('hit');
+    expect(through(s, id, RIGHT).result?.kind).toBe('hit');
+    expect(through(s, id, LEFT).result?.kind).toBe('hit');
+    const up = through(s, id, UP);
+    expect(up.result).toBeNull();
+    expect(up.drones.find((d) => d.id === id)!.passed).toBe(true);
+  });
+
+  it('an inside drone that breaks free locks on and flies straight: one tap after the lock-on beats it', () => {
+    const r = find(6, (x) => new RoundSim(g, x, null).drones.some((d) => !d.edge && d.blocker && d.freeT !== Infinity), false);
+    const { s, id } = alone(r, (x) => x.drones.find((d) => !d.edge && d.blocker && d.freeT !== Infinity)!.id);
+    expect(through(s, id, null).result?.kind).toBe('hit');
+    expect(through(s, id, RIGHT).result).toBeNull();
+  });
+
+  it('the RB: kept in on a blitzer he picks it up; on a threat that drops out he runs a route; sent out, he is a receiver', () => {
+    const r = find(12, (x) => x.threats.some((t) => t.blitz) && x.threats.some((t) => !t.blitz), false);
+    const blitzer = r.threats.find((t) => t.blitz)!, dropper = r.threats.find((t) => !t.blitz)!;
+    const on = new RoundSim(g, r, blitzer.id);
+    expect(on.drones.find((d) => d.id === blitzer.id)!.blocker).toBe('RB');
+    expect(on.friends.some((f) => f.id === RB_ID)).toBe(false);
+    const wrong = new RoundSim(g, r, dropper.id);
+    expect(wrong.drones.find((d) => d.id === blitzer.id)!.blocker).not.toBe('RB');
+    expect(wrong.friends.some((f) => f.id === RB_ID)).toBe(true);
+    expect(friendsOf(r, null).some((f) => f.id === RB_ID)).toBe(true);
+    // picking up the blitzer
+    let picked = false;
+    for (let k = 0; k < 240 && !on.result; k++) { on.step(still()); if (on.events.some((e) => e.kind === 'pickup')) picked = true; }
+    expect(picked).toBe(true);
+  });
+
+  it('threats that blitz creep in before the snap (a tell) more often than threats that drop out', () => {
+    let blitzTell = 0, blitz = 0, dropTell = 0, drop = 0;
+    for (let i = 0; i < 600; i++) for (const t of draftRound(g, 10, 3000 + i).threats) {
+      if (t.blitz) { blitz++; if (t.tell) blitzTell++; } else { drop++; if (t.tell) dropTell++; }
+    }
+    expect(blitz).toBeGreaterThan(50);
+    expect(blitzTell / blitz).toBeGreaterThan(dropTell / drop + 0.3);
+  });
+
+  it('lanterns: each stays lit 1 to 3 s, and they light sooner the more drones rush', () => {
+    const few: number[] = [], many: number[] = [];
+    for (let i = 0; i < 1500; i++) {
+      const r = draftRound(g, 3 + (i % 10), 7000 + i), rushing = r.rushers.length + r.threats.filter((t) => t.blitz).length;
+      for (const f of r.friends) for (const [a, b] of f.windows) {
+        expect(b - a).toBeGreaterThanOrEqual(1 - 1e-9);
+        expect(b - a).toBeLessThanOrEqual(3 + 1e-9);
+        if (f.route === 'quick') { if (rushing >= 6) many.push(a); if (rushing <= 4) few.push(a); }
+      }
+    }
+    const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+    expect(avg(many)).toBeLessThan(avg(few) - 0.2);
+  });
+
+  it('every lit lantern that goes out while he holds the package costs points; once the ball is out, the rest do not count', () => {
+    const r = find(3, (x) => x.friends.filter((f) => f.windows.length).length >= 2);
+    const run = new Run(g, 1, 3);
+    run.round = r; run.callRb(null); run.snap();
+    const wins = run.sim.friends.flatMap((f) => f.windows).sort((a, b) => a[1] - b[1]);
+    let thrown = false;
+    while (run.phase === 'live' && run.sim.t < 6) {
+      const s = run.sim;
+      let u: Input & { action?: Action } = still();
+      // hold it past the first lantern going out (the feet keep him alive), then throw to one still lit
+      if (!thrown && s.t > wins[0]![1] + 0.05) {
+        const f = s.friends.find((ff) => isLit(g, ff, s.t + g.r.toss.release));
+        if (f) { u = { action: { kind: 'toss', target: f.id } }; thrown = true; }
+      }
+      if (u.action) run.act(u.action);
+      run.step(u);
+    }
+    const res = run.log.at(-1)?.result;
+    if (res && 'release' in res) {
+      expect(run.missed).toBe(wins.filter((w) => w[1] <= res.release).length);
+      expect(run.missed).toBeGreaterThan(0);
+    } else expect(res?.kind).toBe('hit'); // he stood still too long: the rush got him first
   });
 
   it('a toss into a watcher still on his friend is snatched and ends the run', () => {
     const run = play(new Run(g, 11, 1), (r) => {
-      const s = r.sim, f = s.round.friends.find((ff) => separation(g, ff, s.t + g.r.toss.release) < g.r.friends.snatch);
+      const s = r.sim, f = s.friends.find((ff) => separation(g, ff, s.t + g.r.toss.release) < g.r.friends.snatch);
       return s.holding && f && s.t > 0.2 ? { action: { kind: 'toss', target: f.id } } : still();
     });
     expect(run.log.at(-1)!.result.kind).toBe('snatch');
     expect(run.phase).toBe('over');
   });
 
-  it('a toss to a dark lantern is dropped: the run goes on but the streak starts over', () => {
-    let dropped = false;
-    const good = ideal();
-    const run = play(new Run(g, 13, 1), (r) => {
-      const s = r.sim;
-      if (r.deliveries >= 2 && !dropped && s.holding) {
-        const f = s.round.friends.find((ff) => { const sep = separation(g, ff, s.t + g.r.toss.release); return sep >= g.r.friends.snatch && !isLit(g, ff, s.t + g.r.toss.release); });
-        if (f && s.drones.every((d) => !d.launched || d.passed)) { dropped = true; return { ...good(r), action: { kind: 'toss', target: f.id } }; }
-      }
-      return good(r);
-    }, 60);
-    const k = run.log.findIndex((l) => l.result.kind === 'drop');
-    expect(k).toBe(2);
-    expect(run.log.length).toBeGreaterThan(k + 1);
-    expect(run.multiplier).toBeCloseTo(1 + (run.deliveries - 2) * g.r.scoring.streak_step, 5);
+  it('getting clear of a locked-on drone only at the last moment is a clutch dodge', () => {
+    const r = find(6, (x) => new RoundSim(g, x, null).drones.some((d) => !d.edge && d.blocker && d.freeT !== Infinity), false);
+    const { s, id } = alone(r, (x) => x.drones.find((d) => !d.edge && d.blocker && d.freeT !== Infinity)!.id);
+    const late = through(s, id, { ...RIGHT, power: g.r.courier.power_max }, (x) => {
+      const d = x.drones.find((y) => y.id === id)!;
+      return d.committed && d.perp0 < g.r.drones.hit && Math.hypot(d.x - x.x, d.z - x.z) / d.speed < 0.2;
+    });
+    expect(late.result).toBeNull();
+    expect(late.clutches).toBe(1);
   });
 
-  it('holding the package past the hot clock brings more drones', () => {
-    const round = roundOf('edge', 1);
-    const s = new RoundSim(g, round), p = idealPolicy(g);
-    while (!s.result && s.t < g.r.scoring.hot_clock + g.r.scoring.swarm_every * 1.5) { const u = p(s); s.step(u); } // never tosses
-    expect(s.drones.some((d) => d.swarm)).toBe(true);
+  it('he moves by taps: each tap is one step, a sharp flick a longer one', () => {
+    const r = makeRound(g, 1, 5), c = g.r.courier;
+    const soft = new RoundSim(g, r, null), sharp = new RoundSim(g, r, null);
+    soft.step({ tap: RIGHT }); sharp.step({ tap: { ...RIGHT, power: c.power_max } });
+    for (let k = 0; k < 60; k++) { soft.step(still()); sharp.step(still()); }
+    expect(soft.x - c.start[0]).toBeCloseTo(c.step, 3);
+    expect(sharp.x - c.start[0]).toBeCloseTo(c.step * c.power_max, 3);
   });
 
-  it('every drone launches in front of him, inside his view, and hovers there before it comes', () => {
-    for (let level = 1; level <= g.r.ramp.levels; level++) for (let i = 0; i < 10; i++) {
-      const round = makeRound(g, level, 500 + 10 * level + i), [sx, sz] = g.r.courier.start;
-      for (const l of round.launches) {
-        const deg = (Math.atan2(l.x - sx, l.z - sz) * 180) / Math.PI;
-        expect(Math.abs(deg)).toBeLessThan(VIEW / 2 - 2);
-        expect(l.t).toBeGreaterThanOrEqual(g.r.drones.warn * 0.9);
-      }
+  it('friends are numbered 1, 2, 3... left to right across his view, the RB included when he runs a route', () => {
+    for (let i = 0; i < 20; i++) {
+      const r = makeRound(g, 1 + (i % 12), 300 + i), friends = friendsOf(r, null), keys = tossKeys(friends);
+      expect([...keys.keys()].join('')).toBe('123456'.slice(0, friends.length));
+      const angles = [...keys.values()].map((id) => { const f = friends.find((x) => x.id === id)!; return Math.atan2(f.x, f.z); });
+      expect([...angles].sort((a, b) => a - b)).toEqual(angles);
+      for (const [k, id] of keys) expect(friendNumber(friends, id)).toBe(Number(k));
     }
   });
 
-  it('a person always has time: tap a beat after the lock-on and it misses', () => {
-    for (let level = 1; level <= g.r.ramp.levels; level += 3) for (let i = 0; i < 8; i++) {
-      const round = makeRound(g, level, 900 + 10 * level + i);
-      const s = runRound(g, round, idealPolicy(g, { react: g.r.drones.react }));
-      expect(s.result?.kind, `level ${level} ${round.pattern.id}`).toBe('catch');
-    }
-  });
-
-  it('he moves by taps: each tap is one step, holding does nothing more, tapping fast goes further', () => {
-    const round = makeRound(g, 1, 5), r = g.r;
-    const s = new RoundSim(g, round), x0 = s.x;
-    s.step({ tap: RIGHT });
-    for (let k = 0; k < 60; k++) s.step(still()); // half a second, no more taps
-    expect(s.x - x0).toBeCloseTo(r.courier.step, 3);
-    expect(Math.hypot(s.vx, s.vz)).toBeLessThan(1e-6);
-    // three quick taps: three steps, quickly
-    const q = new RoundSim(g, round);
-    for (let k = 0; k < 36; k++) q.step(k % 12 === 0 ? { tap: RIGHT } : still());
-    for (let k = 0; k < 30; k++) q.step(still());
-    expect(q.x - x0).toBeCloseTo(3 * r.courier.step, 3);
-    expect(q.taps).toBe(3);
-  });
-
-  it('a drone that can still get him stays in his view, however he moves (random tapping)', () => {
-    let rounds = 0, out = 0, hunting = 0;
-    for (let level = 1; level <= g.r.ramp.levels; level += 2) for (let i = 0; i < 20; i++) {
-      const round = makeRound(g, level, 7000 + level * 100 + i), rand = rng(level * 31 + i);
-      let next = 0.2, seen = true;
-      runRound(g, round, (s) => {
-        for (const d of watched(g, s)) if (!inView(g, s, d)) { seen = false; if (!d.committed) hunting++; }
-        if (s.t < next) return still();
-        next = s.t + 0.15 + rand() * 0.6;
-        const k = Math.floor(rand() * 5);
-        return k < 4 ? { tap: [RIGHT, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 }][k]! } : still();
-      }, 12);
-      rounds++; if (!seen) out++;
-    }
-    // a hunting drone never leaves his view; a locked-on one only right at the edge in its last moment, rarely
-    expect(hunting).toBe(0);
-    expect(out / rounds).toBeLessThan(0.02);
-  });
-
-  it('waves from his off-hand side come from that side', () => {
-    const round = roundOf('collapse', 9), l = round.launches.find((x) => x.from === 'off')!;
-    expect(Math.sign(l.x - g.r.courier.start[0])).toBe(offSign(g));
-  });
-
-  it('a diving drone follows him sideways: a step sideways is caught, a step up takes him under it, a drop leaves it short', () => {
-    const round = roundOf('dive', 3);
-    const once = (tap: { x: number; z: number }) => { let done = false; return (s: RoundSim): Input => (!done && s.drones[0]!.committed ? ((done = true), { tap }) : still()); };
-    expect(runRound(g, round, once(RIGHT), 8).result?.kind).toBe('hit');
-    expect(runRound(g, round, once({ x: -1, z: 0 }), 8).result?.kind).toBe('hit');
-    for (const tap of [{ x: 0, z: 1 }, { x: 0, z: -1 }]) {
-      const s = runRound(g, round, once(tap), 8);
-      expect(s.result?.kind, JSON.stringify(tap)).not.toBe('hit');
-      expect(s.drones[0]!.passed).toBe(true);
-    }
-  });
-
-  it('every wave asks for what it says: up-or-back waves beat sideways-only play, combo waves beat one-direction play', () => {
-    for (const p of g.r.patterns) {
-      if (p.needs === 'any') continue;
-      const round = roundOf(p.id, 10);
-      const limited = runRound(g, round, idealPolicy(g, { react: g.r.drones.react, moves: p.needs === 'up_or_back' ? 'lateral' : 'single' }));
-      expect(limited.result?.kind, p.id).not.toBe('catch');
-      expect(runRound(g, round, idealPolicy(g, { react: g.r.drones.react })).result?.kind, p.id).toBe('catch');
-    }
-  });
-
-  it('getting clear only at the last moment is a clutch dodge and scores a bonus', () => {
-    const round = roundOf('head_on', 3), d0 = round.launches[0]!;
-    // stand until the drone is about to arrive, then one sharp step
-    let done = false;
-    const s = runRound(g, round, (sim) => {
-      const d = sim.drones[0]!;
-      if (!done && d.committed && Math.hypot(d.x - sim.x, d.z - sim.z) / d.speed < 0.2) { done = true; return { tap: { x: 1, z: 0, power: g.r.courier.power_max } }; }
-      return still();
-    }, 8);
-    expect(s.result?.kind).not.toBe('hit');
-    expect(s.clutches).toBe(1);
-    expect(d0.speed).toBeGreaterThan(0);
-    // and a run scores it
-    const run = new Run(g, 1, 1);
-    expect(g.r.scoring.clutch.points).toBeGreaterThan(0);
-    expect(run.clutches).toBe(0);
-  });
-
-  it('a sharp flick is a longer, faster step', () => {
-    const round = makeRound(g, 1, 5), r = g.r;
-    const soft = new RoundSim(g, round), sharp = new RoundSim(g, round);
-    soft.step({ tap: RIGHT }); sharp.step({ tap: { ...RIGHT, power: r.courier.power_max } });
-    for (let k = 0; k < 12; k++) { soft.step(still()); sharp.step(still()); }
-    expect(sharp.x - r.courier.start[0]).toBeGreaterThan(soft.x - r.courier.start[0]);
-    for (let k = 0; k < 120; k++) { soft.step(still()); sharp.step(still()); }
-    expect(sharp.x - r.courier.start[0]).toBeCloseTo(r.courier.step * r.courier.power_max, 3);
-  });
-
-  it('a toss to a friend who is not out this round does nothing', () => {
-    const round = makeRound(g, 1, 5);
-    const missing = ['A', 'B', 'C', 'D', 'E'].find((id) => !round.friends.some((f) => f.id === id))!;
-    const s = new RoundSim(g, round);
-    s.act({ kind: 'toss', target: missing });
-    expect(s.toss).toBeNull();
-    expect(STEP).toBeGreaterThan(0);
-  });
-
-  it('friends are numbered 1, 2, 3... left to right across his view (the toss keys and buttons)', () => {
-    for (let level = 1; level <= 8; level++) for (let i = 0; i < 4; i++) {
-      const round = makeRound(g, level, 300 + 10 * level + i), keys = tossKeys(round);
-      expect([...keys.keys()].join('')).toBe('12345'.slice(0, round.friends.length));
-      for (const [k, id] of keys) expect(friendNumber(round, id)).toBe(Number(k));
-      const xs = [...keys.values()].map((id) => round.friends.find((f) => f.id === id)!.x);
-      expect([...xs].sort((a, b) => a - b)).toEqual(xs);
-    }
-  });
-
-  it('the run report splits lanterns by side and counts what he dodged', () => {
-    const run = play(new Run(g, 21, 1), ideal(), 40);
+  it('the run report counts the RB reads and the lanterns he missed', () => {
+    const run = play(new Run(g, 21, 6), ideal(), 60);
     const rep = report(run);
-    expect(rep.bySide.throwing.lit + rep.bySide.off.lit).toBe(run.rounds);
-    expect(rep.dodged).toBeGreaterThan(0);
-    expect(rep.cut).not.toBeNull();
+    expect(rep.rounds).toBe(run.rounds);
+    expect(rep.readsRight).toBeLessThanOrEqual(rep.reads);
+    expect(rep.missed).toBe(run.missed);
   });
 
   it('looks unlock with his best score, one of each from the start', () => {
-    const none = unlocked(g, 0);
-    expect(none.jackets.length).toBe(1);
-    expect(none.trails.length).toBe(1);
-    expect(unlocked(g, 1e9).jackets.length).toBe(g.r.unlocks.jackets.length);
+    expect(unlocked(g, 0).jackets.length).toBe(1);
+    expect(unlocked(g, 1e9).trails.length).toBe(g.r.unlocks.trails.length);
   });
 });

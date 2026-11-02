@@ -18,31 +18,51 @@ courier:
   power_max: 1.8       # a sharp flick of the joystick: up to this many times a step, that much faster
   start: [0, -0.8]
 
+# The protection (owner, 2026-11-01): his line in front of him, each with a strength rating 0-99, and his RB beside
+# him on his blind side. A protector holds his drone in a beam for up to hold_max seconds (at 99), less the weaker he
+# is; protectors get weaker as the levels rise. A spare protector helps on the nearest drone (double: + seconds).
+protection:
+  linemen: 5
+  ahead: 2.4           # the line stands this far in front of him
+  spacing: 1.2         # between linemen
+  strength: { start: [50, 92], end: [35, 80] }     # by level
+  rb_strength: { start: [55, 75], end: [40, 65] }  # the RB is a weaker blocker
+  hold_max: 4          # seconds a 99 holds (owner: 4 at most)
+  double: 0.6          # a second protector on the same drone adds this much
+  strain: 0.6          # the beam flickers this long before the drone breaks free (the warning)
+  engage: 0.5          # from the snap until the drones meet their protectors
+  bust: { start: 0.0, end: 0.2 }   # how often a lineman whiffs on his man (a protection bust: that drone comes free)
+
+# The rush: core drones always rush; threats (behind them) may blitz or drop out, and may creep in before the snap
+# (a tell). By level step (the levels spread over the list): how many core drones and how many threats.
+rush:
+  rushers: [[3, 4], [4, 4], [4, 5], [4, 5], [5, 6]]
+  threats: [[0, 0], [0, 1], [1, 1], [1, 2], [1, 2]]
+  max: 7               # never more than this many drones in all
+  line: [6.5, 8]       # the core drones hover this far in front of him before the snap
+  threat_depth: [9.5, 11]
+  width: 4.2           # spread across, each side of him
+  edge: 3.0            # an outermost drone at least this far out is an edge: it goes around him
+  blitz: { start: 0.5, end: 0.6 }    # how often a threat blitzes
+  honest: { start: 0.9, end: 0.65 }  # how often a blitzer creeps in before the snap (a non-blitzer fakes it a little)
+
 drones:
-  speed: { start: 6.5, end: 10.5 }   # by level
-  spawn: 20            # how far out a drone launches: always in front of him, inside his view
-  ahead: 8             # a drone from ahead launches within this many degrees of straight ahead
-  side: [14, 28]       # one from a side, this many degrees off to that side (it stays in view as it closes)
-  warn: 1.0            # it hovers there, blinking, this long before it launches: no drone comes out of nowhere
   height: 1.35         # they fly at chest height
-  turn: 2.4            # how hard they steer (radians a second) before they lock on
-  commit: { start: 0.85, end: 0.55 }  # it locks on (eye turns red) this long before it would reach him, by level: the moment to cut
-  react: 0.25          # every round must be beatable by someone who taps this long after the lock-on
   hit: 0.6             # closer than this, it gets him
   near: 1.8            # closer than this but not a hit: a near miss
-  first: [1.1, 1.5]    # the first drone launches this long into a round
-  gap: [0.7, 1.1]      # between drones in a wave (unless a wave says)
-  aims:
-    lane: 1.0          # a drone aimed at his lane goes for the spot this far beside him (one step)
-    depth: 1.2         # one aimed ahead of or behind him goes for the spot this far in front or back
-  dive:                # a diving drone: comes in high, locks on his spot, follows him sideways, dives onto the spot
-    height: 3.4        # how high it flies before it dives
-    drop: 0.9          # it dives over this last stretch (so a step up takes him under it while it is still high)
-    side_speed: 9      # how fast it slides sideways to stay over him (faster than he can step)
-    reach: 0.75        # it gets him if he is this close to its spot when it comes down
+  react: 0.25          # every play must be beatable by someone who reacts this long after a drone breaks free or locks on
+  inside:              # an inside drone that breaks free (or comes free) darts at him: get off its line
+    speed: { start: 5.0, end: 6.5 }        # breaking free from the line (a push, close to him)
+    free_speed: { start: 8.0, end: 10.0 }  # unblocked from where it started (about 1 s)
+    commit: { start: 0.85, end: 0.6 }      # it locks on (red) this long before it would reach him
+    turn: 2.4
+  edge:                # an edge that breaks free goes around him to the depth he stood at, chasing him sideways and
+    speed: { start: 6.5, end: 8.5 }        # back: only a step up beats it (it overruns behind him)
+    wide: 2.6          # how wide of him it swings
+    behind: 1.0        # how far behind his spot it comes in from
 
 friends:
-  count: [3, 3, 4, 4, 5]   # by level (the last one holds)
+  count: [3, 3, 4, 4, 4]   # by level (the last one holds); with the RB on a route, 5 at most (the toss buttons)
   depth: [13, 27]
   bearing: 46          # friends stand from -bearing to +bearing degrees across his view (all inside it)
   spacing: 16          # degrees between two friends at least
@@ -50,56 +70,23 @@ friends:
   watcher: { tight: 0.6, open: 3.4, change: 0.22 }   # each friend's watcher drone: on him, off him, how fast it moves
   lit: 0.8             # his lantern is lit once the watcher is this far (share of tight to open) off him
   snatch: 1.1          # a toss while the watcher is closer than this gets snatched: the run ends
-  window:
-    after: [0.15, 0.45]    # the first lantern lights this long after the last drone of the wave passes
-    early: [0.45, 0.8]     # early rounds: it lights before the drones get there
-    length: { start: 2.4, end: 1.2 }
-    more: [1, 2]           # more lanterns later in the round, on other friends
-    later: [0.5, 2.2]
-  blind: { start: 0.35, end: 0.7 }   # how often the first lantern lights on his off-hand side
+  routes: { short: 17, long: 22 }   # nearer than short: a quick route; farther than long: deep; between: intermediate
+  open:                # when each route's lantern lights, seconds after the snap
+    quick: [1.8, 2.4]
+    mid: [2.4, 3.2]
+    deep: [3.2, 4.2]
+  sooner: 0.25         # each drone rushing beyond 4 lights them this much sooner (fewer left to cover); fewer, later
+  length: [1, 3]       # a lantern stays lit 1 to 3 s (owner)
+  chance: { start: 0.65, end: 0.55 }   # how often a friend comes open at all (plus 10% for each drone rushing beyond 4)
+  rb:                  # the RB running a route (sent out, or his threat dropped): a short throw on his own roof
+    open: [1.3, 1.8]
+    length: [1.2, 2.0]
+    out: 3.2           # to this side of him (his blind side)
+    depth: 3.6         # this far in front of where he starts (past the line)
 
 toss:
   release: 0.12        # from the button to the package leaving his hand
   speed: 24
-
-# Each round is a wave, like a pass rush. A drone comes from ahead, a side (either), his throwing-hand side or his
-# off-hand side, always inside his view, and when it locks on it aims at him (you), at the lane one step beside him
-# on its own side (lane, an edge taking that escape away), at the lane on the other side (cross, like a stunt), or at
-# the spot in front of him (ahead) or behind him (behind). `after` is seconds after the drone before (0 = together).
-# needs: any (any dodge works), up_or_back (sideways alone is not enough: step up or drop back), combo (one direction
-# alone is not enough). Every round is checked for what it says. A wave shows the glossary term's name once the term
-# is signed off, its own name until then.
-patterns:
-  - { id: head_on, name: Head-on, from: 1, weight: 3, early: false, needs: any,
-      hint: "Wait for red, then step aside.",
-      drones: [{ from: ahead, aim: you }] }
-  - { id: edge, name: Edge rush, term: speed-rush, from: 1, weight: 3, early: false, needs: any,
-      hint: "Coming off the edge: step away from it.",
-      drones: [{ from: side, aim: you }] }
-  - { id: dive, name: Dive, from: 2, weight: 2.5, early: false, needs: up_or_back,
-      hint: "It's diving on your spot and follows you sideways: step up under it, or drop back.",
-      drones: [{ from: ahead, aim: dive }] }
-  - { id: hot, name: Free drone, term: free-rusher, from: 2, weight: 1.5, early: true, needs: any,
-      hint: "Nobody's on it: get the package out now (hot).",
-      drones: [{ from: ahead, aim: you, speed: 1.15 }] }
-  - { id: bull, name: Push up the middle, term: bull-rush, from: 3, weight: 2, early: false, needs: any,
-      hint: "Through the middle, and the edge takes one side: slide the other way.",
-      drones: [{ from: ahead, aim: you }, { from: side, aim: lane, after: 0 }] }
-  - { id: four, name: Four-drone rush, term: four-man-rush, from: 4, weight: 2, early: false, needs: combo,
-      hint: "Two edges and a dive: get off the line, then up or back.",
-      drones: [{ from: throwing, aim: lane }, { from: off, aim: lane, after: 0 }, { from: ahead, aim: you, after: 0.2 }, { from: ahead, aim: dive, after: 0.1 }] }
-  - { id: blitz, name: Blitz, term: blitz, from: 5, weight: 2, early: false, needs: combo,
-      hint: "One off the edge, one diving on your spot: off the line, then up or back.",
-      drones: [{ from: side, aim: you }, { from: ahead, aim: dive, after: 0.15 }] }
-  - { id: stunt, name: Crossfire, term: stunt, from: 6, weight: 1.5, early: false, needs: up_or_back,
-      hint: "They cross into your lanes, and one dives on your spot: step up or drop.",
-      drones: [{ from: throwing, aim: cross }, { from: off, aim: cross, after: 0 }, { from: ahead, aim: dive, after: 0.1 }] }
-  - { id: collapse, name: Pocket collapse, term: pocket-collapse, from: 7, weight: 1.5, early: false, needs: combo,
-      hint: "From everywhere: back, then around.",
-      drones: [{ from: ahead, aim: dive }, { from: throwing, aim: you, after: 0.15 }, { from: off, aim: lane, after: 0 }] }
-  - { id: all_out, name: Everybody comes, term: all-out-blitz, from: 8, weight: 1.5, early: false, needs: combo,
-      hint: "All of them, close together: two moves, fast.",
-      drones: [{ from: throwing, aim: you }, { from: ahead, aim: dive, after: 0.1, warn: 0.6 }, { from: off, aim: you, after: 0.35, speed: 1.1 }] }
 
 ramp:
   rounds_per_level: 3
@@ -108,9 +95,10 @@ ramp:
 
 scoring:
   delivery: 100        # a catch, times the streak
-  quick: 40            # plus this much for each second left on the hot clock when he lets it go
-  hot_clock: 5         # hold the package past this and more drones come (one every swarm_every seconds)
-  swarm_every: 1.4
+  quick: 40            # plus this much for each second before quick_until that he lets it go
+  quick_until: 3.5
+  missed: 30           # every lit lantern that goes out while he still holds the package (owner): minus this
+  pickup: 40           # the RB picks up the blitzer he was kept in on
   near_miss: 25        # a drone that just misses him, times the streak
   clutch:              # it was on him when it locked on and he got clear only in the last moment: bonus, times the streak
     window: 0.3        # got clear this close to it passing (the later, the more: full points in the last half)

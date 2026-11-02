@@ -5,7 +5,7 @@ import { parsePlayContent } from '../src/play/content';
 import { allCalls } from '../src/play';
 import { validateContent } from '../src/validate';
 import { type SweepResult, describeCall, mergeSweeps, sweepPlays } from '../src/validate/plays';
-import { makeGame, sweepRooftop } from '../src/rooftop';
+import { PLAY_TERMS, makeGame, sweepRooftop } from '../src/rooftop';
 
 /** Validation step: coarser than the game's, fine enough for every invariant (speeds are checked per step). */
 const DT = 1 / 15;
@@ -47,10 +47,12 @@ if (!isMainThread) {
     process.exit(1);
   }
   console.log('All football invariants pass.');
-  // Rooftop Run (not football): its settings and that every round at every level is fair
+  // Rooftop Run (not football): its settings, the glossary terms it names plays with, and that every play at every
+  // level is fair whatever the RB call
   const glossaryIds = new Set((raw.glossary as { terms: { id: string }[] }).terms.map((t) => t.id));
-  const roof = sweepRooftop(makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand), 30, glossaryIds);
-  console.log(`Rooftop Run sweep: ${roof.rounds} rounds (${Object.entries(roof.byPattern).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
+  const roof = sweepRooftop(makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand), 30);
+  for (const t of PLAY_TERMS) if (!glossaryIds.has(t)) roof.failures.push(`rooftop: names plays with unknown glossary term ${t}`);
+  console.log(`Rooftop Run sweep: ${roof.rounds} plays (by drones rushing: ${Object.entries(roof.byRush).map(([k, v]) => `${k}: ${v}`).join(', ')}).`);
   if (roof.failures.length) {
     console.error(`\n${roof.failures.length} Rooftop Run problem(s):`);
     for (const f of roof.failures.slice(0, 25)) console.error(`  - ${f}`);
