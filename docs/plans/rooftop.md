@@ -5,39 +5,49 @@ with football that trains the same instincts: keep your eyes up for the one who 
 what is coming at you. The routine game and the Football Bible are unchanged.
 
 ## The game
-A courier on neon rooftops at night, seen through his own eyes (first person, owner's pick). Each **round** a wave of
-hunter drones comes for him; friends on the rooftops around him each have a watcher drone on them. When a watcher
-drifts off its friend, the friend's **lantern lights** (gold). He tosses the package to a lit friend; a catch sends him
-running and leaping to the next roof, a little faster each time. **A hit or a snatched package ends the run.**
+A courier on neon rooftops at night, seen through his own eyes (first person, owner's pick). Every **play** is a pass
+rush made of drones (owner, 2026-11-01: "truly mimic the way pass rush operates"). He tosses the package to a friend
+whose lantern lights; a catch sends him leaping to the next roof. **A hit or a snatched package ends the run.**
 
-| Pocket idea | Rooftop Run |
-|---|---|
-| Rusher | A drone. A **darting** drone locks on (eye and ring turn red) and flies a straight line, drawn red on the roof: get off the line. A **diving** drone comes in high, locks on his spot, follows him sideways and dives onto it, with a red ring on the roof: step up under it or drop back (sideways can't shake it, like an edge keeping him in the pocket) |
-| Rush concepts | Waves, named after the rush they copy (the glossary term once signed off, a plain name until then): head-on, edge rush (speed rush), dive, free drone (free rusher: throw hot), push up the middle (bull rush), four-drone rush, blitz, crossfire (stunt), pocket collapse, everybody comes (all-out blitz). Drones aim at him, at the lane one step beside him (an edge taking it away), across (a stunt), or at the spot in front of or behind him |
-| What a wave asks | Checked on every round: `any` dodge; `up_or_back` (a sideways-only player fails); `combo` (a one-direction player fails: up then around, back then around) |
-| Open receiver | A friend whose lantern lights; friends are numbered 1, 2, 3... left to right |
-| Interception | A toss while the watcher is still on him: snatched, the run ends |
-| Incompletion | A toss before the lantern is fully lit: dropped, the streak starts over |
-| Hot clock | Hold the package past 5 s and more drones come |
+### Before the snap (a GO button every play)
+- He sees the rush (3 to 7 drones by level), his **5 protectors** in front of him, each with a **strength 0-99**, and
+  his **RB**. Protectors get weaker as the levels rise.
+- Drones marked **?** are **threats**: they may blitz or drop out. A threat that creeps in (lower, closer) is a tell:
+  honest about 90% of the time at first, about 65% at the top.
+- He may keep the **RB in** on one threat (tap it, or its number), or leave him out to run a short route.
 
-- **Feet (owner's son, 2026-10-31):** one step per key press (holding does nothing more); on the iPad a one-finger
-  joystick that appears where the finger lands on its half of the screen: each flick is a step, a sharp flick a
-  longer, faster one.
-- **Righty or lefty (owner, 2026-11-01),** picked on the start card and remembered: righty moves with the arrows and
-  the joystick on the right, tosses with Q W E R T and the buttons bottom left; lefty is flipped as-is, W A S D and
-  the joystick on the left, Y U I O P and the buttons bottom right. The number keys toss in both. Controller: d-pad or a flick of the stick. Drones lead him while they hunt, so
-  moving early does not work. The lock-on comes 0.85 s before impact at level 1 and never later than 0.55 s.
-- **The right play** looks ahead when a drone locks on (after a person's 0.25 s reaction): it tries combos of up to
-  three taps on a copy of the round and keeps the shortest that gets him through. Every round must be beatable that
-  way, every wave must ask for what it says, and standing still must get him hit.
-- **Always in view:** drones launch within 28 degrees of straight ahead; a drone that can still get him stays in view
-  (checked on every round and by a random-tapping test); his head turns toward a locked-on one at the edge.
-- **Last-second dodge:** a drone that was on him when it locked on, dodged in the last 0.3 s: a bonus, bigger the
-  later he got clear ("LAST SECOND!" / "CLOSE CALL").
-- **Guide:** for his first five runs each wave's hint shows with its name, prompts say what to do now, and the lit
-  friend's number button glows gold.
-- **Hands:** numbered buttons 1-5 side by side; on a computer Q W E R T or Y U I O P (by layout) or the number keys. A game controller
-  works (X Y A B RB toss the 1st to 5th from the left).
+### After the snap
+- **Protectors hold their drones with beams** for up to 4 s (a 99), less the weaker they are; a spare protector helps
+  (double team). A beam **flickers** just before it breaks: the moment to feel it.
+- **Inside drones** that break free lock on (red) and dart straight: step off the red line.
+- **Edge drones** that break free **go around him**, out wide and in behind him to where he stood, chasing him sideways
+  and back: only **stepping up** beats them (they overrun behind him), then sideways if something else is coming. Off
+  screen, he feels them: a red glow builds on that edge and their buzz is in that ear.
+- **A drone nobody blocks** (more rushers than protectors, or a **protection bust**: a lineman whiffs) comes at him from
+  the snap, about a second away: throw hot, or escape.
+- **The RB:** kept in on a threat that blitzes, he picks it up (a weaker block); kept in on one that drops out, he runs
+  his route after all; left out, he is a receiver on his own roof (a short throw). Wrong call: the blitzer comes free.
+- Each play is named by its rush: 3 or 4 rushing, blitz (5-6), all-out blitz (7), free rusher (glossary terms once
+  signed off, plain names until then).
+
+### Lanterns
+- Each friend runs a route by how far out he is: **quick** (lights at about 1.8-2.4 s), **intermediate** (2.4-3.2 s),
+  **deep** (3.2-4.2 s). Each rusher beyond four lights them a quarter second sooner and makes more of them come open
+  (fewer left in coverage); fewer rushers, later and fewer.
+- A lantern stays lit **1 to 3 s** (owner). **Every lit lantern that goes out while he still holds the package costs
+  points**; once the ball is out, the rest do not count (owner).
+
+### Checked on every play (npm run validate, tests)
+- Whatever the RB call (in on any threat, or out), a person who reacts 0.25 s after a drone breaks free or locks on and
+  taps a short combo gets through and gets the ball out.
+- Edges really need the step up: a sideways-only player gets caught (test); a stronger protector holds longer, never
+  past 4 s; blitzers show the tell far more often than droppers; more rushers light lanterns sooner.
+
+- **Feet:** one step per key press or joystick flick (a sharp flick is a longer step); righty or lefty layout.
+- **Last-second dodge:** getting clear of a drone that was on him only in the last 0.3 s scores a bonus.
+- **Guide:** for his first five runs, prompts say what to do now (step up, off its line, toss to 2...).
+- **Hands:** numbered buttons, friends numbered left to right (the RB too when he runs a route); before the snap the
+  same buttons pick the threat for the RB.
 
 ## Hooks (owner: all four)
 - **Near miss:** a drone that passes close without hitting scores points (times the streak).

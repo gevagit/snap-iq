@@ -1,9 +1,10 @@
 // Rooftop Run (docs/plans/rooftop.md): the Pocket workout. A courier on neon rooftops at night, seen through his own
-// eyes: dodge the hunter drones by tapping a step at a time (keys or swipes), toss the package to a friend the moment his lantern lights (fixed
-// buttons, always in the same place), and keep the run going. The rules and every number live in src/rooftop and
+// eyes. Before each play he sees the rush, his protectors and his RB, keeps the RB in on a threat (or not) and hits GO;
+// then he feels the rush break through, steps up from the edges, slides off inside drones' lines, and tosses to a
+// friend the moment his lantern lights. The rules and every number live in src/rooftop and
 // content/rooftop/rules.yaml; this file draws the city, plays the sound, takes input (touch, keyboard, mouse, game
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
-import { STEP, Run, idealPolicy, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, watched } from '../rooftop';
+import { STEP, Run, idealPolicy, idealRb, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, live, playKind, RB_ID } from '../rooftop';
 
 // Two layouts (owner, 2026-11-01), keys by where they sit on the keyboard (e.code), not what they type, so they work
 // with any layout (Hebrew too). Righty: move with the right hand (arrows; the joystick on the right of the iPad), toss
@@ -44,7 +45,7 @@ export function initRooftop(ctx) {
   let run = null, raf = 0, last = 0, acc = 0, policy = null, policySim = null, on = false, started = false;
   let W = 0, H = 0, DPR = 1, F = 1, layers = null;
   let gpPrev = [];
-  const fx = { tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
+  const fx = { snapT: -9, edgeT: -9, missT: -9, tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
   let ghost = null, look = { jacket: null, trail: null }, guided = true, layout = 'righty';
   const trails = new Map();
   const audio = sound();
@@ -165,9 +166,9 @@ export function initRooftop(ctx) {
   }
   $('rGo').addEventListener('click', go);
 
-  let blds = [], frameDt = 1 / 60;
+  let blds = [], frameDt = 1 / 60, preT = 0;
   function newRound() {
-    blds = buildings(run.sim.round); trails.clear();
+    blds = buildings(run.round); trails.clear(); preT = run.clock;
     renderToss();
   }
 
@@ -178,11 +179,12 @@ export function initRooftop(ctx) {
       acc -= STEP;
       const before = run.sim, phase = run.phase, level = run.level, streak = run.streak, pop = run.pop;
       let u = input();
+      if (run.phase === 'pre' && autoplay && run.clock - preT > 0.8) { run.callRb(idealRb(run.round)); snapNow(); }
       if (run.phase === 'live' && autoplay) { if (policySim !== run.sim) { policySim = run.sim; policy = idealPolicy(G); } const a = policy(run.sim); if (a.action) run.act(a.action); u = a; }
       run.step(u);
       for (const e of before.events) onEvent(e, before);
       if (phase === 'live' && run.phase !== 'live') onResult(before.result);
-      if (run.sim !== before) { newRound(); if (run.level > level) { fx.level = run.level; fx.levelT = run.clock; audio.level(); } }
+      if (run.sim !== before && run.phase === 'pre') { newRound(); if (run.level > level) { fx.level = run.level; fx.levelT = run.clock; audio.level(); } }
       if (run.pop !== pop) fx.popT = run.clock;
       if (run.streak !== streak) audio.streak(run.streak);
     }
@@ -194,7 +196,23 @@ export function initRooftop(ctx) {
     }
     raf = requestAnimationFrame(loop);
   }
+  /** GO: the snap. */
+  function snapNow() {
+    if (!run || run.phase !== 'pre' || !started) return;
+    run.snap(); renderToss(); trails.clear(); fx.snapT = run.clock; audio.snap();
+  }
+  $('rSnap').addEventListener('click', () => { $('rSnap').blur(); snapNow(); });
+  /** Before the snap: keep the RB in on threat k (1 = the leftmost), or take him off it. */
+  function pickThreat(k) {
+    if (!run || run.phase !== 'pre') return;
+    const t = [...run.round.threats].sort((a, b) => a.x - b.x)[k - 1];
+    if (t) run.callRb(run.rb === t.id ? null : t.id);
+  }
   function onEvent(e, sim) {
+    if (e.kind === 'free') { const d = sim.drones.find((x) => x.id === e.id); if (d && d.edge) { fx.edgeT = run.clock; audio.edge(d.side); } }
+    if (e.kind === 'strain') audio.strain();
+    if (e.kind === 'pickup') audio.pickup();
+    if (e.kind === 'missed') { fx.missT = run.clock; audio.missed(); }
     if (e.kind === 'near') { fx.nearT = run.clock; const d = sim.drones.find((x) => x.id === e.id); fx.nearSide = d ? Math.sign(d.x - sim.x) : 0; audio.near(); }
     if (e.kind === 'commit') { fx.commitT = run.clock; audio.lock(); }
     if (e.kind === 'clutch') { fx.nearT = run.clock; audio.clutch(); }
@@ -229,8 +247,11 @@ export function initRooftop(ctx) {
     const fresh = [...after.jackets.filter((u) => !before.jackets.includes(u)).map((u) => `${u.name} jacket`), ...after.trails.filter((u) => !before.trails.includes(u)).map((u) => `${u.name} trail`)];
     const f1 = (v) => (v == null ? '–' : `${v.toFixed(2)} s`);
     const cause = rep.end === 'snatch' ? 'A watcher was still on him: toss only when his lantern glows gold.'
-      : rep.end === 'hit' ? 'Wait for red, then move: off a drone\'s red line, or up or back from a ring on the roof. Move too early and it follows you.' : '';
-    const side = (b, name) => `<li><b>${name}</b><span>${b.caught} of ${b.lit} lanterns${b.spot != null ? ` · spotted in ${f1(b.spot)}` : ''}</span></li>`;
+      : rep.endBy === 'edge' ? 'An edge got around you. When a drone breaks free on the outside, step UP: it can\'t turn up into the pocket.'
+      : rep.endBy === 'free' ? 'A free drone got you. Nobody was blocking it: get the ball out fast, or keep your RB in on the threat.'
+      : rep.end === 'hit' ? 'An inside drone got you. When it turns red, step off its line.' : '';
+    const side = (b, name) => `<li><b>${name}</b><span>${b.caught} of ${b.lit} lanterns</span></li>`;
+    void f1;
     $('rRepTitle').textContent = newBest ? 'New best run!' : 'Run over';
     $('rRepBig').textContent = run.score.toLocaleString();
     $('rRepSub').textContent = newBest ? `Your best is now ${run.score.toLocaleString()}` : `Best ${(st.best || 0).toLocaleString()}`;
@@ -238,7 +259,9 @@ export function initRooftop(ctx) {
       `<li><b>Deliveries</b><span>${rep.deliveries} · level ${rep.level}</span></li>`,
       `<li><b>Near misses</b><span>${rep.nearMisses}</span></li>`,
       `<li><b>Last-second dodges</b><span>${rep.clutches}</span></li>`,
-      `<li><b>Drones dodged</b><span>${rep.dodged}${rep.cut != null ? ` · cut ${f1(rep.cut)} after lock-on` : ''}</span></li>`,
+      `<li><b>Drones dodged</b><span>${rep.dodged} · edges beaten ${rep.edges}</span></li>`,
+      `<li><b>Missed lanterns</b><span>${rep.missed}</span></li>`,
+      rep.reads ? `<li><b>RB calls</b><span>${rep.readsRight} of ${rep.reads} right · ${rep.pickups} pickups</span></li>` : '',
       side(rep.bySide.off, 'Blind side'), side(rep.bySide.throwing, 'Throwing side'),
       cause ? `<li class="tip"><span>${cause}</span></li>` : '',
       fresh.length ? `<li class="unlock"><b>Unlocked</b><span>${fresh.join(', ')}</span></li>` : '',
@@ -255,11 +278,11 @@ export function initRooftop(ctx) {
   function tap(x, z, power = 1) { if (on && started && run && run.phase === 'live' && taps.length < 6) { taps.push({ x, z, power }); fx.tapT = run.clock; fx.tapX = x; fx.tapZ = z; } }
   function input() { const t = taps.shift(); return t ? { tap: t } : {}; }
   function toss(id) { if (on && started && run.phase === 'live' && run.sim.holding) run.act({ kind: 'toss', target: id }); }
-  function tossKey(k) { if (!run) return; const id = tossKeys(run.sim.round).get(k); if (id) toss(id); }
+  function tossKey(k) { if (!run) return; if (run.phase === 'pre') { pickThreat(Number(k)); return; } const id = tossKeys(run.sim.friends).get(k); if (id) toss(id); }
   window.addEventListener('keydown', (e) => {
     if (!on) return;
     const k = e.code;
-    if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
+    if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (run && run.phase === 'pre') snapNow(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
     const L = LAYOUTS[layout], toss = L.toss[k] || TOSS_DIGITS[k];
     if (toss) { tossKey(toss); return; }
     if (k === 'Escape') { $('rQuit').click(); return; }
@@ -317,10 +340,19 @@ export function initRooftop(ctx) {
   stickEl.addEventListener('pointerup', strokeEnd); stickEl.addEventListener('pointercancel', strokeEnd);
   // a click (or tap) on a friend tosses to him
   canvas.addEventListener('pointerdown', (e) => {
+    if (run && run.phase === 'pre') {
+      // before the snap: a tap on a threat keeps the RB in on it
+      const r0 = canvas.getBoundingClientRect(), x0 = e.clientX - r0.left, y0 = e.clientY - r0.top;
+      const order = [...run.round.threats].sort((a, b) => a.x - b.x);
+      let k = 0, bd0 = 70;
+      order.forEach((t, i) => { const p = project(t.x, R.drones.height, t.z); if (p && Math.hypot(p.x - x0, p.y - y0) < bd0) { bd0 = Math.hypot(p.x - x0, p.y - y0); k = i + 1; } });
+      if (k) pickThreat(k);
+      return;
+    }
     if (!run || run.phase !== 'live') return;
     const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     let best = null, bd = 60;
-    for (const f of run.sim.round.friends) { const p = project(f.x, f.rise + 1.2, f.z); if (!p) continue; const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = f.id; } }
+    for (const f of run.sim.friends) { const p = project(f.x, f.rise + 1.2, f.z); if (!p) continue; const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = f.id; } }
     if (best) toss(best);
   });
 
@@ -346,7 +378,7 @@ export function initRooftop(ctx) {
     const p = progress(); p.rooftop = { ...(p.rooftop || {}), layout }; save();
   });
   function renderToss() {
-    const n = run.sim.round.friends.length;
+    const n = run.phase === 'pre' ? run.round.threats.length : run.sim.friends.length;
     for (const b of tossEl.querySelectorAll('button')) b.hidden = Number(b.dataset.n) > n;
   }
 
@@ -379,21 +411,33 @@ export function initRooftop(ctx) {
     }
     // score pops
     const pop = $('rPop');
-    if (run.pop && run.clock - fx.popT < 0.9) { setText('rPop', `+${run.pop.points}  ${run.pop.label}`); pop.style.opacity = String(1 - Math.max(0, run.clock - fx.popT - 0.5) / 0.4); pop.classList.add('on'); }
+    if (run.pop && run.clock - fx.popT < 0.9) { setText('rPop', `${run.pop.points >= 0 ? '+' : ''}${run.pop.points}  ${run.pop.label}`); pop.classList.toggle('neg', run.pop.points < 0); pop.style.opacity = String(1 - Math.max(0, run.clock - fx.popT - 0.5) / 0.4); pop.classList.add('on'); }
     else pop.classList.remove('on');
     const lv = $('rLevelUp');
     lv.classList.toggle('on', run.clock - fx.levelT < 1.2);
     if (run.clock - fx.levelT < 1.2) setText('rLevelUp', `LEVEL ${fx.level}`);
-    const keys = tossKeys(s.round);
+    const keys = tossKeys(s.friends), pre = run.phase === 'pre' && started;
+    if (pre !== shown.pre) { shown.pre = pre; renderToss(); }
     for (const b of tossEl.querySelectorAll('button')) {
-      b.classList.toggle('dim', !holding);
-      const f = holding && s.round.friends.find((x) => x.id === keys.get(b.dataset.n));
+      b.classList.toggle('dim', !holding && !pre);
+      const f = holding && s.friends.find((x) => x.id === keys.get(b.dataset.n));
       b.classList.toggle('lit', !!f && isLit(G, f, s.t));
+      // before the snap the buttons pick the threat the RB stays in on
+      const t = pre && [...run.round.threats].sort((a, c) => a.x - c.x)[Number(b.dataset.n) - 1];
+      b.classList.toggle('pick', !!t && run.rb === t.id);
     }
-    // the wave's name as it starts (and, on his first runs, what it asks of him)
-    const wave = run.phase === 'live' && started && s.t < 2.2;
+    // before the snap: the count, and the RB call
+    $('rPre').hidden = !pre;
+    if (pre) {
+      const rushers = run.round.rushers.length, threats = run.round.threats.length;
+      setText('rPreCount', `${rushers} rushing${threats ? ` + ${threats} threat${threats > 1 ? 's' : ''} (?)` : ''} · your line ${run.round.protectors.length} + RB`);
+      const t = run.round.threats.find((x) => x.id === run.rb);
+      setText('rPreRb', !threats ? 'No threats: your RB runs a route.' : t ? `RB stays in on threat ${[...run.round.threats].sort((a, c) => a.x - c.x).indexOf(t) + 1}.` : 'RB runs a route. Tap a ? drone (or its number) to keep him in on it.');
+    }
+    // the play's name as it starts: how many rush (the glossary term once signed off)
+    const wave = run.phase === 'live' && started && s.t < 1.6;
     $('rWave').classList.toggle('on', wave);
-    if (wave) { setText('rWaveName', waveName(s.round.pattern).toUpperCase()); setText('rWaveHint', guided ? s.round.pattern.hint : ''); }
+    if (wave) { const k = playKind(s); setText('rWaveName', waveName(k).toUpperCase()); setText('rWaveHint', ''); }
     // first runs: say what to do right now
     guideText(s, holding);
   }
@@ -403,15 +447,14 @@ export function initRooftop(ctx) {
     const el = $('rGuide');
     let text = '', kind = '';
     if (guided && started && run.phase === 'live') {
-      const live = s.drones.filter((d) => !d.gone && !d.passed);
-      const lit = holding && s.round.friends.find((f) => isLit(G, f, s.t));
-      const locked = live.filter((d) => d.committed);
+      const loose = live(s);
+      const lit = holding && s.friends.find((f) => isLit(G, f, s.t));
       const L = LAYOUTS[layout];
-      if (locked.some((d) => d.aim === 'dive')) { text = fine ? `DIVING ON YOUR SPOT! ${layout === 'lefty' ? 'W OR S' : '↑ OR ↓'}` : 'DIVING ON YOUR SPOT! FLICK UP OR DOWN'; kind = 'lock'; }
-      else if (locked.length) { text = fine ? `RED! OFF ITS LINE (${L.moveShort})` : 'RED! FLICK OFF ITS LINE'; kind = 'lock'; }
-      else if (lit) { const n = friendNumber(s.round, lit.id); text = `GOLD! TOSS TO ${n}${fine ? ` (${L.letters[n - 1]})` : ''}`; kind = 'gold'; }
-      else if (s.t >= 2.2 && live.some((d) => s.t >= d.launchT - d.warn)) { text = 'DRONE COMING · WAIT FOR RED, THEN MOVE'; kind = 'warn'; }
-      else if (holding) { text = 'WATCH FOR A GOLD LANTERN'; kind = 'warn'; }
+      if (loose.some((d) => d.edge)) { text = fine ? `EDGE COMING AROUND! STEP UP (${layout === 'lefty' ? 'W' : '↑'})` : 'EDGE COMING AROUND! FLICK UP'; kind = 'lock'; }
+      else if (loose.some((d) => d.committed)) { text = fine ? `RED! OFF ITS LINE (${L.moveShort})` : 'RED! FLICK OFF ITS LINE'; kind = 'lock'; }
+      else if (lit) { const n = friendNumber(s.friends, lit.id); text = `GOLD! TOSS TO ${n}${fine ? ` (${L.letters[n - 1]})` : ''}`; kind = 'gold'; }
+      else if (s.drones.some((d) => d.phase === 'held' && s.t >= d.freeT - R.protection.strain)) { text = 'A BEAM IS BREAKING · FEEL IT'; kind = 'warn'; }
+      else if (holding) { text = 'EYES UP · WATCH FOR A GOLD LANTERN'; kind = 'warn'; }
     }
     if (shown.rGuide !== text) { shown.rGuide = text; el.textContent = text; el.className = 'rguide' + (text ? ' on ' + kind : ''); }
   }
@@ -434,7 +477,7 @@ export function initRooftop(ctx) {
     cam.x = s.x; cam.y = eye + cam.bob; cam.z = s.z;
     // his head turns a little toward a drone that can still get him when it nears the edge of his view
     let want = 0;
-    if (run.phase === 'live') for (const d of watched(G, s)) {
+    if (run.phase === 'live') for (const d of live(s).filter((x) => !x.edge)) {
       const b = Math.atan2(d.x - s.x, Math.max(0.2, d.z - s.z)), edge = (36 * Math.PI) / 180;
       if (Math.abs(b) > edge && Math.abs(Math.abs(b) - edge) > Math.abs(want)) want = Math.sign(b) * Math.min((25 * Math.PI) / 180, Math.abs(b) - edge);
     }
@@ -468,9 +511,17 @@ export function initRooftop(ctx) {
     const D = -2 * R.roof.back + R.roof.gap;
     if (run.phase !== 'live') roof(D);
     roof(0);
-    // a locked-on drone's path on the roof (a red line), a diving drone's landing spot (a red ring), so he can read the rush
-    for (const d of s.drones) if (d.committed && !d.passed && !d.gone) floorMark(d, s);
-    for (const d of s.drones.filter((x) => !x.gone && (x.launched || s.t >= x.launchT - x.warn)).sort((a, c) => c.z - a.z)) drone(d, s);
+    // a locked-on inside drone's line on the roof (red), an edge's depth (a red band: get in front of it)
+    if (run.phase === 'live') for (const d of live(s)) if (d.committed) floorMark(d, s);
+    // the RB on his route (a friend on his own roof)
+    const rbF = s.friends.find((f) => f.id === RB_ID);
+    // far to near: the drones, his protectors with their beams, the RB
+    const items = s.drones.filter((d) => !d.gone).map((d) => ({ z: d.z, draw: () => drone(d, s) }));
+    for (const p of s.round.protectors) items.push({ z: p.z, draw: () => protector(p, s) });
+    if (!rbF || run.phase === 'pre') items.push({ z: s.round.rb.z, draw: () => protector(s.round.rb, s) });
+    else items.push({ z: rbF.z, draw: () => rbRunner(rbF, s, fade) });
+    beams(s);
+    for (const it of items.sort((a, c) => c.z - a.z)) it.draw();
     pkg(s);
     rain(t);
     hands(s);
@@ -559,7 +610,7 @@ export function initRooftop(ctx) {
     } else { g.globalAlpha = 0.45 * fade; g.drawImage(layers.glow.watch, hx - 6, hy - 6, 12, 12); }
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = fade;
     // his tag: his shape (and his key on a computer), gold when his lantern is lit
-    const num = friendNumber(s.round, f.id), label = fine ? `${num} · ${LAYOUTS[layout].letters[num - 1]}` : String(num);
+    const num = friendNumber(s.friends, f.id), label = fine ? `${num} · ${LAYOUTS[layout].letters[num - 1]}` : String(num);
     const ty = feet.y - k * 2.5 - 16;
     g.font = `800 ${Math.round(Math.max(13, Math.min(20, k * 0.5)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
     const tw = g.measureText(label).width + 14;
@@ -584,10 +635,10 @@ export function initRooftop(ctx) {
   function floorMark(d, s) {
     const blink = 0.55 + 0.45 * Math.sin(run.clock * 18);
     g.save(); g.strokeStyle = LOCK; g.globalAlpha = 0.85 * blink;
-    if (d.aim === 'dive') {
-      // where it comes down: a ring on the roof under it, at the depth it locked on
-      const c = project(d.x, 0, d.aimZ), e1 = project(d.x - R.drones.dive.reach, 0, d.aimZ), e2 = project(d.x, 0, d.aimZ + R.drones.dive.reach);
-      if (c && e1 && e2) { g.lineWidth = 3; g.beginPath(); g.ellipse(c.x, c.y, Math.abs(c.x - e1.x), Math.max(3, Math.abs(c.y - e2.y)), 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha *= 0.25; g.fillStyle = LOCK; g.fill(); }
+    if (d.edge) {
+      // the depth it is coming around to: a red band across the roof at his spot; in front of it he is safe
+      const a = project(s.x - 1.6, 0.02, d.z0, true), b = project(s.x + 1.6, 0.02, d.z0, true);
+      if (a && b) { g.lineWidth = 5; g.setLineDash([12, 8]); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); g.setLineDash([]); }
     } else {
       // its straight line along the roof, from under it on past him
       g.lineWidth = 2.5; g.setLineDash([10, 8]); g.beginPath();
@@ -600,14 +651,76 @@ export function initRooftop(ctx) {
       g.stroke(); g.setLineDash([]);
     }
     g.restore();
+  }
+
+  /** One of his protectors (his team, see-through): a low hovering shield unit, so the view stays clear, with his
+   * strength rating (how long he holds) floating above it; the RB the same, smaller. */
+  function protector(p, s) {
+    const c = project(p.x, 0.45, p.z); if (!c) return;
+    const k = c.s * (p.rb ? 0.8 : 1);
+    const col = p.strength >= 75 ? '#5BE39A' : p.strength >= 50 ? '#FFD84D' : '#FF7A59';
+    g.save();
+    g.globalAlpha = 0.35; g.fillStyle = '#5B8DEF';
+    g.beginPath(); g.ellipse(c.x, c.y, k * 0.32, k * 0.1, 0, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 0.9; g.strokeStyle = '#9CC1FF'; g.lineWidth = Math.max(1.5, k * 0.025);
+    g.beginPath(); g.ellipse(c.x, c.y, k * 0.32, k * 0.1, 0, 0, Math.PI * 2); g.stroke();
+    // the emitter its beam comes from
+    g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.8;
+    g.drawImage(layers.glow.hunt, c.x - k * 0.12, c.y - k * 0.28, k * 0.24, k * 0.24);
+    g.restore();
+    const label = p.rb ? `RB ${p.strength}` : String(p.strength), ty = c.y - k * 0.42;
+    g.font = `800 ${Math.round(Math.max(11, Math.min(16, k * 0.22)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const tw = g.measureText(label).width + 10;
+    g.globalAlpha = 0.85; g.fillStyle = 'rgba(10,8,24,0.8)'; roundRect(c.x - tw / 2, ty - 9, tw, 18, 5); g.fill();
+    g.strokeStyle = col; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = col; g.fillText(label, c.x, ty + 1); g.globalAlpha = 1;
     void s;
+  }
+
+  /** The beams: each protector's beam on the drone he holds, flickering red as it is about to break. */
+  function beams(s) {
+    g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+    for (const d of s.drones) {
+      if (d.gone || !d.blocker || (d.phase !== 'engage' && d.phase !== 'held')) continue;
+      const p = s.blockerAt(d.blocker), a = project(p.x, 0.6, p.z), b = project(d.x, d.h, d.z);
+      if (!a || !b) continue;
+      const breaking = d.phase === 'held' && s.t >= d.freeT - R.protection.strain;
+      const flick = breaking ? (Math.sin(run.clock * 45) > 0 ? 1 : 0.25) : 0.75 + 0.25 * Math.sin(run.clock * 9 + d.x);
+      g.strokeStyle = breaking ? LOCK : HUNT; g.globalAlpha = 0.25 * flick; g.lineWidth = 10; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+      g.globalAlpha = 0.9 * flick; g.lineWidth = 2.5; g.stroke();
+    }
+    g.restore();
+  }
+
+  /** The RB on his route: a see-through teammate on his own roof with a lantern (a short throw). */
+  function rbRunner(f, s, fade) {
+    const u = Math.min(1, s.t / 1.2), rb = s.round.rb;
+    const x = rb.x + (f.x - rb.x) * u, z = rb.z + (f.z - rb.z) * u;
+    const feet = project(x, 0, z); if (!feet) return;
+    const k = feet.s, lit = isLit(G, f, s.t) && !s.result;
+    g.save(); g.globalAlpha = 0.5 * fade; g.fillStyle = '#5B8DEF';
+    g.beginPath(); g.ellipse(feet.x, feet.y - k * 0.7, k * 0.26, k * 0.55, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(feet.x, feet.y - k * 1.35, k * 0.18, 0, Math.PI * 2); g.fill();
+    g.restore();
+    const hx = feet.x, hy = feet.y - k * 1.8;
+    if (lit) { g.globalCompositeOperation = 'lighter'; const r0 = Math.max(24, k * 1.4); g.drawImage(layers.glow.gold, hx - r0, hy - r0, r0 * 2, r0 * 2); g.globalCompositeOperation = 'source-over'; }
+    const num = friendNumber(s.friends, f.id), label = (fine ? `${num} · ${LAYOUTS[layout].letters[num - 1]}` : String(num)) + ' RB';
+    g.font = `800 15px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const tw = g.measureText(label).width + 14, ty = hy - 16;
+    g.fillStyle = lit ? GOLD : 'rgba(10,8,24,0.8)'; roundRect(hx - tw / 2, ty - 11, tw, 22, 6); g.fill();
+    g.strokeStyle = lit ? GOLD : 'rgba(156,193,255,0.6)'; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = lit ? '#1A1206' : '#FFFFFF'; g.fillText(label, hx, ty + 1);
   }
 
   /** A hunter drone: four rotors, a body, an eye that turns from cyan (hunting) to red (locked on), a light trail.
    * Before it launches it hovers where it will come from, blinking inside a shrinking ring, so he sees it coming. */
   function drone(d, s) {
-    const y = d.h + Math.sin(run.clock * 6 + d.x) * 0.05;
-    const p = project(d.x, y, d.z); if (!p) return;
+    // before the snap a threat showing a tell creeps in, lower and closer
+    const pre = run.phase === 'pre', rt = pre && d.threat ? s.round.threats.find((t) => t.id === d.id) : null;
+    const creep = rt && rt.tell ? Math.min(1, (run.clock - preT) / 1.2) : 0;
+    const shake = d.phase === 'held' ? Math.sin(run.clock * 31 + d.x * 7) * (s.t >= d.freeT - R.protection.strain ? 0.08 : 0.03) : 0;
+    const y = d.h - creep * 0.35 + Math.sin(run.clock * 6 + d.x) * 0.05;
+    const p = project(d.x + shake, y, d.z - creep * 1.2); if (!p) return;
     // trail
     let tr = trails.get(d); if (!tr) { tr = []; trails.set(d, tr); }
     tr.push([d.x, y, d.z]); if (tr.length > 14) tr.shift();
@@ -619,12 +732,18 @@ export function initRooftop(ctx) {
     const k = Math.min(p.s * 1.7, H * 1.2);
     const bw = k * 0.55, bh = k * 0.16;
     const ring = Math.min(120, Math.max(18, k * 0.75));
-    if (!d.launched) {
-      const u = Math.max(0, Math.min(1, (d.launchT - s.t) / R.drones.warn));
-      const blink = Math.sin(run.clock * 22) > 0;
-      g.strokeStyle = HUNT; g.lineWidth = 2.5; g.globalAlpha = blink ? 0.95 : 0.4;
-      g.beginPath(); g.arc(p.x, p.y, ring * (1 + 1.5 * u), 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
-    } else if (!d.passed) {
+    if (pre && rt) {
+      // a threat: a ? tag with its number (the button that keeps the RB in on it), ringed when the RB is on it
+      const n = [...s.round.threats].sort((a, b) => a.x - b.x).findIndex((t) => t.id === d.id) + 1;
+      const picked = run.rb === d.id;
+      g.strokeStyle = picked ? '#9CC1FF' : WATCH; g.lineWidth = picked ? 4 : 2; g.globalAlpha = 0.9;
+      g.beginPath(); g.arc(p.x, p.y, ring, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
+      const label = picked ? `RB ON ${n}` : `? ${n}`;
+      g.font = `800 15px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      const tw = g.measureText(label).width + 14, ty = p.y - ring - 14;
+      g.fillStyle = picked ? '#9CC1FF' : 'rgba(10,8,24,0.85)'; roundRect(p.x - tw / 2, ty - 11, tw, 22, 6); g.fill();
+      g.fillStyle = picked ? '#0A1430' : WATCH; g.fillText(label, p.x, ty + 1);
+    } else if (d.phase === 'free' && !d.passed) {
       g.strokeStyle = d.committed ? LOCK : HUNT; g.lineWidth = d.committed ? 3.5 : 1.5; g.globalAlpha = d.committed ? 0.95 : 0.55;
       g.beginPath(); g.arc(p.x, p.y, ring, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
     }
@@ -644,7 +763,7 @@ export function initRooftop(ctx) {
   /** The package: in his hand while he holds it; flying to the friend after the toss, with his trail colour. */
   function pkg(s) {
     const T = s.toss; if (!T || s.t < T.release) return;
-    const f = s.round.friends.find((x) => x.id === T.target); if (!f) return;
+    const f = s.friends.find((x) => x.id === T.target); if (!f) return;
     const u = Math.min(1, (s.t - T.release) / (T.arrive - T.release));
     const hand = handAt(s);
     const x = hand.x + (f.x - hand.x) * u, z = hand.z + (f.z + 0.5 - hand.z) * u, y = hand.y + (f.rise + 1.9 - hand.y) * u + Math.sin(u * Math.PI) * 2.2;
@@ -701,12 +820,16 @@ export function initRooftop(ctx) {
 
   /** Drones he can't see (behind him or past the edge of the view): chevrons at that screen edge, flickering once one locks on. */
   function edges(s, t) {
-    for (const d of s.drones) {
-      if (!d.launched || d.gone || d.passed) continue;
+    for (const d of live(s)) {
       const p = project(d.x, d.h, d.z);
       if (p && p.x > 0 && p.x < W) continue;
       const side = Math.sign(d.x - s.x) || offSign(G), dist = Math.hypot(d.x - s.x, d.z - s.z);
-      const near = Math.max(0, 1 - dist / R.drones.spawn), flick = d.committed ? (Math.sin(t * 40) > 0 ? 1 : 0.35) : 0.55;
+      // he feels it: a glow building on that edge, and its buzz in that ear
+      const near = Math.max(0, 1 - dist / 6), flick = d.committed ? (Math.sin(t * 40) > 0 ? 1 : 0.35) : 0.55;
+      const gl = g.createLinearGradient(side > 0 ? W : 0, 0, side > 0 ? W - W * 0.18 : W * 0.18, 0);
+      gl.addColorStop(0, `rgba(255,59,107,${0.55 * near})`); gl.addColorStop(1, 'rgba(255,59,107,0)');
+      g.fillStyle = gl; g.fillRect(side > 0 ? W - W * 0.18 : 0, 0, W * 0.18, H);
+      audio.buzz(side, near);
       const a = (0.25 + 0.75 * near) * flick;
       const x = side > 0 ? W - 8 : 8, y = H * 0.48;
       g.globalAlpha = a; g.fillStyle = d.committed ? LOCK : HUNT;
@@ -762,6 +885,12 @@ function sound() {
     }
   }
   const at = () => ac.currentTime + 0.01;
+  let lastBuzz = 0;
+  /** A sound in his left or right ear (side -1 or +1). */
+  function panned(side, make) {
+    const out = make();
+    if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = side * 0.9; out.connect(p); p.connect(master); } else out.connect(master);
+  }
   return {
     start() { if (!ensure()) return; if (ac.state === 'suspended') ac.resume(); layers = 1; beat = 0; next = ac.currentTime + 0.05; clearInterval(timer); timer = setInterval(schedule, 50); },
     stop() { clearInterval(timer); timer = 0; },
@@ -774,6 +903,17 @@ function sound() {
     lock() { if (ac) tone(1760, at(), 0.06, 'square', 0.04); },
     hit() { if (!ac) return; tone(120, at(), 0.5, 'sawtooth', 0.3, 0.3); noise(at(), 0.4, 0.3, 300); clearInterval(timer); },
     level() { if (!ac) return; [523, 659, 784].forEach((f, i) => tone(f, at() + i * 0.07, 0.2, 'triangle', 0.12)); },
+    snap() { if (ac) { tone(180, at(), 0.12, 'square', 0.12, 0.5); noise(at(), 0.08, 0.15, 2000); } },
+    strain() { if (ac) tone(300, at(), 0.25, 'sawtooth', 0.05, 1.6); },
+    pickup() { if (ac) { tone(140, at(), 0.2, 'square', 0.15, 0.6); noise(at(), 0.1, 0.2, 600); } },
+    missed() { if (ac) tone(330, at(), 0.25, 'triangle', 0.08, 0.7); },
+    edge(side) { if (ac) panned(side, () => { const o = ac.createOscillator(), v = ac.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(220, at()); o.frequency.exponentialRampToValueAtTime(520, at() + 0.35); v.gain.setValueAtTime(0.12, at()); v.gain.exponentialRampToValueAtTime(0.0001, at() + 0.4); o.connect(v); o.start(at()); o.stop(at() + 0.42); return v; }); },
+    buzz(side, near) {
+      // an edge he can't see: a buzz in that ear, louder as it closes (a few times a second)
+      if (!ac || near <= 0.05 || ac.currentTime - lastBuzz < 0.12) return;
+      lastBuzz = ac.currentTime;
+      panned(side, () => { const o = ac.createOscillator(), v = ac.createGain(); o.type = 'square'; o.frequency.value = 160 + 120 * near; v.gain.setValueAtTime(0.03 + 0.09 * near, at()); v.gain.exponentialRampToValueAtTime(0.0001, at() + 0.1); o.connect(v); o.start(at()); o.stop(at() + 0.11); return v; });
+    },
   };
 }
 
