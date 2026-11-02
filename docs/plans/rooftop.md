@@ -13,13 +13,15 @@ whose lantern lights; a catch sends him leaping to the next roof. **A hit or a s
 - He sees the drones (owner, 2026-11-02: just a front row and a back row, up to 8; the game says nothing about
   boxes or fronts): a set-up picked by level, 4 and 3, 3 and 3, 4 and 2 at first, then 3 and 4, 4 and 4, 5 and 3,
   5 and 2, all in front (6 or 7), 6 and 1, 6 and 2. His **5 protectors** stand in front of him, each with a
-  **strength 0-99**, and his **RB**. Protectors get weaker as the levels rise.
+  hidden **strength 0-99** (owner, 2026-11-02: no numbers on screen, he learns who holds by feel), and his **RB**.
+  Protectors get weaker as the levels rise.
 - **Front-row drones** nearly always come; at higher levels an inside one sometimes hangs back after the snap.
-- **Back-row drones** are the **threats (?)**: each may come or hang back, and at higher levels some come a beat late.
+- **Back-row drones** are the threats (nothing marks them, owner 2026-11-02: he reads the rows): each may come or hang back, and at higher levels some come a beat late.
   One that creeps in (lower, closer) is a tell: honest about 90% of the time at first, about 65% at the top. From 3 to
   8 come: early from the front row, later from the back row, and whoever his 5 protectors and the RB can't block gets
   through, each at its own moment.
-- He may keep the **RB in** on one threat (tap it, or its number), or leave him out to run a short route.
+- He may keep the **RB in** on one back-row drone (tap it; on a computer, its small key number), or leave him out to
+  run a short route.
 
 ### After the snap
 - **Protectors hold their drones with beams** for up to 4 s (a 99), less the weaker they are; a spare protector helps

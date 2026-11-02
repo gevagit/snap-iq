@@ -378,7 +378,7 @@ export function initRooftop(ctx) {
     const p = progress(); p.rooftop = { ...(p.rooftop || {}), layout }; save();
   });
   function renderToss() {
-    const n = run.phase === 'pre' ? run.round.threats.length : run.sim.friends.length;
+    const n = run.phase === 'pre' ? (fine ? run.round.threats.length : 0) : run.sim.friends.length;
     for (const b of tossEl.querySelectorAll('button')) b.hidden = Number(b.dataset.n) > n;
   }
 
@@ -430,9 +430,9 @@ export function initRooftop(ctx) {
     $('rPre').hidden = !pre;
     if (pre) {
       const up = run.round.rushers.length, threats = run.round.threats.length;
-      setText('rPreCount', `${up} drones in front${threats ? `, ${threats} behind (?)` : ''} · your ${run.round.protectors.length} protectors + RB`);
+      setText('rPreCount', `${up} drones in front${threats ? `, ${threats} behind` : ''} · your ${run.round.protectors.length} protectors + RB`);
       const t = run.round.threats.find((x) => x.id === run.rb);
-      setText('rPreRb', !threats ? 'No threats: your RB runs a route.' : t ? `RB stays in on threat ${[...run.round.threats].sort((a, c) => a.x - c.x).indexOf(t) + 1}.` : 'RB runs a route. Tap a ? drone (or its number) to keep him in on it.');
+      setText('rPreRb', t ? 'Your RB stays in on that drone. Tap it again to send him out.' : fine ? 'RB runs a route. Press a back-row drone\'s number to keep him in on it.' : 'RB runs a route. Tap a back-row drone to keep him in on it.');
     }
     // the play's name as it starts: how many rush (the glossary term once signed off)
     const wave = run.phase === 'live' && started && s.t < 1.6;
@@ -653,12 +653,11 @@ export function initRooftop(ctx) {
     g.restore();
   }
 
-  /** One of his protectors (his team, see-through): a low hovering shield unit, so the view stays clear, with his
-   * strength rating (how long he holds) floating above it; the RB the same, smaller. */
+  /** One of his protectors (his team, see-through): a low hovering shield unit, so the view stays clear; the RB the
+   * same, smaller. No rating shows (owner, 2026-11-02): he learns who holds and who doesn't by feel. */
   function protector(p, s) {
     const c = project(p.x, 0.45, p.z); if (!c) return;
     const k = c.s * (p.rb ? 0.8 : 1);
-    const col = p.strength >= 75 ? '#5BE39A' : p.strength >= 50 ? '#FFD84D' : '#FF7A59';
     g.save();
     g.globalAlpha = 0.35; g.fillStyle = '#5B8DEF';
     g.beginPath(); g.ellipse(c.x, c.y, k * 0.32, k * 0.1, 0, 0, Math.PI * 2); g.fill();
@@ -668,12 +667,11 @@ export function initRooftop(ctx) {
     g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.8;
     g.drawImage(layers.glow.hunt, c.x - k * 0.12, c.y - k * 0.28, k * 0.24, k * 0.24);
     g.restore();
-    const label = p.rb ? `RB ${p.strength}` : String(p.strength), ty = c.y - k * 0.42;
-    g.font = `800 ${Math.round(Math.max(11, Math.min(16, k * 0.22)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    const tw = g.measureText(label).width + 10;
-    g.globalAlpha = 0.85; g.fillStyle = 'rgba(10,8,24,0.8)'; roundRect(c.x - tw / 2, ty - 9, tw, 18, 5); g.fill();
-    g.strokeStyle = col; g.lineWidth = 1.5; g.stroke();
-    g.fillStyle = col; g.fillText(label, c.x, ty + 1); g.globalAlpha = 1;
+    if (p.rb) {
+      // the RB is the one he calls on: just his name
+      g.font = `800 ${Math.round(Math.max(11, Math.min(15, k * 0.22)))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.globalAlpha = 0.85; g.fillStyle = '#9CC1FF'; g.fillText('RB', c.x, c.y - k * 0.4); g.globalAlpha = 1;
+    }
     void s;
   }
 
@@ -733,16 +731,22 @@ export function initRooftop(ctx) {
     const bw = k * 0.55, bh = k * 0.16;
     const ring = Math.min(120, Math.max(18, k * 0.75));
     if (pre && rt) {
-      // a threat: a ? tag with its number (the button that keeps the RB in on it), ringed when the RB is on it
+      // a back-row drone: nothing marks it as a threat (owner, 2026-11-02: he reads the rows himself). On a computer it
+      // carries a small key number (the key that keeps the RB on it); the one the RB is on gets his ring
       const n = [...s.round.threats].sort((a, b) => a.x - b.x).findIndex((t) => t.id === d.id) + 1;
       const picked = run.rb === d.id;
-      g.strokeStyle = picked ? '#9CC1FF' : WATCH; g.lineWidth = picked ? 4 : 2; g.globalAlpha = 0.9;
-      g.beginPath(); g.arc(p.x, p.y, ring, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
-      const label = picked ? `RB ON ${n}` : `? ${n}`;
-      g.font = `800 15px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      const tw = g.measureText(label).width + 14, ty = p.y - ring - 14;
-      g.fillStyle = picked ? '#9CC1FF' : 'rgba(10,8,24,0.85)'; roundRect(p.x - tw / 2, ty - 11, tw, 22, 6); g.fill();
-      g.fillStyle = picked ? '#0A1430' : WATCH; g.fillText(label, p.x, ty + 1);
+      if (picked) {
+        g.strokeStyle = '#9CC1FF'; g.lineWidth = 4; g.globalAlpha = 0.9;
+        g.beginPath(); g.arc(p.x, p.y, ring, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
+      }
+      if (picked || fine) {
+        const label = picked ? (fine ? `RB · ${n}` : 'RB') : String(n);
+        g.font = `800 ${picked ? 15 : 12}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+        const tw = g.measureText(label).width + 12, ty = p.y - ring - 12;
+        g.globalAlpha = picked ? 1 : 0.7;
+        g.fillStyle = picked ? '#9CC1FF' : 'rgba(10,8,24,0.75)'; roundRect(p.x - tw / 2, ty - 10, tw, 20, 6); g.fill();
+        g.fillStyle = picked ? '#0A1430' : 'rgba(255,255,255,0.8)'; g.fillText(label, p.x, ty + 1); g.globalAlpha = 1;
+      }
     } else if (d.phase === 'free' && !d.passed) {
       g.strokeStyle = d.committed ? LOCK : HUNT; g.lineWidth = d.committed ? 3.5 : 1.5; g.globalAlpha = d.committed ? 0.95 : 0.55;
       g.beginPath(); g.arc(p.x, p.y, ring, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
