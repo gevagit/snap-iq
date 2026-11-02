@@ -18,7 +18,7 @@ courier:
   power_max: 1.8       # a sharp flick of the joystick: up to this many times a step, that much faster
   start: [0, -0.8]
 
-# The protection (owner, 2026-11-01): his line in front of him, each with a strength rating 0-99, and his RB beside
+# The protection (owner, 2026-11-01): his line in front of him, each with a strength rating 0-99, and his wingman ("rb") beside
 # him on his blind side. A protector holds his drone in a beam for up to hold_max seconds (at 99), less the weaker he
 # is; protectors get weaker as the levels rise. A spare protector helps on the nearest drone (double: + seconds).
 protection:
@@ -26,7 +26,7 @@ protection:
   ahead: 2.4           # the line stands this far in front of him
   spacing: 1.2         # between linemen
   strength: { start: [50, 92], end: [35, 80] }     # by level
-  rb_strength: { start: [55, 75], end: [40, 65] }  # the RB is a weaker blocker
+  rb_strength: { start: [55, 75], end: [40, 65] }  # the wingman is a weaker blocker
   hold_max: 4          # seconds a 99 holds (owner: 4 at most)
   double: 0.6          # a second protector on the same drone adds this much
   strain: 0.6          # the beam flickers this long before the drone breaks free (the warning)
@@ -36,7 +36,7 @@ protection:
 # The drones (owner, 2026-11-02): a front row and a back row, up to 8 in all, in a set-up picked by level (front-back).
 # A front-row drone nearly always comes (now and then an inside one hangs back after the snap); a back-row drone is a
 # threat: it may come (sometimes a beat late) or hang back, and may creep in before the snap (a tell). The more of
-# them come against his 5 protectors and the RB, the more get through unblocked.
+# them come against his 5 protectors and the wingman, the more get through unblocked.
 rush:
   boxes:
     - { id: "4-3", front: 4, back: 3, from: 1, weight: 3 }
@@ -77,7 +77,7 @@ drones:
     behind: 1.0        # how far behind his spot it comes in from
 
 friends:
-  count: [3, 3, 4, 4, 4]   # by level (the last one holds); with the RB on a route, 5 at most (the toss buttons)
+  count: [3, 3, 4, 4, 4]   # by level (the last one holds); with the wingman out, 5 at most (the toss buttons)
   depth: [13, 27]
   bearing: 46          # friends stand from -bearing to +bearing degrees across his view (all inside it)
   spacing: 16          # degrees between two friends at least
@@ -93,7 +93,7 @@ friends:
   sooner: 0.25         # each drone rushing beyond 4 lights them this much sooner (fewer left to cover); fewer, later
   length: [1, 3]       # a lantern stays lit 1 to 3 s (owner)
   chance: { start: 0.65, end: 0.55 }   # how often a friend comes open at all (plus 10% for each drone rushing beyond 4)
-  rb:                  # the RB running a route (sent out, or his threat dropped): a short throw on his own roof
+  rb:                  # the wingman breaking out (sent out, or his threat dropped): a short throw on his own roof
     open: [1.3, 1.8]
     length: [1.2, 2.0]
     out: 3.2           # to this side of him (his blind side)
@@ -113,7 +113,7 @@ scoring:
   quick: 40            # plus this much for each second before quick_until that he lets it go
   quick_until: 3.5
   missed: 30           # every lit lantern that goes out while he still holds the package (owner): minus this
-  pickup: 40           # the RB picks up the blitzer he was kept in on
+  pickup: 40           # the wingman picks up the blitzer he was kept in on
   near_miss: 25        # a drone that just misses him, times the streak
   clutch:              # it was on him when it locked on and he got clear only in the last moment: bonus, times the streak
     window: 0.3        # got clear this close to it passing (the later, the more: full points in the last half)
