@@ -31,9 +31,12 @@ export const RooftopRules = z
       bust: StartEnd,
     }).strict(),
     rush: z.object({
-      rushers: z.array(Range).min(1), threats: z.array(Range).min(1), max: z.number().int().min(1),
-      line: Range, threat_depth: Range, width: z.number().positive(), edge: z.number().positive(),
-      blitz: StartEnd, honest: StartEnd,
+      boxes: z.array(z.object({
+        id: z.string(), front: z.number().int().min(0).max(8), back: z.number().int().min(0).max(5),
+        from: z.number().int().positive(), weight: z.number().positive(),
+      }).strict()).min(1),
+      line: Range, back_depth: Range, width: z.number().positive(), back_width: z.number().positive(), edge: z.number().positive(),
+      blitz: StartEnd, front_drop: StartEnd, honest: StartEnd, delayed: StartEnd, delay: Range,
     }).strict(),
     drones: z.object({
       height: z.number().positive(), hit: z.number().positive(), near: z.number().positive(), react: z.number().min(0),
@@ -76,7 +79,6 @@ export const rampAt = (g: Game, level: number) => clamp((level - 1) / Math.max(1
 const between = (rand: () => number, [a, b]: readonly [number, number]) => a + (b - a) * rand();
 const atLevel = (se: { start: number; end: number }, u: number) => lerp(se.start, se.end, u);
 const rangeAt = (se: { start: readonly [number, number]; end: readonly [number, number] }, u: number): [number, number] => [lerp(se.start[0], se.end[0], u), lerp(se.start[1], se.end[1], u)];
-const intIn = (rand: () => number, [a, b]: readonly [number, number]) => Math.floor(a + rand() * (b - a + 1 - 1e-9));
 
 /** Settings checks beyond the schema; each message says what to fix. */
 export function checkRules(r: Rules): string[] {
@@ -91,8 +93,11 @@ export function checkRules(r: Rules): string[] {
   const lit = r.friends.watcher.tight + r.friends.lit * (r.friends.watcher.open - r.friends.watcher.tight);
   if (r.friends.snatch >= lit) e.push(`${file}: snatch reach must be closer than a lit lantern's watcher`);
   if (r.friends.length[0] < 1 || r.friends.length[1] > 3) e.push(`${file}: a lantern stays lit 1 to 3 seconds (owner)`);
-  if (r.rush.rushers.length !== r.rush.threats.length) e.push(`${file}: rushers and threats need a range for each level step`);
-  for (const [k, rr] of r.rush.rushers.entries()) if (rr[1] + r.rush.threats[k]![1] > r.rush.max + 2) e.push(`${file}: step ${k + 1} can show far more drones than max`);
+  for (const b of r.rush.boxes) {
+    if (b.front + b.back > 8 || b.front + b.back < 3) e.push(`${file}: box ${b.id} has ${b.front + b.back} drones (the box holds 3 to 8)`);
+    if (b.front < 2) e.push(`${file}: box ${b.id} needs at least 2 drones on the line`);
+  }
+  if (!r.rush.boxes.some((b) => b.from === 1)) e.push(`${file}: no box at level 1`);
   const ids = new Set<string>();
   for (const k of ['jackets', 'trails'] as const) {
     if (!r.unlocks[k].some((u) => u.at === 0)) e.push(`${file}: no ${k} look free from the start`);
@@ -146,10 +151,13 @@ export const isLit = (g: Game, f: Friend, t: number) => separation(g, f, t) >= l
 /** How wide his view is (degrees, across). */
 export const VIEW = 100;
 export interface Protector { id: string; x: number; z: number; strength: number; rb: boolean }
-/** A drone in the rush. Core rushers always come; threats may blitz or drop out (and may show a tell: creeping in). */
-export interface Rusher { id: string; x: number; z: number; threat: boolean; blitz: boolean; tell: boolean; edge: boolean; side: -1 | 1 }
+/** A drone in the box. On the line (front) it nearly always rushes (one may drop out); at the second level (back) it is
+ * a threat: it may blitz (maybe a beat late: delay) or drop out, and may show a tell (creeping in). */
+export interface Rusher { id: string; x: number; z: number; threat: boolean; blitz: boolean; tell: boolean; edge: boolean; side: -1 | 1; delay: number }
 export interface Round {
   seed: number; level: number;
+  /** the box's front: how many on the line and how many at the second level (like 4-3) */
+  box: string;
   protectors: Protector[]; rb: Protector;
   rushers: Rusher[]; threats: Rusher[];
   /** which lineman whiffs on his man this play (a protection bust), if any */
@@ -162,30 +170,34 @@ export interface Round {
 /** Deal a play: the rush, the protection, the friends and their routes. Not yet checked: see makeRound. */
 export function draftRound(g: Game, level: number, seed: number): Round {
   const r = g.r, rand = rng(seed), u = rampAt(g, level), off = offSign(g), [sx, sz] = r.courier.start;
-  const step = Math.min(r.rush.rushers.length - 1, Math.floor(u * (r.rush.rushers.length - 1) + 1e-9));
   // protectors: the line in front of him, and the RB just in front of him on his blind (off-hand) side
   const P = r.protection, str = rangeAt(P.strength, u);
   const protectors: Protector[] = Array.from({ length: P.linemen }, (_, k) => ({
     id: `P${k + 1}`, x: sx + (k - (P.linemen - 1) / 2) * P.spacing, z: sz + P.ahead, strength: Math.round(between(rand, str)), rb: false,
   }));
   const rb: Protector = { id: 'RB', x: sx + off * 1.4, z: sz + 1.3, strength: Math.round(between(rand, rangeAt(P.rb_strength, u))), rb: true };
-  // the rush: core rushers across the line, threats behind them; an edge is a rusher outside the end of the line
+  // the box: drones on the line and at the second level (no DBs), in a front picked by level (like 4-3, 3-3, 5-3)
   const R = r.rush;
-  const nCore = intIn(rand, R.rushers[step]!), nThreat = Math.min(intIn(rand, R.threats[step]!), Math.max(0, R.max - nCore));
+  const fronts = R.boxes.filter((x) => x.from <= level);
+  let pick = rand() * fronts.reduce((a, x) => a + x.weight, 0);
+  const box = fronts.find((x) => (pick -= x.weight) <= 0) ?? fronts[fronts.length - 1]!;
+  const dropP = atLevel(R.front_drop, u), blitzP = atLevel(R.blitz, u), honest = atLevel(R.honest, u), lateP = atLevel(R.delayed, u);
   const rushers: Rusher[] = [];
-  for (let k = 0; k < nCore; k++) {
-    const x = sx + (nCore === 1 ? 0 : lerp(-R.width, R.width, k / (nCore - 1))) + between(rand, [-0.3, 0.3]);
-    rushers.push({ id: `D${k + 1}`, x, z: sz + between(rand, R.line), threat: false, blitz: true, tell: false, edge: false, side: x >= sx ? 1 : -1 });
+  for (let k = 0; k < box.front; k++) {
+    const x = sx + (box.front === 1 ? 0 : lerp(-R.width, R.width, k / (box.front - 1))) + between(rand, [-0.25, 0.25]);
+    // a line drone nearly always rushes; now and then one drops out after the snap
+    const blitz = !(k > 0 && k < box.front - 1 && rand() < dropP);
+    rushers.push({ id: `D${k + 1}`, x, z: sz + between(rand, R.line), threat: false, blitz, tell: false, edge: false, side: x >= sx ? 1 : -1, delay: 0 });
   }
   const threats: Rusher[] = [];
-  const blitzP = atLevel(R.blitz, u), honest = atLevel(R.honest, u);
-  for (let k = 0; k < nThreat; k++) {
-    const x = sx + between(rand, [-R.width * 0.7, R.width * 0.7]);
+  for (let k = 0; k < box.back; k++) {
+    const x = sx + (box.back === 1 ? 0 : lerp(-R.back_width, R.back_width, k / (box.back - 1))) + between(rand, [-0.4, 0.4]);
     const blitz = rand() < blitzP;
     const tell = blitz ? rand() < honest : rand() < (1 - honest) * 0.6;
-    threats.push({ id: `T${k + 1}`, x, z: sz + between(rand, R.threat_depth), threat: true, blitz, tell, edge: false, side: x >= sx ? 1 : -1 });
+    const delay = blitz && rand() < lateP ? between(rand, R.delay) : 0;
+    threats.push({ id: `T${k + 1}`, x, z: sz + between(rand, R.back_depth), threat: true, blitz, tell, edge: false, side: x >= sx ? 1 : -1, delay });
   }
-  // the outermost core rusher on each side, outside the line, is an edge
+  // the outermost line drone on each side, out past the end of the line, is an edge
   const sorted = [...rushers].sort((a, b) => a.x - b.x);
   for (const d of [sorted[0], sorted.at(-1)]) if (d && Math.abs(d.x - sx) >= R.edge) d.edge = true;
   const bust = rand() < atLevel(P.bust, u) ? protectors[Math.floor(rand() * protectors.length)]!.id : null;
@@ -206,7 +218,7 @@ export function draftRound(g: Game, level: number, seed: number): Round {
     return { id: FRIEND_IDS[k]!, x, z: d * Math.cos(a), rise: between(rand, F.rise), route, side: Math.sign(x) === off ? 'off' : 'throwing', drift: x >= 0 ? 1 : -1, windows: [] };
   });
   // lanterns: each route opens on its timing, sooner (and more of them) the more drones rush; 1 to 3 s each
-  const rushing = nCore + threats.filter((t) => t.blitz).length;
+  const rushing = rushers.filter((d) => d.blitz).length + threats.filter((t) => t.blitz).length;
   const sooner = F.sooner * (rushing - 4), chance = clamp(atLevel(F.chance, u) + 0.1 * (rushing - 4), 0.2, 1);
   const open = (f: Friend) => { const t0 = Math.max(0.4, between(rand, F.open[f.route as 'quick' | 'mid' | 'deep']) - sooner); f.windows.push([t0, t0 + between(rand, F.length)]); };
   for (const f of friends) if (rand() < chance) open(f);
@@ -214,7 +226,7 @@ export function draftRound(g: Game, level: number, seed: number): Round {
   if (!friends.some((f) => f.windows.length)) open([...friends].sort((a, b) => a.z - b.z)[0]!);
   const rbT = between(rand, F.rb.open);
   const rbRoute: Friend = { id: RB_ID, x: sx + off * F.rb.out, z: sz + F.rb.depth, rise: 0, route: 'rb', side: 'off', drift: off === 1 ? 1 : -1, windows: [[rbT, rbT + between(rand, F.rb.length)]] };
-  return { seed, level, protectors, rb, rushers, threats, bust, friends, rbRoute, jitter };
+  return { seed, level, box: box.id, protectors, rb, rushers, threats, bust, friends, rbRoute, jitter };
 }
 
 // ------------------------------------------------------------------ one play, live
@@ -228,6 +240,8 @@ export interface Drone {
   x: number; z: number; dx: number; dz: number; h: number; speed: number;
   /** pre: before the snap; engage: flying to its blocker; held: in his beam; free: after him; drop: dropping out */
   phase: Phase;
+  /** a delayed blitzer waits this long after the snap before it comes */
+  delay: number;
   /** who blocks it (a protector id, 'RB', or none), and when it breaks free (seconds after the snap; never if it drops) */
   blocker: string | null; freeT: number;
   /** an inside drone locks on (eye and ring red) this long before it would reach him; an edge locks when it breaks free */
@@ -276,7 +290,7 @@ export class RoundSim {
     this.friends = friendsOf(round, rb);
     // blocking: each lineman takes the nearest rusher, middle out; spare linemen pick up blitzers, then help (double)
     const line = [...round.protectors].sort((a, b) => a.x - b.x);
-    const rushing = [...round.rushers, ...round.threats.filter((t) => t.blitz)];
+    const rushing = [...round.rushers, ...round.threats].filter((d) => d.blitz);
     const blocker: Record<string, string | null> = {};
     const helpers: Record<string, number> = {};
     const open = new Set(line.map((p) => p.id));
@@ -286,7 +300,7 @@ export class RoundSim {
       blocker[d.id] = best ? best.id : null;
       if (best) open.delete(best.id);
     };
-    for (const d of [...round.rushers].sort((a, b) => Math.abs(a.x) - Math.abs(b.x))) take(d);
+    for (const d of round.rushers.filter((x) => x.blitz).sort((a, b) => Math.abs(a.x) - Math.abs(b.x))) take(d);
     for (const t of round.threats.filter((x) => x.blitz)) { if (this.rbOn === t.id) blocker[t.id] = 'RB'; else take(t); }
     for (const pid of open) {
       const p = line.find((q) => q.id === pid)!;
@@ -305,7 +319,7 @@ export class RoundSim {
       const b = d.blitz ? blocker[d.id] ?? null : null;
       this.drones.push({
         id: d.id, threat: d.threat, edge: d.edge, side: d.side, x: d.x, z: d.z, dx: 0, dz: -1, h: D.height, speed: 0,
-        phase: 'pre', blocker: b, freeT: d.blitz ? (b ? P.engage + hold(d) : 0) : Infinity,
+        phase: 'pre', blocker: b, freeT: d.blitz ? d.delay + (b ? P.engage + hold(d) : 0) : Infinity, delay: d.delay,
         commitIn: atLevel(D.inside.commit, u), committed: false, commitT: null, z0: 0, leg: 0,
         passed: false, gone: false, minD: Infinity, perp0: 0, clearT: null, near: false, clutch: false,
       });
@@ -386,6 +400,7 @@ export class RoundSim {
     if (d.gone) return;
     if (d.phase === 'pre') {
       if (d.freeT === Infinity) { d.phase = 'drop'; this.events.push({ kind: 'drop', id: d.id }); }
+      else if (this.t < d.delay) return; // a delayed blitzer waits a beat
       else if (d.blocker) d.phase = 'engage';
       else { d.phase = 'free'; this.release(d); }
     }
@@ -576,15 +591,11 @@ export function makeRound(g: Game, level: number, seed: number): Round {
 }
 
 /** The glossary terms the game names plays with (checked by npm run validate). */
-export const PLAY_TERMS = ['free-rusher', 'all-out-blitz', 'blitz', 'four-man-rush', 'blitz-pickup', 'check-release'] as const;
-/** What the play is, by how many drones rush and whether one came free (the glossary term once it is signed off). */
+export const PLAY_TERMS = ['blitz-pickup', 'check-release'] as const;
+/** What the play is: the box and how many of it rush. */
 export function playKind(sim: RoundSim): { term: string | null; name: string } {
-  const rushing = sim.drones.filter((d) => d.freeT !== Infinity).length;
-  if (sim.drones.some((d) => d.freeT === 0)) return { term: 'free-rusher', name: 'Free drone' };
-  if (rushing >= 7) return { term: 'all-out-blitz', name: `${rushing} rushing` };
-  if (rushing >= 5) return { term: 'blitz', name: `${rushing} rushing` };
-  if (rushing === 4) return { term: 'four-man-rush', name: '4 rushing' };
-  return { term: null, name: `${rushing} rushing` };
+  const rushing = sim.drones.filter((d) => d.freeT !== Infinity).length, box = sim.round.box;
+  return { term: null, name: `${box} box · ${rushing} rushing` };
 }
 
 // ------------------------------------------------------------------ a run: play after play until a hit or a snatch
@@ -706,18 +717,18 @@ export function unlocked(g: Game, best: number) {
 }
 
 /** Invariant sweep for validation: every play at every level is fair, whatever the RB call. */
-export function sweepRooftop(g: Game, perLevel = 12): { rounds: number; byRush: Record<string, number>; failures: string[] } {
+export function sweepRooftop(g: Game, perLevel = 12): { rounds: number; byBox: Record<string, number>; failures: string[] } {
   const failures = checkRules(g.r), byRush: Record<string, number> = {};
+  // plays by box
   let rounds = 0;
   for (let level = 1; level <= g.r.ramp.levels; level++) {
     for (let i = 0; i < perLevel; i++) {
       try {
         const round = makeRound(g, level, 1000 * level + i);
-        const k = String(round.rushers.length + round.threats.filter((t) => t.blitz).length);
-        byRush[k] = (byRush[k] ?? 0) + 1;
+        byRush[round.box] = (byRush[round.box] ?? 0) + 1;
         rounds++;
       } catch (err) { failures.push(String((err as Error).message)); }
     }
   }
-  return { rounds, byRush, failures };
+  return { rounds, byBox: byRush, failures };
 }

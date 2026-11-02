@@ -33,18 +33,33 @@ protection:
   engage: 0.5          # from the snap until the drones meet their protectors
   bust: { start: 0.0, end: 0.2 }   # how often a lineman whiffs on his man (a protection bust: that drone comes free)
 
-# The rush: core drones always rush; threats (behind them) may blitz or drop out, and may creep in before the snap
-# (a tell). By level step (the levels spread over the list): how many core drones and how many threats.
+# The box (owner, 2026-11-02): the drones on the line (front) and at the second level (back), no DBs, in a front
+# picked by level: up to 8 in all. A line drone nearly always rushes (now and then an inside one drops out after the
+# snap); a second-level drone is a threat: it may blitz (sometimes a beat late) or drop out, and may creep in before the
+# snap (a tell). The more of the box that rushes against his 5 protectors and the RB, the more come free.
 rush:
-  rushers: [[3, 4], [4, 4], [4, 5], [4, 5], [5, 6]]
-  threats: [[0, 0], [0, 1], [1, 1], [1, 2], [1, 2]]
-  max: 7               # never more than this many drones in all
-  line: [6.5, 8]       # the core drones hover this far in front of him before the snap
-  threat_depth: [9.5, 11]
-  width: 4.2           # spread across, each side of him
-  edge: 3.0            # an outermost drone at least this far out is an edge: it goes around him
-  blitz: { start: 0.5, end: 0.6 }    # how often a threat blitzes
-  honest: { start: 0.9, end: 0.65 }  # how often a blitzer creeps in before the snap (a non-blitzer fakes it a little)
+  boxes:
+    - { id: "4-3", front: 4, back: 3, from: 1, weight: 3 }
+    - { id: "3-3", front: 3, back: 3, from: 1, weight: 2 }
+    - { id: "4-2", front: 4, back: 2, from: 1, weight: 2 }
+    - { id: "3-4", front: 3, back: 4, from: 2, weight: 2 }
+    - { id: "4-4", front: 4, back: 4, from: 4, weight: 2 }
+    - { id: "5-3", front: 5, back: 3, from: 4, weight: 2 }
+    - { id: "6-0", front: 6, back: 0, from: 5, weight: 1 }
+    - { id: "5-2", front: 5, back: 2, from: 5, weight: 1.5 }
+    - { id: "6-1", front: 6, back: 1, from: 7, weight: 1 }
+    - { id: "7-0", front: 7, back: 0, from: 8, weight: 0.8 }
+    - { id: "6-2", front: 6, back: 2, from: 9, weight: 1 }
+  line: [6.5, 8]       # the line drones hover this far in front of him before the snap
+  back_depth: [9.5, 11] # the second level, this far
+  width: 4.2           # the line spreads this far each side of him
+  back_width: 3.0      # the second level this far
+  edge: 3.0            # an outermost line drone at least this far out is an edge: it goes around him
+  blitz: { start: 0.2, end: 0.55 }       # how often a second-level drone blitzes
+  front_drop: { start: 0.0, end: 0.15 }  # how often an inside line drone drops out instead
+  honest: { start: 0.9, end: 0.65 }      # how often a blitzer creeps in before the snap (a dropper fakes it a little)
+  delayed: { start: 0.0, end: 0.4 }      # how often a blitzer comes a beat late
+  delay: [0.4, 0.9]    # how late
 
 drones:
   height: 1.35         # they fly at chest height

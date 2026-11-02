@@ -10,10 +10,14 @@ rush made of drones (owner, 2026-11-01: "truly mimic the way pass rush operates"
 whose lantern lights; a catch sends him leaping to the next roof. **A hit or a snatched package ends the run.**
 
 ### Before the snap (a GO button every play)
-- He sees the rush (3 to 7 drones by level), his **5 protectors** in front of him, each with a **strength 0-99**, and
-  his **RB**. Protectors get weaker as the levels rise.
-- Drones marked **?** are **threats**: they may blitz or drop out. A threat that creeps in (lower, closer) is a tell:
-  honest about 90% of the time at first, about 65% at the top.
+- He sees **the box** (owner, 2026-11-02: the line and the second level, no DBs, up to 8): a front picked by level,
+  4-3, 3-3 and 4-2 at first, then 3-4, 4-4, 5-3, 5-2, all on the line (6-0, 7-0), 6-1 and 6-2. His **5 protectors**
+  stand in front of him, each with a **strength 0-99**, and his **RB**. Protectors get weaker as the levels rise.
+- **Line drones** nearly always rush; at higher levels an inside one sometimes drops out after the snap.
+- **Second-level drones** are the **threats (?)**: each may blitz or drop out, and at higher levels some blitz a beat
+  late (a delayed blitz). A threat that creeps in (lower, closer) is a tell: honest about 90% of the time at first,
+  about 65% at the top. The rush is anywhere from 3 to 8: early pressure from the line, later pressure from depth,
+  and whoever is left over when the box outnumbers his 5 + RB comes free, each at its own moment.
 - He may keep the **RB in** on one threat (tap it, or its number), or leave him out to run a short route.
 
 ### After the snap
@@ -27,8 +31,7 @@ whose lantern lights; a catch sends him leaping to the next roof. **A hit or a s
   the snap, about a second away: throw hot, or escape.
 - **The RB:** kept in on a threat that blitzes, he picks it up (a weaker block); kept in on one that drops out, he runs
   his route after all; left out, he is a receiver on his own roof (a short throw). Wrong call: the blitzer comes free.
-- Each play is named by its rush: 3 or 4 rushing, blitz (5-6), all-out blitz (7), free rusher (glossary terms once
-  signed off, plain names until then).
+- Each play shows its box and how many of it rushed ("4-3 box · 5 rushing").
 
 ### Lanterns
 - Each friend runs a route by how far out he is: **quick** (lights at about 1.8-2.4 s), **intermediate** (2.4-3.2 s),

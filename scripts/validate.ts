@@ -52,7 +52,7 @@ if (!isMainThread) {
   const glossaryIds = new Set((raw.glossary as { terms: { id: string }[] }).terms.map((t) => t.id));
   const roof = sweepRooftop(makeGame(raw.rooftop, parsePlayContent(raw).quarterback.throwing_hand), 30);
   for (const t of PLAY_TERMS) if (!glossaryIds.has(t)) roof.failures.push(`rooftop: names plays with unknown glossary term ${t}`);
-  console.log(`Rooftop Run sweep: ${roof.rounds} plays (by drones rushing: ${Object.entries(roof.byRush).map(([k, v]) => `${k}: ${v}`).join(', ')}).`);
+  console.log(`Rooftop Run sweep: ${roof.rounds} plays (by box: ${Object.entries(roof.byBox).map(([k, v]) => `${k} ${v}`).join(', ')}).`);
   if (roof.failures.length) {
     console.error(`\n${roof.failures.length} Rooftop Run problem(s):`);
     for (const f of roof.failures.slice(0, 25)) console.error(`  - ${f}`);

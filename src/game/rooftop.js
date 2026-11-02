@@ -429,8 +429,8 @@ export function initRooftop(ctx) {
     // before the snap: the count, and the RB call
     $('rPre').hidden = !pre;
     if (pre) {
-      const rushers = run.round.rushers.length, threats = run.round.threats.length;
-      setText('rPreCount', `${rushers} rushing${threats ? ` + ${threats} threat${threats > 1 ? 's' : ''} (?)` : ''} · your line ${run.round.protectors.length} + RB`);
+      const up = run.round.rushers.length, threats = run.round.threats.length;
+      setText('rPreCount', `${run.round.box} box: ${up} on the line${threats ? `, ${threats} behind (?)` : ''} · your line ${run.round.protectors.length} + RB`);
       const t = run.round.threats.find((x) => x.id === run.rb);
       setText('rPreRb', !threats ? 'No threats: your RB runs a route.' : t ? `RB stays in on threat ${[...run.round.threats].sort((a, c) => a.x - c.x).indexOf(t) + 1}.` : 'RB runs a route. Tap a ? drone (or its number) to keep him in on it.');
     }

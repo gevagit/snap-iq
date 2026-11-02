@@ -121,10 +121,32 @@ describe('Rooftop Run: the protection', () => {
     expect(wrong.drones.find((d) => d.id === blitzer.id)!.blocker).not.toBe('RB');
     expect(wrong.friends.some((f) => f.id === RB_ID)).toBe(true);
     expect(friendsOf(r, null).some((f) => f.id === RB_ID)).toBe(true);
-    // picking up the blitzer
+    // picking up the blitzer (the rest of the box drops out, so nothing else gets him first)
+    for (const d of on.drones) if (d.id !== blitzer.id) d.freeT = Infinity;
     let picked = false;
-    for (let k = 0; k < 240 && !on.result; k++) { on.step(still()); if (on.events.some((e) => e.kind === 'pickup')) picked = true; }
+    for (let k = 0; k < 600 && !on.result && !picked; k++) { on.step(still()); if (on.events.some((e) => e.kind === 'pickup')) picked = true; }
     expect(picked).toBe(true);
+  });
+
+  it('the box: every front by level, 3 to 8 drones, line drones rushing, second-level drones blitzing or dropping, some late', () => {
+    const seen = new Set<string>();
+    let late = 0, onTime = 0;
+    for (let i = 0; i < 1200; i++) {
+      const r = draftRound(g, 12, 11000 + i), spec = g.r.rush.boxes.find((b) => b.id === r.box)!;
+      seen.add(r.box);
+      expect(r.rushers.length).toBe(spec.front);
+      expect(r.threats.length).toBe(spec.back);
+      expect(r.rushers.length + r.threats.length).toBeLessThanOrEqual(8);
+      expect(r.rushers.every((d) => !d.threat && d.delay === 0)).toBe(true);
+      const s = new RoundSim(g, r, null);
+      for (const t of r.threats.filter((x) => x.blitz)) {
+        const d = s.drones.find((x) => x.id === t.id)!;
+        if (t.delay > 0) { late++; expect(d.freeT).toBeGreaterThanOrEqual(t.delay); } else onTime++;
+      }
+    }
+    for (const b of g.r.rush.boxes) expect(seen.has(b.id), b.id).toBe(true);
+    expect(late).toBeGreaterThan(20);
+    expect(onTime).toBeGreaterThan(late);
   });
 
   it('threats that blitz creep in before the snap (a tell) more often than threats that drop out', () => {
@@ -139,7 +161,7 @@ describe('Rooftop Run: the protection', () => {
   it('lanterns: each stays lit 1 to 3 s, and they light sooner the more drones rush', () => {
     const few: number[] = [], many: number[] = [];
     for (let i = 0; i < 1500; i++) {
-      const r = draftRound(g, 3 + (i % 10), 7000 + i), rushing = r.rushers.length + r.threats.filter((t) => t.blitz).length;
+      const r = draftRound(g, 3 + (i % 10), 7000 + i), rushing = [...r.rushers, ...r.threats].filter((d) => d.blitz).length;
       for (const f of r.friends) for (const [a, b] of f.windows) {
         expect(b - a).toBeGreaterThanOrEqual(1 - 1e-9);
         expect(b - a).toBeLessThanOrEqual(3 + 1e-9);
