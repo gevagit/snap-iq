@@ -9,12 +9,19 @@ A courier on neon rooftops at night, seen through his own eyes (first person, ow
 rush made of drones (owner, 2026-11-01: "truly mimic the way pass rush operates"). He tosses the package to a friend
 whose lantern lights; a catch sends him leaping to the next roof. **A hit or a snatched package ends the run.**
 
-### Before the snap (a GO button every play)
-- He sees the rush (3 to 7 drones by level), his **5 protectors** in front of him, each with a **strength 0-99**, and
-  his **RB**. Protectors get weaker as the levels rise.
-- Drones marked **?** are **threats**: they may blitz or drop out. A threat that creeps in (lower, closer) is a tell:
-  honest about 90% of the time at first, about 65% at the top.
-- He may keep the **RB in** on one threat (tap it, or its number), or leave him out to run a short route.
+### Before the snap (a 3, 2, 1 countdown every play)
+- He sees the drones (owner, 2026-11-02: just a front row and a back row, up to 8; the game says nothing about
+  boxes or fronts): a set-up picked by level, 4 and 3, 3 and 3, 4 and 2 at first, then 3 and 4, 4 and 4, 5 and 3,
+  5 and 2, all in front (6 or 7), 6 and 1, 6 and 2. His **5 protectors** stand in front of him, each with a
+  hidden **strength 0-99** (owner, 2026-11-02: no numbers on screen, he learns who holds by feel), and his **wingman** (owner, 2026-11-02: looks exactly like a protector, no label; "rb" in code and settings).
+  Protectors get weaker as the levels rise.
+- **Front-row drones** nearly always come; at higher levels an inside one sometimes hangs back after the snap.
+- **Back-row drones** are the threats (nothing marks them, owner 2026-11-02: he reads the rows): each may come or hang back, and at higher levels some come a beat late.
+  One that creeps in (lower, closer) is a tell: honest about 90% of the time at first, about 65% at the top. From 3 to
+  8 come: early from the front row, later from the back row, and whoever his 5 protectors and the wingman can't block gets
+  through, each at its own moment.
+- He may keep the **wingman in** on one back-row drone (tap it; on a computer, its small key number), or leave him out to
+  run a short route.
 
 ### After the snap
 - **Protectors hold their drones with beams** for up to 4 s (a 99), less the weaker they are; a spare protector helps
@@ -25,10 +32,13 @@ whose lantern lights; a catch sends him leaping to the next roof. **A hit or a s
   screen, he feels them: a red glow builds on that edge and their buzz is in that ear.
 - **A drone nobody blocks** (more rushers than protectors, or a **protection bust**: a lineman whiffs) comes at him from
   the snap, about a second away: throw hot, or escape.
-- **The RB:** kept in on a threat that blitzes, he picks it up (a weaker block); kept in on one that drops out, he runs
-  his route after all; left out, he is a receiver on his own roof (a short throw). Wrong call: the blitzer comes free.
-- Each play is named by its rush: 3 or 4 rushing, blitz (5-6), all-out blitz (7), free rusher (glossary terms once
-  signed off, plain names until then).
+- **The wingman:** kept in on a threat that blitzes, he picks it up (a weaker block); kept in on one that drops out, he runs
+  his route after all; left out, he breaks out on his own roof (a short throw), but comes open only now and then (about 3 plays in 10)
+  and never before 3 s (owner, 2026-11-03): a last resort, not the first look. Wrong call: the blitzer comes free.
+- No GO button (owner, 2026-11-03): a 3, 2, 1 countdown, then the snap. Nothing says how many drones there are or how
+  many come: he counts them himself.
+- A play where every lantern goes out while he still holds it, with nothing loose, ends ("NOBODY OPEN"): the streak
+  resets and the next play starts.
 
 ### Lanterns
 - Each friend runs a route by how far out he is: **quick** (lights at about 1.8-2.4 s), **intermediate** (2.4-3.2 s),
@@ -38,7 +48,7 @@ whose lantern lights; a catch sends him leaping to the next roof. **A hit or a s
   points**; once the ball is out, the rest do not count (owner).
 
 ### Checked on every play (npm run validate, tests)
-- Whatever the RB call (in on any threat, or out), a person who reacts 0.25 s after a drone breaks free or locks on and
+- Whatever the wingman call (in on any threat, or out), a person who reacts 0.25 s after a drone breaks free or locks on and
   taps a short combo gets through and gets the ball out.
 - Edges really need the step up: a sideways-only player gets caught (test); a stronger protector holds longer, never
   past 4 s; blitzers show the tell far more often than droppers; more rushers light lanterns sooner.
@@ -46,8 +56,8 @@ whose lantern lights; a catch sends him leaping to the next roof. **A hit or a s
 - **Feet:** one step per key press or joystick flick (a sharp flick is a longer step); righty or lefty layout.
 - **Last-second dodge:** getting clear of a drone that was on him only in the last 0.3 s scores a bonus.
 - **Guide:** for his first five runs, prompts say what to do now (step up, off its line, toss to 2...).
-- **Hands:** numbered buttons, friends numbered left to right (the RB too when he runs a route); before the snap the
-  same buttons pick the threat for the RB.
+- **Hands:** numbered buttons, friends numbered left to right (the wingman too when he breaks out). Before the snap he
+  taps a back-row drone to keep the wingman on it (on a computer, its number key); no buttons show then on the iPad.
 
 ## Hooks (owner: all four)
 - **Near miss:** a drone that passes close without hitting scores points (times the streak).

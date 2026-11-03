@@ -121,10 +121,32 @@ describe('Rooftop Run: the protection', () => {
     expect(wrong.drones.find((d) => d.id === blitzer.id)!.blocker).not.toBe('RB');
     expect(wrong.friends.some((f) => f.id === RB_ID)).toBe(true);
     expect(friendsOf(r, null).some((f) => f.id === RB_ID)).toBe(true);
-    // picking up the blitzer
+    // picking up the blitzer (the rest of the box drops out, so nothing else gets him first)
+    for (const d of on.drones) if (d.id !== blitzer.id) d.freeT = Infinity;
     let picked = false;
-    for (let k = 0; k < 240 && !on.result; k++) { on.step(still()); if (on.events.some((e) => e.kind === 'pickup')) picked = true; }
+    for (let k = 0; k < 600 && !on.result && !picked; k++) { on.step(still()); if (on.events.some((e) => e.kind === 'pickup')) picked = true; }
     expect(picked).toBe(true);
+  });
+
+  it('front and back rows: every set-up by level, 3 to 8 drones, front-row drones coming, back-row drones coming or hanging back, some late', () => {
+    const seen = new Set<string>();
+    let late = 0, onTime = 0;
+    for (let i = 0; i < 1200; i++) {
+      const r = draftRound(g, 12, 11000 + i), spec = g.r.rush.boxes.find((b) => b.id === r.box)!;
+      seen.add(r.box);
+      expect(r.rushers.length).toBe(spec.front);
+      expect(r.threats.length).toBe(spec.back);
+      expect(r.rushers.length + r.threats.length).toBeLessThanOrEqual(8);
+      expect(r.rushers.every((d) => !d.threat && d.delay === 0)).toBe(true);
+      const s = new RoundSim(g, r, null);
+      for (const t of r.threats.filter((x) => x.blitz)) {
+        const d = s.drones.find((x) => x.id === t.id)!;
+        if (t.delay > 0) { late++; expect(d.freeT).toBeGreaterThanOrEqual(t.delay); } else onTime++;
+      }
+    }
+    for (const b of g.r.rush.boxes) expect(seen.has(b.id), b.id).toBe(true);
+    expect(late).toBeGreaterThan(20);
+    expect(onTime).toBeGreaterThan(late);
   });
 
   it('threats that blitz creep in before the snap (a tell) more often than threats that drop out', () => {
@@ -139,7 +161,7 @@ describe('Rooftop Run: the protection', () => {
   it('lanterns: each stays lit 1 to 3 s, and they light sooner the more drones rush', () => {
     const few: number[] = [], many: number[] = [];
     for (let i = 0; i < 1500; i++) {
-      const r = draftRound(g, 3 + (i % 10), 7000 + i), rushing = r.rushers.length + r.threats.filter((t) => t.blitz).length;
+      const r = draftRound(g, 3 + (i % 10), 7000 + i), rushing = [...r.rushers, ...r.threats].filter((d) => d.blitz).length;
       for (const f of r.friends) for (const [a, b] of f.windows) {
         expect(b - a).toBeGreaterThanOrEqual(1 - 1e-9);
         expect(b - a).toBeLessThanOrEqual(3 + 1e-9);
@@ -220,6 +242,33 @@ describe('Rooftop Run: the protection', () => {
     expect(rep.readsRight).toBeLessThanOrEqual(rep.reads);
     expect(rep.missed).toBe(run.missed);
   });
+
+  it('the wingman comes open late (3 s or more) and only now and then, never first in most plays', () => {
+    let open = 0, first = 0, n = 0;
+    for (let lv = 1; lv <= 12; lv++) for (let i = 0; i < 25; i++) {
+      const r = draftRound(g, lv, 900 + lv * 31 + i); n++;
+      const w = r.rbRoute.windows[0];
+      if (!w) continue;
+      open++;
+      expect(w[0]).toBeGreaterThanOrEqual(3);
+      if (r.friends.every((f) => !f.windows.length || f.windows[0]![0] > w[0])) first++;
+    }
+    expect(open / n).toBeLessThan(0.45);
+    expect(first / n).toBeLessThan(0.15);
+  }, 30000);
+
+  it('a play where he never tosses ends once every lantern is out and nothing is loose (no endless play)', () => {
+    for (let lv = 1; lv <= 12; lv += 2) {
+      const r = draftRound(g, lv, 700 + lv * 13), p = idealPolicy(g, { react: g.r.drones.react });
+      const s = runRound(g, r, (sim) => ({ tap: p(sim).tap }), null, 20);
+      expect(s.result).not.toBeNull();
+      expect(['dead', 'hit']).toContain(s.result!.kind);
+    }
+    // and the run goes on to the next play, the streak reset
+    const run = new Run(g, 5, 7), ip = ideal();
+    play(run, (r) => ({ tap: ip(r).tap }), 12);
+    expect(run.rounds).toBeGreaterThan(0);
+  }, 60000);
 
   it('looks unlock with his best score, one of each from the start', () => {
     expect(unlocked(g, 0).jackets.length).toBe(1);
