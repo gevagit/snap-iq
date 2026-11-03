@@ -94,8 +94,9 @@ friends:
   length: [1, 3]       # a lantern stays lit 1 to 3 s (owner)
   chance: { start: 0.65, end: 0.55 }   # how often a friend comes open at all (plus 10% for each drone rushing beyond 4)
   rb:                  # the wingman breaking out (sent out, or his threat dropped): a short throw on his own roof
-    open: [1.3, 1.8]
-    length: [1.2, 2.0]
+    open: [3.0, 3.8]   # owner, 2026-11-03: never before 3 s
+    length: [1.0, 1.8]
+    chance: 0.3        # and only sometimes (owner: he can be the only one open, but not most of the time)
     out: 3.2           # to this side of him (his blind side)
     depth: 3.6         # this far in front of where he starts (past the line)
 
@@ -122,9 +123,11 @@ scoring:
   streak_cap: 4
 
 beats:
+  countdown: 3         # before each play: 3, 2, 1, go (owner, 2026-11-03: no GO button)
   result: 0.55         # after a catch, before the jump
   jump: 1.25           # the run and leap to the next roof
   over: 0.9            # after a hit or a snatch, before the run report
+  dead: 0.4            # every lantern out and nothing loose while he still holds it: the play ends this long after
 
 # Looks he earns with his best run (score). All drawn in code.
 unlocks:

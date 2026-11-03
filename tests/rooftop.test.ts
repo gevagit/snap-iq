@@ -243,6 +243,33 @@ describe('Rooftop Run: the protection', () => {
     expect(rep.missed).toBe(run.missed);
   });
 
+  it('the wingman comes open late (3 s or more) and only now and then, never first in most plays', () => {
+    let open = 0, first = 0, n = 0;
+    for (let lv = 1; lv <= 12; lv++) for (let i = 0; i < 25; i++) {
+      const r = draftRound(g, lv, 900 + lv * 31 + i); n++;
+      const w = r.rbRoute.windows[0];
+      if (!w) continue;
+      open++;
+      expect(w[0]).toBeGreaterThanOrEqual(3);
+      if (r.friends.every((f) => !f.windows.length || f.windows[0]![0] > w[0])) first++;
+    }
+    expect(open / n).toBeLessThan(0.45);
+    expect(first / n).toBeLessThan(0.15);
+  }, 30000);
+
+  it('a play where he never tosses ends once every lantern is out and nothing is loose (no endless play)', () => {
+    for (let lv = 1; lv <= 12; lv += 2) {
+      const r = draftRound(g, lv, 700 + lv * 13), p = idealPolicy(g, { react: g.r.drones.react });
+      const s = runRound(g, r, (sim) => ({ tap: p(sim).tap }), null, 20);
+      expect(s.result).not.toBeNull();
+      expect(['dead', 'hit']).toContain(s.result!.kind);
+    }
+    // and the run goes on to the next play, the streak reset
+    const run = new Run(g, 5, 7), ip = ideal();
+    play(run, (r) => ({ tap: ip(r).tap }), 12);
+    expect(run.rounds).toBeGreaterThan(0);
+  }, 60000);
+
   it('looks unlock with his best score, one of each from the start', () => {
     expect(unlocked(g, 0).jackets.length).toBe(1);
     expect(unlocked(g, 1e9).trails.length).toBe(g.r.unlocks.trails.length);

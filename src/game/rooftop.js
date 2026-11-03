@@ -4,7 +4,7 @@
 // friend the moment his lantern lights. The rules and every number live in src/rooftop and
 // content/rooftop/rules.yaml; this file draws the city, plays the sound, takes input (touch, keyboard, mouse, game
 // controller) and keeps score. Drawn in 2D canvas, no bought art.
-import { STEP, Run, idealPolicy, idealRb, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, live, playKind, RB_ID } from '../rooftop';
+import { STEP, Run, idealPolicy, idealRb, isLit, separation, tossKeys, friendNumber, report, unlocked, offSign, live, RB_ID } from '../rooftop';
 
 // Two layouts (owner, 2026-11-01), keys by where they sit on the keyboard (e.code), not what they type, so they work
 // with any layout (Hebrew too). Righty: move with the right hand (arrows; the joystick on the right of the iPad), toss
@@ -36,7 +36,7 @@ const HORIZON = 0.43;
 function looks(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 export function initRooftop(ctx) {
-  const { G, $, show, progress, save, renderHome, waveName } = ctx;
+  const { G, $, show, progress, save, renderHome } = ctx;
   const R = G.r;
   const canvas = $('roofView');
   const g = canvas.getContext('2d');
@@ -45,7 +45,7 @@ export function initRooftop(ctx) {
   let run = null, raf = 0, last = 0, acc = 0, policy = null, policySim = null, on = false, started = false;
   let W = 0, H = 0, DPR = 1, F = 1, layers = null;
   let gpPrev = [];
-  const fx = { snapT: -9, edgeT: -9, missT: -9, tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, level: 0, levelT: -9 };
+  const fx = { snapT: -9, edgeT: -9, missT: -9, tapT: -9, tapX: 0, tapZ: 0, shakeT: -9, nearT: -9, nearSide: 0, catchT: -9, catchAt: null, popT: -9, commitT: -9, overT: -9, deadT: -9, level: 0, levelT: -9 };
   let ghost = null, look = { jacket: null, trail: null }, guided = true, layout = 'righty';
   const trails = new Map();
   const audio = sound();
@@ -180,6 +180,8 @@ export function initRooftop(ctx) {
       const before = run.sim, phase = run.phase, level = run.level, streak = run.streak, pop = run.pop;
       let u = input();
       if (run.phase === 'pre' && autoplay && run.clock - preT > 0.8) { run.callRb(idealRb(run.round)); snapNow(); }
+      // no GO button (owner, 2026-11-03): 3, 2, 1 and the snap
+      if (run.phase === 'pre' && run.clock - preT >= R.beats.countdown) snapNow();
       if (run.phase === 'live' && autoplay) { if (policySim !== run.sim) { policySim = run.sim; policy = idealPolicy(G); } const a = policy(run.sim); if (a.action) run.act(a.action); u = a; }
       run.step(u);
       for (const e of before.events) onEvent(e, before);
@@ -196,12 +198,11 @@ export function initRooftop(ctx) {
     }
     raf = requestAnimationFrame(loop);
   }
-  /** GO: the snap. */
+  /** The snap, at the end of the countdown. */
   function snapNow() {
     if (!run || run.phase !== 'pre' || !started) return;
     run.snap(); renderToss(); trails.clear(); fx.snapT = run.clock; audio.snap();
   }
-  $('rSnap').addEventListener('click', () => { $('rSnap').blur(); snapNow(); });
   /** Before the snap: keep his wingman in on threat k (1 = the leftmost), or take him off it. */
   function pickThreat(k) {
     if (!run || run.phase !== 'pre') return;
@@ -220,7 +221,8 @@ export function initRooftop(ctx) {
   }
   function onResult(res) {
     if (res.kind === 'catch') { fx.catchT = run.clock; audio.catch(run.streak); }
-    if (res.kind === 'drop') audio.drop();
+    if (res.kind === 'drop' || res.kind === 'dead') audio.drop();
+    if (res.kind === 'dead') fx.deadT = run.clock;
     if (res.kind === 'hit' || res.kind === 'snatch') { fx.shakeT = run.clock; fx.overT = run.clock; audio.hit(); canvas.classList.add('over'); }
   }
 
@@ -282,7 +284,7 @@ export function initRooftop(ctx) {
   window.addEventListener('keydown', (e) => {
     if (!on) return;
     const k = e.code;
-    if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (run && run.phase === 'pre') snapNow(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
+    if (k === 'Space' || k === 'Enter' || k === 'NumpadEnter') { e.preventDefault(); if (!started && !$('rReady').hidden) go(); else if (!$('rReport').hidden && k === 'Space') $('rAgain').click(); return; }
     const L = LAYOUTS[layout], toss = L.toss[k] || TOSS_DIGITS[k];
     if (toss) { tossKey(toss); return; }
     if (k === 'Escape') { $('rQuit').click(); return; }
@@ -426,18 +428,18 @@ export function initRooftop(ctx) {
       const t = pre && [...run.round.threats].sort((a, c) => a.x - c.x)[Number(b.dataset.n) - 1];
       b.classList.toggle('pick', !!t && run.rb === t.id);
     }
-    // before the snap: the count, and the wingman call
+    // before the snap: the countdown and his wingman call; no count of drones or protectors (owner, 2026-11-03: he
+    // reads the rush himself)
     $('rPre').hidden = !pre;
     if (pre) {
-      const up = run.round.rushers.length, threats = run.round.threats.length;
-      setText('rPreCount', `${up} drones in front${threats ? `, ${threats} behind` : ''} · your ${run.round.protectors.length} protectors + your wingman`);
+      setText('rPreCount', String(Math.max(1, Math.ceil(R.beats.countdown - (run.clock - preT)))));
       const t = run.round.threats.find((x) => x.id === run.rb);
       setText('rPreRb', t ? 'Your wingman stays in on that drone. Tap it again to send him out.' : fine ? 'Your wingman breaks out for a short catch. Press a back-row drone\'s number to keep him in on it.' : 'Your wingman breaks out for a short catch. Tap a back-row drone to keep him in on it.');
     }
-    // the play's name as it starts: how many rush (the glossary term once signed off)
-    const wave = run.phase === 'live' && started && s.t < 1.6;
-    $('rWave').classList.toggle('on', wave);
-    if (wave) { const k = playKind(s); setText('rWaveName', waveName(k).toUpperCase()); setText('rWaveHint', ''); }
+    // no banner saying how many come (owner, 2026-11-03): he sees it. A dead play (nobody left to throw to) says so.
+    const dead = run.phase !== 'pre' && run.clock - fx.deadT < 1.2;
+    $('rWave').classList.toggle('on', dead);
+    if (dead) { setText('rWaveName', 'NOBODY OPEN'); setText('rWaveHint', 'every lantern went out: toss sooner'); }
     // first runs: say what to do right now
     guideText(s, holding);
   }

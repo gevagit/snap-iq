@@ -51,7 +51,7 @@ export const RooftopRules = z
       routes: z.object({ short: z.number().positive(), long: z.number().positive() }).strict(),
       open: z.object({ quick: Range, mid: Range, deep: Range }).strict(),
       sooner: z.number().min(0), length: Range, chance: StartEnd,
-      rb: z.object({ open: Range, length: Range, out: z.number().positive(), depth: z.number() }).strict(),
+      rb: z.object({ open: Range, length: Range, chance: z.number().min(0).max(1), out: z.number().positive(), depth: z.number() }).strict(),
     }).strict(),
     toss: z.object({ release: z.number().min(0), speed: z.number().positive() }).strict(),
     ramp: z.object({ rounds_per_level: z.number().int().positive(), levels: z.number().int().positive(), restart_below: z.number().int().min(0) }).strict(),
@@ -60,7 +60,7 @@ export const RooftopRules = z
       near_miss: z.number().min(0), pickup: z.number().min(0), streak_step: z.number().min(0), streak_cap: z.number().min(1),
       clutch: z.object({ window: z.number().positive(), points: z.number().min(0) }).strict(),
     }).strict(),
-    beats: z.object({ result: z.number().min(0), jump: z.number().positive(), over: z.number().min(0) }).strict(),
+    beats: z.object({ countdown: z.number().positive(), result: z.number().min(0), jump: z.number().positive(), over: z.number().min(0), dead: z.number().min(0) }).strict(),
     unlocks: z.object({ jackets: z.array(Look).min(1), trails: z.array(Look).min(1) }).strict(),
     reviewed: z.boolean(),
   })
@@ -224,8 +224,9 @@ export function draftRound(g: Game, level: number, seed: number): Round {
   for (const f of friends) if (rand() < chance) open(f);
   // somebody always comes open: the quickest route
   if (!friends.some((f) => f.windows.length)) open([...friends].sort((a, b) => a.z - b.z)[0]!);
-  const rbT = between(rand, F.rb.open);
-  const rbRoute: Friend = { id: RB_ID, x: sx + off * F.rb.out, z: sz + F.rb.depth, rise: 0, route: 'rb', side: 'off', drift: off === 1 ? 1 : -1, windows: [[rbT, rbT + between(rand, F.rb.length)]] };
+  // the wingman breaking out comes open late (3 s or more) and only now and then: a last resort, not the first look
+  const rbT = between(rand, F.rb.open), rbLen = between(rand, F.rb.length), rbOpen = rand() < F.rb.chance;
+  const rbRoute: Friend = { id: RB_ID, x: sx + off * F.rb.out, z: sz + F.rb.depth, rise: 0, route: 'rb', side: 'off', drift: off === 1 ? 1 : -1, windows: rbOpen ? [[rbT, rbT + rbLen]] : [] };
   return { seed, level, box: box.id, protectors, rb, rushers, threats, bust, friends, rbRoute, jitter };
 }
 
@@ -256,7 +257,9 @@ export type Result =
   | { kind: 'catch'; target: string; t: number; release: number }
   | { kind: 'drop'; target: string; t: number; release: number }
   | { kind: 'snatch'; target: string; t: number; release: number }
-  | { kind: 'hit'; by: string; t: number };
+  | { kind: 'hit'; by: string; t: number }
+  /** he still held it when every lantern had gone out and nothing was loose: the play is dead, on to the next */
+  | { kind: 'dead'; t: number };
 export interface Toss { target: string; press: number; release: number; arrive: number; kind: 'catch' | 'drop' | 'snatch' }
 export type SimEvent =
   | { kind: 'near' | 'commit' | 'release' | 'free' | 'strain' | 'drop' | 'pickup' | 'missed'; id: string }
@@ -392,7 +395,11 @@ export class RoundSim {
     if (this.toss && this.t >= this.toss.arrive) {
       const { kind, target, release } = this.toss;
       this.result = { kind, target, t: this.t, release };
+      return;
     }
+    // nobody left to throw to: every lantern has gone out (a beat ago) and no drone is loose: the play is dead
+    const beat = this.g.r.beats.dead;
+    if (this.holding && this.friends.every((f) => f.windows.every(([, b]) => this.t >= b + beat)) && !live(this).length) this.result = { kind: 'dead', t: this.t };
   }
 
   private fly(d: Drone, dt: number) {
@@ -659,7 +666,7 @@ export class Run {
         this.deliveries++;
         points = (sc.delivery + sc.quick * Math.max(0, sc.quick_until - res.release)) * this.multiplier;
         this.add(points, this.streak > 1 ? `STREAK ×${this.multiplier.toFixed(2).replace(/\.?0+$/, '')}` : 'DELIVERED');
-      } else if (res.kind === 'drop') this.streak = 0;
+      } else if (res.kind === 'drop' || res.kind === 'dead') this.streak = 0;
       this.nearMisses += s.nearMisses;
       this.clutches += s.clutches;
       this.log.push({ round: this.round, rb: this.rb, result: res, points, missed: s.missed, near: s.nearMisses, drones: s.drones, pressT: s.toss?.press ?? null });
