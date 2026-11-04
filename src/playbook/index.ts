@@ -22,7 +22,7 @@ export interface Playbook {
   plays: TeamPlay[];
 }
 /** A play the owner took out of the game (kept in content with the reason). */
-export const active = (p: { cancelled?: unknown }) => !p.cancelled;
+export const active = (p: object) => !(p as { cancelled?: unknown }).cancelled;
 export interface Formations {
   alignment: {
     line: { split: number; depth: number };

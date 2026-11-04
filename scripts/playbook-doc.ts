@@ -51,7 +51,7 @@ function diagram(p: TeamPlay): { svg: string; problems: string[] } {
     if (m && end) {
       // around the QB for an orbit (behind him), straight across otherwise
       const qb = placed.find((q) => q.id === 'QB')!;
-      const pts = p.motion.kind === 'orbit-motion' ? [[m.x, m.y], [qb.x, qb.y - 2], [end.x, end.y]] : [[m.x, m.y], [end.x, end.y]];
+      const pts: [number, number][] = p.motion.kind === 'orbit-motion' ? [[m.x, m.y], [qb.x, qb.y - 2], [end.x, end.y]] : [[m.x, m.y], [end.x, end.y]];
       g.push(`<polyline class="motion" marker-end="url(#arrow-m)" points="${pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')}"/>`);
     } else if (m) {
       const dir = m.x > 0.5 ? -1 : m.x < -0.5 ? 1 : 1;
