@@ -70,3 +70,14 @@ Then the **snap**: the play runs for about a second and freezes so he sees the t
 2. Answer keys for every step (computed from the play and the look; the editor overrides them).
 3. The rep UI (his-eyes view, step track, 40 s clock), the last-scan shift, the scorecard.
 4. The answer editor and export.
+
+## Built (first playable, 2026-11-04)
+- Start Workout runs this routine: 6 of our plays, each against a look for its formation, in playtest until the
+  owner signs the playbook off. Every step is graded; the scorecard shows his answer next to the right one.
+- Steps as built: down & distance (yardage, must-convert), the call card, everyone set, safeties (depth, where),
+  corners (press/off, leverage), box (down linemen, the edges, linebackers, who may blitz), protection (can we block
+  them all), the run check (runs), reads (or the side, on a pick-a-side play), the look-off (deep reads), footwork,
+  key defender, run lane, last scan (same look, or what changed: the defense moves while he watches).
+- Not yet: stance questions (the his-eyes players don't show a stance difference yet, so it isn't asked: P3), the
+  post-snap read after the freeze, and the classic workout's Breakdown for these plays.
+- The answer editor: Parent settings, Answer keys. Edits stay on the device; Export gives the file to commit.

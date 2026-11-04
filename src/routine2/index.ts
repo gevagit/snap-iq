@@ -186,7 +186,7 @@ function placeDefense(C: Content, look: Look, offense: Placed[], press: Rep['pre
     else if (sp.position === 'middle') x = 0;
     else if (sp.position === 'box') x = side * P.safety_x.box!;
     else if (sp.position === 'shaded') x = strong * P.safety_x.shaded!;
-    else if (sp.position === 'over-2') { const q = two(side) ?? two(-side as -1 | 1); x = q ? q.x : side * 6; }
+    else if (sp.position === 'over-2') { const q = two(side); x = q ? q.x : side * 6; }   // no #2 on his side: the apex
     out.push({ id: `S${k + 1}`, role: 'S', x, y: P.safety_depth[sp.depth], num: num(), blitz: false, depth: sp.depth, position: sp.position === 'shaded' ? 'middle' : sp.position });
   });
   // a nickel (5 defensive backs): over #2 on the side without an over-2 safety

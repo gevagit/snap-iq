@@ -274,6 +274,54 @@ body.roof-lefty .rstick .base { left: 120px; }
 .big { font-size: 64px; font-weight: 800; font-stretch: 70%; font-variant-numeric: tabular-nums; color: var(--def); line-height: 1; }
 #rotate { position: fixed; inset: 0; background: var(--ink); color: #fff; display: none; place-items: center; text-align: center; padding: 30px; font-size: 20px; font-weight: 700; z-index: 10; }
 @media (orientation: portrait) and (max-width: 900px) { body.playing #rotate { display: grid; } }
+
+/* Routine v2 (ops): our playbook at the line */
+#ops .opsask { position: absolute; left: max(14px, env(safe-area-inset-left)); bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--badge)); width: min(400px, 46vw); max-height: calc(100% - 90px); overflow: auto; background: var(--panel); color: var(--panel-ink); border-radius: 16px; padding: 14px; display: grid; gap: 10px; }
+#ops .opsask[hidden], #ops .opscard[hidden], #ops .opscall[hidden] { display: none; }
+#ops .opsask h2 { margin: 0; font-size: 19px; font-weight: 800; line-height: 1.2; }
+#ops .opsstep { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--panel-ink-2); }
+#ops .choices.long { grid-template-columns: 1fr; }
+#ops .choices.long button { font-size: 14px; font-weight: 700; text-align: left; min-height: 46px; }
+#ops .choices button[aria-pressed="true"] { background: #FFD54A; }
+#ops .choices button em { font-style: normal; display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%; background: #0E1520; color: #FFD54A; font-size: 13px; }
+.bug { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 40px); left: 50%; transform: translateX(-50%); background: #0E1520; color: #FFFFFF; border: 2px solid #FFD54A; border-radius: 10px; padding: 4px 14px; font-weight: 800; font-size: 22px; font-stretch: 80%; letter-spacing: 0.02em; pointer-events: none; }
+#ops .opscall { position: absolute; inset: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); background: rgba(8,12,22,0.94); border-radius: 18px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto auto; gap: 10px; color: #FFFFFF; }
+#ops .opscall h2 { margin: 0; font-size: 26px; font-weight: 800; font-stretch: 80%; }
+#ops .opscall p { margin: 0; color: #C9D3E6; }
+#ops .opscall .fieldbox { min-height: 0; display: grid; place-items: center; }
+#ops .opscall svg { width: 100%; height: 100%; max-height: 52vh; }
+#ops .opscall .break { min-height: 56px; border-radius: 14px; font-weight: 800; font-size: 20px; background: #FFD54A; color: #0E1520; }
+#ops .opscard { position: absolute; right: max(14px, env(safe-area-inset-right)); top: max(56px, env(safe-area-inset-top)); width: min(440px, 52vw); max-height: calc(100% - 120px); overflow: auto; background: var(--panel); color: var(--panel-ink); border-radius: 16px; padding: 16px; display: grid; gap: 10px; }
+#ops .opscard h2 { margin: 0; font-size: 22px; font-weight: 800; font-stretch: 80%; }
+#ops .opscard p { margin: 0; font-size: 14px; color: var(--panel-ink-2); }
+#ops .opscard ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; }
+#ops .opscard li { display: grid; grid-template-columns: 1.8em 1fr; gap: 6px; align-items: start; }
+#ops .opscard li small { display: block; font-size: 13px; color: var(--panel-ink-2); margin-top: 2px; }
+#ops .opscard i { font-style: normal; font-weight: 800; text-align: center; border-radius: 6px; }
+#ops .opscard i.ok { color: #1F9D55; } #ops .opscard i.no { color: #D64545; } #ops .opscard i.miss { color: #D64545; font-size: 11px; } #ops .opscard i.na { color: var(--panel-ink-2); }
+#ops .opscard .go { min-height: 52px; border-radius: 12px; font-weight: 800; font-size: 17px; }
+.gate { position: fixed; inset: 0; background: rgba(6,10,18,0.7); display: grid; place-items: center; z-index: 30; padding: 16px; }
+.gate[hidden] { display: none; }
+.gate > div { background: var(--panel); color: var(--panel-ink); border-radius: 16px; padding: 18px; max-width: 420px; display: grid; gap: 10px; }
+.gate .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gate button { min-height: 48px; border-radius: 12px; font-weight: 800; }
+#opsEdit { overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--ground); color: var(--ink); }
+#opsEdit .edwrap { max-width: 980px; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 40px max(16px, env(safe-area-inset-left)); display: grid; gap: 12px; }
+#opsEdit .edtop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#opsEdit select, #opsEdit input { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid #C9D3E6; min-width: 0; max-width: 100%; }
+#opsEdit .edfield svg { width: 100%; height: auto; display: block; }
+#opsEdit .edrow { display: grid; grid-template-columns: 9em 1fr minmax(0, 14em); gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(127,127,127,0.25); }
+@media (max-width: 640px) { #opsEdit .edrow { grid-template-columns: 1fr; } }
+#opsEdit .edbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+#opsEdit .edbtns button { min-height: 46px; padding: 0 16px; border-radius: 12px; font-weight: 800; }
+.turf { fill: #2F6B3E; } .yl, .hash { stroke: rgba(255,255,255,0.55); stroke-width: 1.5; } .los { stroke: #8EC5FF; stroke-width: 2; stroke-dasharray: 6 5; }
+.route { fill: none; stroke: #FFFFFF; stroke-width: 2.4; stroke-linejoin: round; } .block { fill: none; stroke: #FFFFFF; stroke-width: 2.4; }
+.carry { fill: none; stroke: #F2A33A; stroke-width: 3; } .motion { fill: none; stroke: #FFD54A; stroke-width: 2.2; stroke-dasharray: 5 4; }
+.ah { fill: #FFFFFF; } .ahc { fill: #F2A33A; } .ahm { fill: #FFD54A; } .bar { stroke: #FFFFFF; stroke-width: 2.5; fill: none; }
+.ol { fill: #1C2A22; stroke: #FFFFFF; stroke-width: 1.5; }
+.skill circle, .qb circle, .carrier circle { fill: #1C2A22; stroke: #FFFFFF; stroke-width: 1.5; } .qb circle { fill: #0B5D9E; } .carrier circle { fill: #F2A33A; }
+.skill text, .qb text, .carrier text, .def text { fill: #FFFFFF; font: 700 10px Archivo, Arial, sans-serif; text-anchor: middle; dominant-baseline: central; }
+.ball { fill: #8B5A2B; } .def circle { fill: #B5122B; stroke: #FFFFFF; stroke-width: 1.5; } .def.blz circle { fill: #FF7A1A; }
 </style>
 </head>
 <body>
@@ -308,6 +356,7 @@ body.roof-lefty .rstick .base { left: 120px; }
       <summary><b>Parent settings</b></summary>
       <label class="switch"><input type="checkbox" id="playtest"> Playtest plays that aren't signed off yet</label>
       <p class="note">Drills only use football content the owner has reviewed. Turn this on to playtest new content before it is signed off; every rep then says so.</p>
+      <button class="plain" id="keysBtn" type="button">Answer keys</button>
       <button class="plain" id="resetBtn" type="button">Reset progress</button>
     </details>
   </div>
@@ -396,6 +445,45 @@ body.roof-lefty .rstick .base { left: 120px; }
     <span id="rRepSub"></span>
     <ul id="rRepList"></ul>
     <div class="btns"><button class="ghost" id="rDone" type="button">Done</button><button class="go" id="rAgain" type="button">Run again</button></div>
+  </div>
+</section>
+
+<section class="screen" id="ops" aria-label="Your routine">
+  <div id="opsStage" style="position:absolute;inset:0"><canvas id="opsView"></canvas></div>
+  <div class="hud"><span class="pill" id="opsRep"></span><span class="pill warn" id="opsTest" hidden>Playtest</span></div>
+  <div class="bug" id="opsBug"></div>
+  <div class="look" aria-label="Turn your head"><button type="button" id="opsL">‹ Look left</button><button type="button" id="opsC">Center</button><button type="button" id="opsR">Look right ›</button></div>
+  <button class="quit" id="opsQuit" type="button">End workout</button>
+  <div class="opsask" id="opsAsk" role="dialog" aria-label="Your routine">
+    <div class="clock" id="opsClock"><i id="opsClockBar"></i><b id="opsClockNum"></b></div>
+    <span class="opsstep" id="opsStep"></span>
+    <h2 id="opsQ"></h2>
+    <div class="choices" id="opsChoices"></div>
+  </div>
+  <div class="opscall" id="opsCall" hidden role="dialog" aria-label="The call">
+    <div><h2 id="opsCallName"></h2><p id="opsCallSit"></p></div>
+    <div class="fieldbox" id="opsCallField"></div>
+    <p id="opsCallNotes"></p>
+    <button class="break" id="opsBreak" type="button">BREAK THE HUDDLE ›</button>
+  </div>
+  <div class="opscard" id="opsCard" hidden role="dialog" aria-label="Scorecard">
+    <h2 id="opsCardTitle"></h2><p id="opsCardSub"></p>
+    <ul id="opsCardList"></ul>
+    <button class="go" id="opsNext" type="button">Next rep</button>
+  </div>
+</section>
+<div class="gate" id="opsGate" hidden><div><b>Your playbook isn't signed off yet.</b><p class="note">The plays and defenses in this workout are waiting for your review. Turn on playtest to drill them now; every rep says so.</p><div class="btns"><button class="ghost" id="opsGateNo" type="button">Not now</button><button class="go" id="opsGateOn" type="button">Turn on playtest</button></div></div></div>
+
+<section class="screen" id="opsEdit" aria-label="Answer keys">
+  <div class="edwrap">
+    <div class="edtop"><h2 style="margin:0;flex:1 1 auto">Answer keys</h2><button class="plain" id="edBack" type="button">Done</button></div>
+    <p class="note">Pick a play and a defense: here are the right answers the game computes. Change any of them; your change is saved on this device and used from his next rep. Export sends them to Claude to make them permanent.</p>
+    <div class="edtop"><select id="edPlay" aria-label="Play"></select><select id="edLook" aria-label="Defense"></select></div>
+    <div class="edfield" id="edField"></div>
+    <div id="edKeys"></div>
+    <label class="switch"><input type="checkbox" id="edAll"> Use my changes against every defense for this play</label>
+    <div class="edbtns"><button class="go" id="edSave" type="button">Save changes</button><button class="ghost" id="edExport" type="button">Export all changes</button></div>
+    <p class="note" id="edMsg"></p>
   </div>
 </section>
 
