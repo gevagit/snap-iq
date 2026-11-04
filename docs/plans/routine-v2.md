@@ -1,0 +1,58 @@
+# Plan: the pre-snap routine, v2 (owner, 2026-11-04)
+
+Purpose: instill a solid pre-snap operation. One rep = one play from **our playbook** (the owner's PDF) against a
+defensive look built to attack that formation. He runs the whole operation in **under 40 seconds**, snaps, and gets
+a **scorecard**. The owner can **edit every right answer** in the web app.
+
+## The rep
+1. **Huddle: the call.** The call card shows our play as the coach sends it (play name, formation, protection).
+   He taps it to break the huddle; the 40 s clock starts.
+2. **Everyone set.** Offense aligned right on 70% of reps; on the rest one player is out of place (off the line,
+   covered, wrong split, wrong side, back in the wrong spot). He taps "All set" or taps the player.
+3. **Safeties.** For each safety: **depth** (deep / middle / low), **position** (over the hash, middle of the field,
+   over #2, outside), **stance** (square, eyes on QB / turned, eyes on a receiver / creeping).
+4. **Corners.** For each corner: **depth** (press / off ~5 / off 7+), **leverage** (inside / head-up / outside),
+   **stance** (square, eyes on QB / turned in on the receiver).
+5. **Box.** He taps who is what: **down linemen**, **edges**, **linebackers**, and marks **possible blitzers**.
+6. **Protection.** Slide direction (left / right / none), the back's job (block left / block right / free release /
+   check release), and whether to adjust (who he's responsible for if they bring one more: hot or sight adjust).
+7. **Reads.** Taps his progression: **1, 2, checkdown**. Only on plays that have a progression (the play says so).
+8. **Footwork.** His drop for this play: 1-step / 3-step / 5-step / gun catch-and-throw / boot / sprint-out
+   (the menu comes from the playbook).
+9. **Key defender.** Taps the defender whose move tells him where to go with the ball.
+10. **Run lane.** If the snap is bad or nobody is open: which lane (A gap left/right, B gap, C gap / edge, or
+    scramble to his throwing-hand side).
+11. **Last scan.** On some reps the defense **changes its look** while he works (a corner goes from off to cloud,
+    2 high rotates to 1 high, a linebacker creeps up to blitz, a safety walks down). Before the snap he answers
+    "Same look" or taps what changed, and fixes any answer it affects (the key, the protection, the reads).
+
+Then the **snap**: the play runs for about a second and freezes so he sees the truth (unchanged from today).
+
+## Clock and scoring
+- One 40 s clock for the whole operation (the owner tunes it in content). The steps are always in this order;
+  he can go back to a step before the snap.
+- **Scorecard** at the end of each rep: every step right / wrong / missed, the right answer next to his, his time,
+  and the step he is slowest on. A workout summary after the last rep.
+
+## Our plays, their defenses
+- **Offense:** every play in the owner's PDF becomes a play in `content/playbook/` (formation, each player's
+  alignment and route, protection, read progression, footwork, run lanes). The game shuffles them.
+- **Defense:** for each formation, several **looks** built to attack it (e.g. vs. trips: cover 3 with the safety
+  rolled to trips, a trips check with the backside corner on an island, a nickel pressure from the field). Each
+  look sets every defender's alignment, depth, leverage and stance, what it may change to in the last scan, and
+  what it does at the snap.
+- Football content: everything starts `reviewed: false` and appears in drills only with the playtest setting until
+  the owner signs it off.
+
+## Answer editor (parent area, in the web app)
+- Pick a play and a look: the field from above with the full answer key, step by step.
+- Change any answer by tapping (a defender, a choice, the order of the reads). Mark a look "reviewed".
+- Edits save **in this browser** (no account yet) and take effect at once on this device. **Export** gives a file
+  to send to Claude, who commits it so every device and every future build gets it (and the football checks run
+  on it).
+
+## Order of work
+1. Playbook content from the PDF + the looks per formation, for review.
+2. Answer keys for every step (computed from the play and the look; the editor overrides them).
+3. The rep UI (his-eyes view, step track, 40 s clock), the last-scan shift, the scorecard.
+4. The answer editor and export.
