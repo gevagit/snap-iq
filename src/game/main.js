@@ -47,9 +47,11 @@ function renderHome() {
   $('rankNext').textContent = r.next ? `${r.next - progress.xp} XP to the next rank` : 'Top rank';
   $('rankBar').style.width = (r.next ? ((progress.xp - r.floor) / (r.next - r.floor)) * 100 : 100) + '%';
   $('sXp').textContent = progress.xp; $('sStreak').textContent = progress.streak; $('sReps').textContent = progress.reps;
-  for (const b of document.querySelectorAll('#tierSeg button')) b.setAttribute('aria-pressed', String(b.dataset.tier === progress.tier));
-  $('tierNote').textContent = `${progress.tier === 'youth' ? 'Youth' : 'JV'}: ${R.tiers[progress.tier].clock} seconds at the line for your routine. Coverages: ${R.tiers[progress.tier].coverages.map((id) => C.coverages.coverages.find((c) => c.id === id).name).join(', ')}.`;
-  $('startSub').textContent = '6 plays from your playbook · down & distance, your routine in 40 s, snap, scorecard';
+  // difficulty: how long he has for the whole routine (owner, 2026-11-04)
+  const lvl = progress.opsLevel || ops.defaultLevel;
+  for (const b of document.querySelectorAll('#levelSeg button')) b.setAttribute('aria-pressed', String(b.dataset.level === lvl));
+  $('levelNote').textContent = `${ops.clocks[lvl]} seconds for your whole routine, from down & distance to the snap.`;
+  $('startSub').textContent = `6 plays from your playbook · down & distance, your routine in ${ops.clocks[progress.opsLevel || ops.defaultLevel]} s, snap, scorecard`;
   $('playtest').checked = progress.playtest;
   const anyReviewed = makeRep(C, progress.tier, 1, 0, false) !== null;
   const b = $('playtestBanner');
@@ -82,9 +84,9 @@ $('locker').addEventListener('click', (e) => {
   progress.rooftop = { ...(progress.rooftop || {}), [b.dataset.kind === 'jackets' ? 'jacket' : 'trail']: b.dataset.id };
   save(); renderHome();
 });
-$('tierSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; progress.tier = b.dataset.tier; save(); renderHome(); });
+$('levelSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; progress.opsLevel = b.dataset.level; save(); renderHome(); });
 $('playtest').addEventListener('change', () => { progress.playtest = $('playtest').checked; save(); renderHome(); });
-$('resetBtn').addEventListener('click', () => { const keep = { tier: progress.tier, playtest: progress.playtest }; progress = { ...newProgress(), ...keep }; save(); renderHome(); });
+$('resetBtn').addEventListener('click', () => { const keep = { tier: progress.tier, playtest: progress.playtest, opsLevel: progress.opsLevel }; progress = { ...newProgress(), ...keep }; save(); renderHome(); });
 
 // ---------------------------------------------------------------- the workout
 const canvas = $('view');

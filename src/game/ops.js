@@ -131,7 +131,7 @@ export function initOps({ raw, $, show, progress, save, renderHome, createEyes, 
     $('opsBug').textContent = `${ORD[rep.situation.down - 1]} & ${rep.situation.distance === 10 && rep.situation.down === 1 ? 10 : rep.situation.distance}`;
     $('opsRep').textContent = `Rep ${session.i + 1} of ${REPS}`;
     $('opsTest').hidden = rep.reviewed;
-    clock = { left: C.rules.clock, running: true, last: performance.now(), raf: 0, started: performance.now() };
+    clock = { left: limit(), running: true, last: performance.now(), raf: 0, started: performance.now() };
     tick();
     openStep();
   }
@@ -140,7 +140,7 @@ export function initOps({ raw, $, show, progress, save, renderHome, createEyes, 
     const loop = (now) => {
       if (!clock.running) return;
       clock.left = Math.max(0, clock.left - (now - clock.last) / 1000); clock.last = now;
-      $('opsClockBar').style.width = `${(clock.left / C.rules.clock) * 100}%`;
+      $('opsClockBar').style.width = `${(clock.left / limit()) * 100}%`;
       $('opsClockNum').textContent = `${Math.ceil(clock.left)}`;
       $('opsClock').classList.toggle('out', clock.left <= 5);
       if (showing === 'pre') eyes.draw(-1.2);
@@ -152,6 +152,8 @@ export function initOps({ raw, $, show, progress, save, renderHome, createEyes, 
 
   // ------------------------------------------------------------------ the steps
   const K = () => rep.keys;
+  /** the clock for his difficulty (60 / 45 / 30 s, owner) */
+  function limit() { return C.rules.clock[progress().opsLevel] ?? C.rules.clock[C.rules.default_difficulty]; }
   const sideOf = (x) => (x < -0.5 ? 'left' : x > 0.5 ? 'right' : 'middle');
   const skill = () => rep.offense.filter((q) => !q.lineman && !q.ghost && q.id !== 'QB');
   function asksFor(id) {
@@ -287,7 +289,7 @@ export function initOps({ raw, $, show, progress, save, renderHome, createEyes, 
   // ------------------------------------------------------------------ the snap and the scorecard
   function snap() {
     clock.running = false;
-    const used = C.rules.clock - clock.left;
+    const used = limit() - clock.left;
     showing = 'snap';
     scene = buildScene(rep.after ?? rep.defense); eyes.setScene(scene);
     $('opsAsk').hidden = true;
@@ -417,5 +419,5 @@ export function initOps({ raw, $, show, progress, save, renderHome, createEyes, 
     $('edMsg').textContent = 'Exported. Send the file to Claude to make it permanent for every device.';
   });
   $('edBack').addEventListener('click', () => { renderHome(); show('home'); });
-  return { start, openEditor };
+  return { start, openEditor, clocks: C.rules.clock, defaultLevel: C.rules.default_difficulty };
 }

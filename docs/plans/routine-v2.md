@@ -39,7 +39,7 @@ a **scorecard**. The owner can **edit every right answer** in the web app.
 Then the **snap**: the play runs for about a second and freezes so he sees the truth (unchanged from today).
 
 ## Clock and scoring
-- One 40 s clock for the whole operation (the owner tunes it in content). The steps are always in this order;
+- One clock for the whole operation, by difficulty (owner, 2026-11-04): Easy 60 s, Medium 45 s, Hard 30 s, picked on the home screen. The steps are always in this order;
   he can go back to a step before the snap.
 - **Scorecard** at the end of each rep: every step right / wrong / missed, the right answer next to his, his time,
   and the step he is slowest on. A workout summary after the last rep.

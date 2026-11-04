@@ -4,7 +4,9 @@
 version: 1
 batch: 7
 
-clock: 40            # seconds for the whole operation, from breaking the huddle to the snap
+# Seconds for the whole operation, by difficulty (owner, 2026-11-04: he picks it on the home screen).
+clock: { easy: 60, medium: 45, hard: 30 }
+default_difficulty: easy
 
 # The steps, in order. `pass` steps are skipped on run plays; `run` steps appear only on run plays (owner: a run
 # play runs the full routine without reads and footwork, plus the run check).

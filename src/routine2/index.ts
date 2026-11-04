@@ -24,7 +24,8 @@ export interface Look {
   blitzers: string[]; last_scan: { kind: string; text: string }[]; attack: string; reviewed: boolean;
 }
 export interface RoutineRules {
-  clock: number;
+  clock: Record<'easy' | 'medium' | 'hard', number>;
+  default_difficulty: 'easy' | 'medium' | 'hard';
   steps: { id: string; name: string; only?: 'pass' | 'run'; when?: string }[];
   down_distance: { yardage: Record<'short' | 'medium' | 'long', [number, number]>; must_convert: number[]; downs: Record<string, number>; first_down_distance: number; distance: [number, number] };
   look_off: { deep_routes: string[] };
