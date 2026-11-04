@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "bible:doc": "tsx scripts/bible-doc.ts",
+    "playbook:doc": "tsx scripts/playbook-doc.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run validate",
     "lab": "tsx scripts/play-lab.ts",
     "build:game": "tsx scripts/build-game.ts"

@@ -24,6 +24,8 @@ export const CONTENT_FILES = {
   quarterback: 'content/offense/quarterback.yaml',
   pocket: 'content/pocket/rules.yaml',
   rooftop: 'content/rooftop/rules.yaml',
+  playbook: 'content/playbook/plays.yaml',
+  looks: 'content/playbook/looks.yaml',
 } as const;
 export type ContentKey = keyof typeof CONTENT_FILES;
 

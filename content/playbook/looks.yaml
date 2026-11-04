@@ -1,0 +1,194 @@
+# Defensive looks for the routine game (docs/plans/routine-v2.md): for each group of our formations, the looks a youth
+# (11U) defense would show to attack it. Football content: every look is `reviewed: false` until the owner signs it
+# off (the answer editor in the web app is where he reviews and corrects the answer keys).
+#
+# Each look gives what he must read before the snap (the answer key comes from it):
+#   front: a front in content/defense/fronts.yaml (or a new one under `fronts` below)
+#   coverage: a coverage in content/defense/coverages.yaml (what it really is at the snap)
+#   safeties / corners: depth (deep 10+, middle 6-9, low 5 or less; press for a corner), position, stance
+#   box: how many down linemen, edges, linebackers, and who may blitz
+#   last_scan: what the look may change to while he works (one of these, on some reps), and what that changes
+version: 1
+batch: 7
+
+# Formation groups (content/playbook/plays.yaml): which plays face which looks.
+groups:
+  doubles: { name: "2 by 2 (doubles, stacks)", plays: [2, 8, 9, 11, 12, 15, 16, 18, 20, 21, 24, 43, 44] }
+  trips: { name: "3 by 1 (trips, quads)", plays: [10, 14, 17, 22, 23, 25, 39, 40] }
+  empty: { name: "Empty (trips stack 3 by 2)", plays: [28, 29, 30, 31, 32, 33, 37] }
+  heavy: { name: "Under center, I, pro, pistol, full house, bunch", plays: [1, 3, 4, 5, 6, 7, 13, 26, 27, 34, 35, 36, 38, 41, 42, 45, 46, 52] }
+
+# Fronts a youth defense plays that content/defense/fronts.yaml does not have yet (alignments to be written).
+fronts:
+  - { id: four-four, name: "4-4", note: "4 down, 4 linebackers, 3 defensive backs: an 8-man box", reviewed: false }
+  - { id: five-three, name: "5-3", note: "5 down (a nose on the center), 3 linebackers, 3 defensive backs", reviewed: false }
+  - { id: six-two, name: "6-2", note: "6 down, 2 linebackers, 3 defensive backs: goal line and short yardage", reviewed: false }
+
+looks:
+  # -------------------------------------------------------------------------------------------- vs 2 by 2
+  - id: doubles-cover-2
+    name: "4-2-5, Cover 2"
+    groups: [doubles]
+    front: four-two-five-even
+    coverage: cover-2
+    safeties: { depth: deep, position: "over each hash", stance: "square, eyes on the QB" }
+    corners: { depth: "off 5", leverage: outside, stance: "square, eyes on the QB (squat in the flat)" }
+    box: { down: 4, edges: 2, linebackers: 2, blitzers: [] }
+    last_scan:
+      - { change: "a safety rotates down to the box: cover 3 sky", affects: [safeties, key, reads] }
+      - { change: "both corners press (cover 2 press)", affects: [corners, reads] }
+    attack: "two high takes away the deep shots; corners sit on the quick outs"
+    reviewed: false
+  - id: doubles-cover-2-press-close
+    name: "Cover 2 press, safeties close to the box (the Dunkin look)"
+    groups: [doubles]
+    front: four-two-five-even
+    coverage: cover-2
+    safeties: { depth: middle, position: "inside the hashes, close to the box", stance: "square, creeping" }
+    corners: { depth: press, leverage: outside, stance: "square, eyes on the receiver" }
+    box: { down: 4, edges: 2, linebackers: 2, blitzers: [] }
+    last_scan:
+      - { change: "a safety walks down into the box (8 in the box)", affects: [box, protection] }
+    attack: "press corners jam, low safeties stop the run: the look play 20 (Dunkin) is built for"
+    reviewed: false
+  - id: doubles-cover-3
+    name: "4-3, Cover 3"
+    groups: [doubles, heavy]
+    front: four-three-over
+    coverage: cover-3
+    safeties: { depth: deep, position: "free safety in the middle of the field; strong safety low over #2", stance: "square" }
+    corners: { depth: "off 7+", leverage: outside, stance: "square, ready to bail" }
+    box: { down: 4, edges: 2, linebackers: 3, blitzers: [] }
+    last_scan:
+      - { change: "a corner rolls up to the flat (cloud): cover 2 to that side", affects: [corners, reads] }
+      - { change: "the Will creeps toward the A gap", affects: [box, protection] }
+    attack: "one high, corners deep: the seams and the flats are the soft spots"
+    reviewed: false
+  - id: doubles-cover-1-robber
+    name: "3-3 stack, Cover 1 robber"
+    groups: [doubles, empty]
+    front: three-three-stack
+    coverage: cover-1-robber
+    safeties: { depth: deep, position: "one in the middle of the field; the other low over the middle (robber)", stance: "turned, eyes on the receiver" }
+    corners: { depth: press, leverage: inside, stance: "turned in on the receiver (man)" }
+    box: { down: 3, edges: 2, linebackers: 3, blitzers: [stack-linebacker] }
+    last_scan:
+      - { change: "a stack linebacker creeps to blitz", affects: [box, protection, reads] }
+      - { change: "the robber drops back to deep: two high (cover 2 look)", affects: [safeties, key] }
+    attack: "man everywhere with a robber in the window: rubs, crossers and the side with the best matchup"
+    reviewed: false
+  - id: doubles-cover-0
+    name: "Cover 0, all-out blitz"
+    groups: [doubles, trips, empty]
+    front: four-two-five-even
+    coverage: cover-0
+    safeties: { depth: low, position: "both walked down over the slots", stance: "weight forward, creeping" }
+    corners: { depth: press, leverage: inside, stance: "turned in on the receiver" }
+    box: { down: 4, edges: 2, linebackers: 2, blitzers: [both-linebackers, a-safety] }
+    last_scan:
+      - { change: "shows two high, then both safeties sprint down late", affects: [safeties, protection, reads] }
+    attack: "more rushers than blockers: hot throw, signal (slant, go), or the RB picks up"
+    reviewed: false
+
+  # -------------------------------------------------------------------------------------------- vs 3 by 1
+  - id: trips-cover-3-rotated
+    name: "Cover 3, rotated to trips"
+    groups: [trips, empty]
+    front: four-two-five-over
+    coverage: cover-3-sky
+    safeties: { depth: deep, position: "free safety shaded to the trips side; strong safety low over #3", stance: "square" }
+    corners: { depth: "off 7+", leverage: outside, stance: "square, ready to bail" }
+    box: { down: 4, edges: 2, linebackers: 2, blitzers: [] }
+    last_scan:
+      - { change: "the free safety moves back to the middle", affects: [safeties, key] }
+    attack: "rotates the coverage to the three receivers; the single receiver side is one on one"
+    reviewed: false
+  - id: trips-check
+    name: "Trips check: Cover 1, backside corner alone"
+    groups: [trips]
+    front: four-three-over
+    coverage: cover-1
+    safeties: { depth: deep, position: "middle of the field", stance: "square" }
+    corners: { depth: press, leverage: inside, stance: "turned in on the receiver" }
+    box: { down: 4, edges: 2, linebackers: 3, blitzers: [] }
+    last_scan:
+      - { change: "the corner on the trips side backs off to 7 yards", affects: [corners, reads] }
+      - { change: "the Sam walks out over #3", affects: [box, reads] }
+    attack: "man on the trips side with help over the top; the backside corner is on an island"
+    reviewed: false
+  - id: trips-cover-2-nickel
+    name: "Cover 2, nickel walked out over trips"
+    groups: [trips, empty]
+    front: four-two-five-over
+    coverage: cover-2
+    safeties: { depth: deep, position: "over each hash", stance: "square" }
+    corners: { depth: "off 5", leverage: outside, stance: "square, eyes on the QB" }
+    box: { down: 4, edges: 2, linebackers: 2, blitzers: [] }
+    last_scan:
+      - { change: "the nickel creeps from the slot toward the edge to blitz", affects: [box, protection, reads] }
+    attack: "two high with five underneath; the hole is between the corner and the safety (the rub, the smash)"
+    reviewed: false
+  - id: trips-fire-zone
+    name: "3-3 stack, fire zone from the trips side"
+    groups: [trips]
+    front: three-three-stack
+    coverage: fire-zone
+    safeties: { depth: deep, position: "middle of the field", stance: "square" }
+    corners: { depth: "off 7+", leverage: outside, stance: "square, ready to bail" }
+    box: { down: 3, edges: 2, linebackers: 3, blitzers: [field-linebacker, nickel] }
+    last_scan:
+      - { change: "the blitzers back out at the last second (they were faking)", affects: [box, protection] }
+    attack: "five rush from the trips side, a lineman drops into the hot window"
+    reviewed: false
+
+  # -------------------------------------------------------------------------------------------- vs empty
+  - id: empty-two-man
+    name: "Two man (man under, two deep)"
+    groups: [empty]
+    front: four-two-five-even
+    coverage: two-man
+    safeties: { depth: deep, position: "over each hash", stance: "square" }
+    corners: { depth: press, leverage: inside, stance: "turned in on the receiver" }
+    box: { down: 4, edges: 2, linebackers: 2, blitzers: [] }
+    last_scan:
+      - { change: "a linebacker walks out over the stack", affects: [box, reads] }
+    attack: "man on every receiver with two safeties over the top: the QB can run, the slants and rubs"
+    reviewed: false
+
+  # -------------------------------------------------------------------------------------------- vs heavy
+  - id: heavy-44-cover-3
+    name: "4-4, Cover 3 (8 in the box)"
+    groups: [heavy]
+    front: four-four
+    coverage: cover-3
+    safeties: { depth: deep, position: "one safety in the middle of the field", stance: "square" }
+    corners: { depth: "off 7+", leverage: outside, stance: "square, ready to bail" }
+    box: { down: 4, edges: 2, linebackers: 4, blitzers: [outside-linebacker] }
+    last_scan:
+      - { change: "an outside linebacker creeps up to the edge", affects: [box, protection, run-lane] }
+    attack: "eight in the box against the run; the play-action and the boot get behind them"
+    reviewed: false
+  - id: heavy-53-cover-1
+    name: "5-3, Cover 1"
+    groups: [heavy]
+    front: five-three
+    coverage: cover-1
+    safeties: { depth: deep, position: "middle of the field", stance: "square" }
+    corners: { depth: press, leverage: inside, stance: "turned in on the receiver" }
+    box: { down: 5, edges: 2, linebackers: 3, blitzers: [] }
+    last_scan:
+      - { change: "the safety walks down: cover 0", affects: [safeties, protection, reads] }
+    attack: "five down with the nose on the center to stop the inside run; man outside"
+    reviewed: false
+  - id: heavy-62-cover-0
+    name: "6-2 goal line, Cover 0"
+    groups: [heavy]
+    front: six-two
+    coverage: cover-0
+    safeties: { depth: low, position: "inside the hashes at 5 yards", stance: "weight forward" }
+    corners: { depth: press, leverage: inside, stance: "turned in on the receiver" }
+    box: { down: 6, edges: 2, linebackers: 2, blitzers: [both-linebackers] }
+    last_scan:
+      - { change: "a linebacker drops back to the middle", affects: [box, reads] }
+    attack: "short yardage and goal line: everyone close, nobody deep"
+    reviewed: false
