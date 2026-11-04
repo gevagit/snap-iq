@@ -6,7 +6,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, loadRawContent } from '../src/content/load';
-import { onLineCount, place, resolve, routePath, type Formations, type Playbook, type TeamPlay } from '../src/playbook';
+import { active, onLineCount, place, resolve, routePath, routeStart, type Formations, type Playbook, type TeamPlay } from '../src/playbook';
 
 const raw = loadRawContent();
 const book = raw.playbook as Playbook;
@@ -36,24 +36,31 @@ function diagram(p: TeamPlay): { svg: string; problems: string[] } {
   const hx = HALF - geo.field.hash_from_sideline;
   for (let y = -8; y <= 25; y++) for (const sx of [-hx, hx]) g.push(`<line class="hash" x1="${X(sx - 0.35)}" x2="${X(sx + 0.35)}" y1="${Y(y)}" y2="${Y(y)}"/>`);
   g.push(`<line class="los" x1="0" x2="${w}" y1="${Y(0)}" y2="${Y(0)}"/>`);
+  const BLOCKS = ['stalk-block', 'pass-block', 'down-block'];
   for (const [id, call] of Object.entries(p.routes)) {
-    const from = placed.find((q) => q.id === id);
+    const from = routeStart(placed, id);
     if (!from) { problems.push(`a route for ${id}, who is not in the formation`); continue; }
     try {
       const pts = routePath(book, routes, p, from, call, HALF - (raw.routes as { sideline_room: number }).sideline_room);
-      const block = call.route === 'stalk-block';
-      g.push(`<polyline class="${block ? 'block' : 'route'}" marker-end="url(#${block ? 'bar' : 'arrow'})" points="${pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')}"/>`);
+      const block = BLOCKS.includes(call.route), carry = call.route === 'carry';
+      g.push(`<polyline class="${block ? 'block' : carry ? 'carry' : 'route'}" marker-end="url(#${block ? 'bar' : carry ? 'arrow-c' : 'arrow'})" points="${pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')}"/>`);
     } catch (e) { problems.push((e as Error).message); }
   }
   if (p.motion) {
-    const m = placed.find((q) => q.id === p.motion!.who);
-    if (m) {
+    const m = placed.find((q) => q.id === p.motion!.who), end = placed.find((q) => q.id === `${p.motion!.who}*`);
+    if (m && end) {
+      // around the QB for an orbit (behind him), straight across otherwise
+      const qb = placed.find((q) => q.id === 'QB')!;
+      const pts = p.motion.kind === 'orbit-motion' ? [[m.x, m.y], [qb.x, qb.y - 2], [end.x, end.y]] : [[m.x, m.y], [end.x, end.y]];
+      g.push(`<polyline class="motion" marker-end="url(#arrow-m)" points="${pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')}"/>`);
+    } else if (m) {
       const dir = m.x > 0.5 ? -1 : m.x < -0.5 ? 1 : 1;
       const len = p.motion.kind === 'short-motion' ? 3 : p.motion.kind === 'return-motion' ? 2.5 : 10;
       g.push(`<line class="motion" marker-end="url(#arrow-m)" x1="${X(m.x)}" y1="${Y(m.y)}" x2="${X(m.x + dir * len)}" y2="${Y(m.y)}"/>`);
     }
   }
   for (const q of placed) {
+    if (q.ghost) continue;
     if (q.lineman) g.push(`<rect class="ol" x="${(Number(X(q.x)) - 7).toFixed(1)}" y="${(Number(Y(q.y)) - 7).toFixed(1)}" width="14" height="14" rx="2"/>`);
     else g.push(`<g class="${q.id === 'QB' ? 'qb' : p.ball === q.id ? 'carrier' : 'skill'}"><circle cx="${X(q.x)}" cy="${Y(q.y)}" r="11"/><text x="${X(q.x)}" y="${Y(q.y)}">${esc(q.id)}</text></g>`);
   }
@@ -62,6 +69,7 @@ function diagram(p: TeamPlay): { svg: string; problems: string[] } {
   if (placed.length && on !== 7) problems.push(`${on} players on the line of scrimmage (a legal formation has 7)`);
   const svg = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(p.name)}, top-down"><defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+<marker id="arrow-c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahc"/></marker>
 <marker id="arrow-m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahm"/></marker>
 <marker id="bar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M5,0 L5,10" class="bar"/></marker></defs>
 <rect class="turf" width="${w}" height="${h}"/>${g.join('')}</svg>`;
@@ -99,15 +107,15 @@ function card(id: string): string {
   <div class="field">${svg}</div>
   <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
   ${p.notes ? `<p class="notes">${esc(p.notes)}</p>` : ''}
-  ${qs.length ? `<div class="ask"><b>For you to answer</b><ol>${qs.map((q, k) => `<li><label for="a-${p.number}-${k + 1}">${esc(q)}</label>${box(`a-${p.number}-${k + 1}`, p.number, q)}</li>`).join('')}</ol></div>` : ''}
-  <div class="fix"><label for="a-${p.number}-fix">Anything wrong in this drawing or card?</label>${box(`a-${p.number}-fix`, p.number, 'Corrections to the drawing or card')}</div>
+  ${qs.length ? `<div class="ask"><b>For you to answer</b><ol>${qs.map((q, k) => `<li><label for="b-${p.number}-${k + 1}">${esc(q)}</label>${box(`b-${p.number}-${k + 1}`, p.number, q)}</li>`).join('')}</ol></div>` : ''}
+  <div class="fix"><label for="b-${p.number}-fix">Anything wrong in this drawing or card?</label>${box(`b-${p.number}-fix`, p.number, 'Corrections to the drawing or card')}</div>
 </article>`;
 }
 
 // ----------------------------------------------------------------------------------------------- the page
 const groupsHtml = Object.entries(looks.groups).map(([gid, g]) => {
   const ls = looks.looks.filter((l) => l.groups.includes(gid));
-  const plays = book.plays.filter((p) => groupOf(p.number) === gid).sort((a, b) => a.number - b.number);
+  const plays = book.plays.filter((p) => active(p) && groupOf(p.number) === gid).sort((a, b) => a.number - b.number);
   return `<section class="group" id="${gid}">
   <h2>${esc(g.name)}</h2>
   <p class="meta">${plays.length} plays · ${ls.length} defensive looks</p>
@@ -121,8 +129,10 @@ const groupsHtml = Object.entries(looks.groups).map(([gid, g]) => {
 </section>`;
 }).join('');
 
-const total = book.plays.length;
-const asks = book.plays.reduce((n, p) => n + (resolve(book, p.id).questions?.length ?? 0), 0);
+const live = book.plays.filter(active);
+const total = live.length;
+const asks = live.reduce((n, p) => n + (resolve(book, p.id).questions?.length ?? 0), 0);
+const gone = book.plays.filter((p) => !active(p)).sort((a, b) => a.number - b.number);
 const html = `<title>Chargers Playbook Review</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -174,7 +184,8 @@ nav a:focus-visible, nav a:hover { border-color: var(--accent); outline: none; }
 .los { stroke: #8EC5FF; stroke-width: 2; stroke-dasharray: 6 5; }
 .route { fill: none; stroke: var(--route); stroke-width: 2.4; stroke-linejoin: round; }
 .block { fill: none; stroke: var(--route); stroke-width: 2.4; }
-.ah { fill: var(--route); } .ahm { fill: var(--motion); } .bar { stroke: var(--route); stroke-width: 2.5; fill: none; }
+.ah { fill: var(--route); } .ahc { fill: var(--carrier); }
+.carry { fill: none; stroke: var(--carrier); stroke-width: 3; stroke-linejoin: round; } .ahm { fill: var(--motion); } .bar { stroke: var(--route); stroke-width: 2.5; fill: none; }
 .motion { stroke: var(--motion); stroke-width: 2.2; stroke-dasharray: 5 4; }
 .ol { fill: #1C2A22; stroke: #FFFFFF; stroke-width: 1.5; }
 .skill circle, .qb circle, .carrier circle { fill: #1C2A22; stroke: #FFFFFF; stroke-width: 1.5; }
@@ -194,6 +205,7 @@ textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 4px;
 textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 textarea:disabled { opacity: 0.6; }
 .saved { display: block; min-height: 1.2em; font-size: 12px; color: var(--muted); }
+.round { margin: 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--panel); font-size: 15px; }
 .status { margin: 0; padding: 8px 12px; border: 1px solid var(--line); background: var(--panel); font-size: 14px; }
 </style>
 <main>
@@ -201,6 +213,7 @@ textarea:disabled { opacity: 0.6; }
     <h1>Chargers 11U playbook in SNAP IQ</h1>
     <p>Each play from your PDF, redrawn from the game's own content: check that every player, route and read matches what you coach. The yellow boxes are what the PDF does not say. The defensive looks at the top of each group are the defenses the game will line up against those plays; each one also says what it may change to during his last scan.</p>
     <div class="stats"><span><b>${total}</b> plays</span><span><b>${looks.looks.length}</b> defensive looks</span><span><b>${asks}</b> questions for you</span></div>
+    <p class="round">Round 2: your answers and corrections are in, and every play is redrawn from them. ${gone.length} plays are out of the game at your call: ${gone.map((p) => `${p.number} ${esc(p.name)}`).join(', ')}. The boxes are fresh: use them for anything still wrong and for the few new questions.</p>
     <p class="status" id="status">Loading the answer boxes...</p>
     <nav>${Object.entries(looks.groups).map(([gid, g]) => `<a href="#${gid}">${esc(g.name.split(' (')[0])}</a>`).join('')}</nav>
   </div>

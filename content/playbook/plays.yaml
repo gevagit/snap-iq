@@ -13,6 +13,9 @@
 #   ball: the ball carrier on a run; reads: his reads in order; checkdown; footwork; key: his key defender
 #   protection: how the play blocks it, in the PDF's words; tags and notes: copied from the PDF
 #   questions: what the PDF does not say, for the owner (answered questions move into the play)
+#   reads / footwork / key may depend on the situation: `default`, `short` / `long` yardage, `must_convert`, `man`,
+#   `zone`, `press`, `blitz` (the owner's answers, 2026-11-04)
+#   cancelled: the owner took the play out of the game (kept here with his reason)
 version: 1
 batch: 7
 
@@ -22,7 +25,8 @@ alignment:
   stack: { behind: 1.5 }                             # the second man of a stack lines up this far behind the first
   up-back: { x: 0, depth: 2.5 }                      # a back between the quarterback under center and the I-back
   beside-qb: { x: 1.6 }                              # a back beside the quarterback (gun, pistol full house), at his depth
-  quads: { spacing: 3.5 }                            # four to one side: slot n (from the inside) stands n x this outside the end man
+  quads: { spacing: 3.5 }
+  gaps: { A: 0.7, B: 2.1, C: 3.5, outside: 7 }         # where a run hits the line (x from the ball), by gap                            # four to one side: slot n (from the inside) stands n x this outside the end man
   reviewed: false
 
 # Route words beyond content/offense/routes.yaml (waypoints as there: x toward his own sideline, y downfield).
@@ -33,37 +37,46 @@ routes:
   - { id: deep-cross-route, waypoints: [[0, 6], [-18, 14]], quick: false, reviewed: false }
   - { id: in-route, waypoints: [[0, 6], [-6, 6]], quick: true, reviewed: false }
   - { id: delay-out-route, waypoints: [[0, 0], [0, 4], [5, 4]], delay: 0.8, quick: false, reviewed: false }
-  - { id: texas-route, waypoints: [[2, 1.5], [0, 4], [-4, 7]], quick: false, reviewed: false }
+  - { id: texas-route, waypoints: [[3.5, 1], [3.5, 3.5], [-1, 7]], quick: false, reviewed: false }   # owner: around the LT
   - { id: stalk-block, waypoints: [[0, 3]], block: true, reviewed: false }
-  - { id: slip-screen, waypoints: [[1, -1], [-4, -2]], quick: true, reviewed: false }
+  - { id: slip-screen, waypoints: [[-1, 0.3], [-1.6, 3]], quick: true, reviewed: false }   # slips through the line (owner: between C and RG)
+  - { id: quick-screen-route, waypoints: [[0, 1], [-1.5, -0.5]], quick: true, reviewed: false }   # our "0": a yard up, then back toward the QB
+  - { id: shallow-wheel-route, waypoints: [[2.5, 0.5], [5, 2], [5.5, 9]], quick: false, reviewed: false }
+  - { id: skinny-post-route, waypoints: [[0, 6], [-2.5, 14]], quick: false, reviewed: false }
+  - { id: deep-slant-route, waypoints: [[0, 3], [-7, 10]], quick: true, reviewed: false }
+  - { id: chip-release-route, waypoints: [[1, 1.2], [5, 2], [8, 2.5]], quick: false, chip: 0.6, reviewed: false }
+  - { id: arrow-route, waypoints: [[6, 2], [14, 4]], quick: true, reviewed: false }
+  - { id: pass-block, waypoints: [[0, -0.6]], block: true, reviewed: false }
+  - { id: down-block, waypoints: [[-1, 1]], block: true, reviewed: false }
 
 plays:
   # ------------------------------------------------------------------------------------------------ 1
   - id: y-bluff
     number: 1
     name: Y Bluff
-    qb: under
+    qb: gun
     kind: play-action
     players:
       X: { side: left, align: wide, on_line: true }
-      H: { side: right, align: wing }
       Z: { side: right, align: wide, on_line: true }
-      Y: { side: middle, align: up-back }
-      RB: { side: right, align: beside-qb, depth: 2.5 }
+      H: { side: right, align: slot }
+      Y: { side: right, align: spot, x: 1.4, depth: 2.7 }      # owner: 2 yards behind the RG
+      RB: { side: right, align: beside-qb }
     routes:
       X: { route: go-route }
-      Y: { route: seam-route, note: "fake block, break forward between C and RG" }
-      H: { route: wheel-route }
-      Z: { route: in-route, note: "mesh with H on the right side" }
-    footwork: three-step-drop
+      Y: { route: seam-route, note: "between C and RG: the play is built for Y to break open in the middle" }
+      Z: { route: slant-route, note: "mesh with H" }
+      H: { route: wheel-route, note: "mesh with Z" }
+      RB: { route: pass-block, note: "after the fake" }
     fake: RB
-    reads: null
-    protection: "fake handoff to the RB, then 3-step"
+    footwork: three-step-drop
+    reads:
+      man: [X, Y]
+      zone: [Z, H]
+    key: "the DBs on the right (zone: pick the side of the mesh from their alignment)"
+    protection: "fake handoff to the RB, who then blocks"
     tags: [goal-line, first-down]
-    notes: "First down or goal line. Pretends like it's a handoff to the RB, then 3 step hit the concept based on coverage and blitz. No RPO."
-    questions:
-      - "Which receiver is his first read against man, and against zone?"
-      - "Is the RB a blocker after the fake, or a checkdown?"
+    notes: "First down or goal line. Pretends like it's a handoff to the RB, then 3 step hit the concept based on coverage and blitz. No RPO. Owner: against man he can go X if he likes the matchup, or Y; against zone he picks the mesh on the right side from the DBs' alignment."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 2
@@ -81,7 +94,7 @@ plays:
     routes:
       X: { route: go-route }
       RB: { route: swing-route }
-      H: { route: wheel-route, note: "block, then release into a wheel" }
+      H: { route: shallow-wheel-route, note: "block, then release into a shallow wheel" }
       Y: { route: out-route, break: 10, note: "crosses Z's path on the break (dagger)" }
       Z: { route: go-route }
     footwork: three-step-drop
@@ -92,9 +105,6 @@ plays:
     protection: "Going left: H pass pro, then leak. Going right: RB pass pro."
     tags: [man, zone]
     notes: "QB is in shotgun. Protections: if going left use H to pass pro and leak, if going right, use RB for pass pro. 3 step throw or roll out. If man - go to left side (bread and butter), if zone, go to right side (dagger). H and RB are your checkdowns and inverse pass pro help."
-    questions:
-      - "On the left (bread and butter) against man: X streak first, then the RB swing?"
-      - "The PDF draws Y and Z both on the line, which puts 8 on it. I put Y off the line: right?"
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 3
@@ -102,41 +112,39 @@ plays:
     number: 3
     name: Gun Jet Fake Toss LG Pull Pass
     qb: gun
-    kind: play-action
+    kind: pass
     players:
       TE: { side: left, align: attached, on_line: true }
       X: { side: left, align: wide }
-      Y: { side: right, align: wing }
+      Y: { side: right, align: slot }
       Z: { side: right, align: wide, on_line: true }
       RB: { side: right, align: beside-qb }
-    motion: { who: X, kind: jet-motion, to: "next to Y", snap: "when X is next to Y" }
+    motion: { who: X, kind: jet-motion, snap: "when X is next to Y", end: { side: right, align: wing } }
     routes:
-      Y: { route: out-route, break: 6 }
+      X: { route: wheel-route, note: "jet sweep across the formation that turns into a wheel" }
+      Y: { route: out-route, break: 5 }
       Z: { route: go-route }
-      X: { route: post-route, note: "after the motion, from beside Y" }
-    fake: { kind: toss, to: RB }
+      RB: { route: flat-route }
     pull: LG
-    footwork: null
+    reads:
+      default: [Z, X]
+      man: [Z, X, Y]
     protection: "LG pulls to block the DE"
-    notes: "QB sets X in motion, hikes when X is next to Y. LG pulls to block the DE. Coaching point: RBs might get the ball - make sure they pay attention!"
+    notes: "QB sets X in motion, hikes when X is next to Y. LG pulls to block the DE. RBs might get the ball - make sure they pay attention! Owner: high-low, Z then X; against man Z, X, Y."
     questions:
-      - "Which route is X's and which is Y's? (The diagram shows an out, a go and a post from Y and Z.)"
-      - "His reads, in order?"
+      - "Footwork: 3-step or 5-step?"
     reviewed: false
 
-  # ------------------------------------------------------------------------------------------------ 4
   - id: gun-jet-fake-toss-rg-pull-pass
     number: 4
     name: Gun Jet Fake Toss RG Pull Pass
+    cancelled: "owner, 2026-11-04"
     flip_of: gun-jet-fake-toss-lg-pull-pass
     qb: gun
-    kind: play-action
-    pull: RG
-    tags: [cover-1]
-    notes: "Play 3 flipped. QB sets X in motion, hikes when X is next to Y. RG pulls to block the DE."
+    kind: pass
     reviewed: false
 
-  # ------------------------------------------------------------------------------------------------ 5-6
+  # ------------------------------------------------------------------------------------------------ 5-7
   - id: power-rt-22-blast
     number: 5
     name: Power RT 22 Blast
@@ -148,11 +156,13 @@ plays:
       Y: { side: middle, align: fullback }
       H: { side: middle, align: i-back }
       RB: { side: right, align: beside-qb, depth: 4.5 }
+    routes:
+      H: { route: carry, gap: A, side: right }
+      Y: { route: down-block, note: "lead" }
+      RB: { route: down-block }
+      Z: { route: stalk-block }
     ball: H
-    hole: "2 hole (between C and RG)"
-    notes: "Power I: Y leads, H carries."
-    questions:
-      - "Who carries, H or the RB? And who is the other back?"
+    hole: "right A gap"
     reviewed: false
   - id: power-rt-23-blast
     number: 6
@@ -160,10 +170,11 @@ plays:
     same_as: power-rt-22-blast
     qb: under
     kind: run
-    hole: "3 hole (between LG and C)"
+    routes:
+      H: { route: carry, gap: A, side: left }
+    hole: "left A gap"
+    notes: "Owner: the same as Power RT 22, but H goes to the left A gap."
     reviewed: false
-
-  # ------------------------------------------------------------------------------------------------ 7
   - id: power-rt-22-action
     number: 7
     name: Power RT 22 Action
@@ -171,12 +182,14 @@ plays:
     qb: under
     kind: play-action
     routes:
-      Z: { route: slant-route }
-      RB: { route: flat-route }
+      Z: { route: deep-slant-route }
+      RB: { route: arrow-route, note: "diagonally outside, to where Z lined up" }
+      Y: { route: pass-block }
+      H: { route: pass-block, note: "after the fake" }
     fake: H
     reads: [Z, RB]
     footwork: three-step-drop
-    protection: "Y and H block"
+    protection: "everybody else blocks"
     tags: [man, zone]
     notes: "QB play action, throws to slant or flat RB. If Zone the Z can get a signal to run a go route."
     signal: { if: zone, who: Z, route: go-route }
@@ -190,22 +203,22 @@ plays:
     kind: screen
     players:
       X: { side: left, align: wide, on_line: true }
-      A: { side: left, align: stack, behind: X }
+      A: { side: left, align: stack, behind: X, gap: 2.5 }
       Z: { side: right, align: wide, on_line: true }
-      Y: { side: right, align: stack, behind: Z }
+      Y: { side: right, align: stack, behind: Z, gap: 2.5 }
       H: { side: left, align: beside-qb, depth: 7 }
     routes:
       X: { route: go-route, team_word: "90", note: "show a block look, then release" }
       Z: { route: go-route, team_word: "90", note: "show a block look, then release" }
-      A: { route: bubble-route, team_word: "0" }
-      Y: { route: bubble-route, team_word: "0" }
+      A: { route: quick-screen-route, team_word: "0" }
+      Y: { route: quick-screen-route, team_word: "0" }
+      H: { route: pass-block }
     footwork: catch-and-throw
-    reads: { pick_side: true }
+    reads: { pick_side: number-advantage }
+    key: "the DBs on each side: throw to the side with the number advantage"
     protection: "RB (H) blocks"
     tags: [cover-1]
-    notes: "X and Z show block look and release to 90. A and Y run a 0. RB blocks."
-    questions:
-      - "How does he pick the side?"
+    notes: "X and Z show block look and release to 90. A and Y run a 0. RB blocks. Owner: he picks the side by matchups: a number advantage (2 DBs on one side, 1 on the other), a DB he wants to attack, or his playmaker. The drill: pick the side with the number advantage."
     reviewed: false
   - id: gun-doubles-stack-screen-draw
     number: 9
@@ -213,10 +226,16 @@ plays:
     same_as: gun-doubles-stack-90-screen
     qb: gun
     kind: run
+    routes:
+      X: { route: go-route }
+      Z: { route: go-route }
+      A: { route: quick-screen-route }
+      Y: { route: quick-screen-route }
+      H: { route: carry, gap: A, side: left }
     ball: H
     fake: screen
     footwork: one-step-drop
-    notes: "QB fakes screen pass (1 step)."
+    notes: "QB fakes screen pass (1 step), showing pass, then hands off to the RB (H)."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 10
@@ -230,18 +249,25 @@ plays:
       Y: { side: left, align: slot }
       TE: { side: left, align: attached, on_line: true }
       Z: { side: right, align: wide, on_line: true }
-      RB: { side: left, align: beside-qb }
+      RB: { side: left, align: beside-qb, depth: 5.5 }
+    players_note: "RB a bit farther from the QB, to his left"
     motion: { who: RB, kind: return-motion, note: "motions around the QB, back to his spot, then snap" }
     routes:
       X: { route: post-route, break: 10 }
       Y: { route: post-route, break: 6 }
-      TE: { route: deep-cross-route, ends: right }
-      Z: { route: deep-cross-route, ends: left, note: "mesh with TE" }
+      TE: { route: skinny-post-route }
+      Z: { route: shallow-route, ends: left, note: "drag" }
+      RB: { route: flat-route, note: "shoots outside to the left" }
+    footwork: five-step-drop
+    reads:
+      default: [X, Y, RB]
+      blitz: [Z, RB]
+    key: "the safety or the nickel: whoever has the intermediate zone"
     protection: "LT takes the DE"
     tags: [cover-2]
-    notes: "RB motions around QB, gets back to original position, then snap. WR need to run hard PAY ATTENTION TO LEVELS. LT takes the DE."
+    notes: "RB motions around QB, gets back to original position, then snap. WR need to run hard PAY ATTENTION TO LEVELS. LT takes the DE. Owner: 5 step. If blitz hit the Z or RB (if man). For longer distance downs go high-low from X to Y then RB and read the safety/nickel."
     questions:
-      - "His reads, in order, and his footwork?"
+      - "Your note says 'The is doing a skinny shallow post': I gave it to the TE. Right?"
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 11
@@ -257,45 +283,23 @@ plays:
       Y: { side: right, align: slot }
       H: { side: left, align: beside-qb }
     motion: { who: Y, kind: jet-motion }
+    routes:
+      H: { route: carry, gap: B, side: right }
     ball: H
     hole: "4 hole (between RG and RT)"
     read_option: true
+    key: "the DE on the side away from the run (the left DE)"
     protection: "LG kicks out to block the DE"
     notes: "LG kicks out to block DE. QB hike the ball between RG and RT (no fake). QB READ OPTION."
-    questions:
-      - "Which defender does he read on the option (give or keep)?"
     reviewed: false
 
-  # ------------------------------------------------------------------------------------------------ 12
   - id: gun-doubles-x-jet-cross-right
     number: 12
     name: Gun Doubles X Jet Cross Right
+    cancelled: "owner, 2026-11-04: too complicated"
     qb: gun
     kind: pass
-    players:
-      X: { side: left, align: wide }
-      Y: { side: left, align: slot, on_line: true }
-      TE: { side: right, align: attached, on_line: true }
-      Z: { side: right, align: wide }
-      RB: { side: left, align: beside-qb }
-    motion: { who: X, kind: jet-motion, to: "behind the RT", snap: "wait for him to set" }
-    routes:
-      X: { route: comeback-route, break: 12 }
-      Y: { route: deep-cross-route, ends: right }
-      Z: { route: go-route }
-      TE: { route: post-route, note: "H in the notes: deep post; slant on the all-out blitz signal" }
-      RB: { route: check-release, note: "no blitz: chip the DT and release right" }
-    footwork: three-step-drop
-    reads:
-      zone: [X, Y]
-      man: [TE, RB]
-    checkdown: RB
-    protection: "If blitz: RB protects the blitzer. C, RG, RT contain right."
-    signal: { if: [cover-0, all-out-blitz], options: ["slant to H", "go to Z"] }
-    tags: [cover-2, long-yardage, cover-0, cover-1]
-    notes: "If zone: your read is (1) X (2) Y. If man: your read is H or RB (checkdown). If blitz: RB protects blitzer. If cover 0 or all out blitz signal slant to H or go to Z. QB: Set X in motion, wait for him to set, 3 step no hitch."
-    questions:
-      - "The notes name H (deep post) but the diagram shows a TE running it: is the TE the H here?"
+    players: {}
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 13
@@ -310,21 +314,22 @@ plays:
       Y: { side: right, align: slot }
       Z: { side: right, align: wide, on_line: true }
       RB: { side: middle, align: i-back, depth: 4 }
-    motion: { who: X, kind: jet-motion, note: "fake motion behind the QB", snap: "when X is behind you" }
+    motion: { who: X, kind: jet-motion, note: "fakes a jet sweep across the formation", end: { side: left, align: slot } }
     routes:
-      X: { route: fade-route, note: "break back out: fade/corner left" }
+      X: { route: quick-out-route, note: "shoots back outside to the left" }
       Y: { route: deep-cross-route, ends: left }
-      Z: { route: deep-cross-route, ends: left, note: "skinny cross past the middle" }
+      Z: { route: deep-cross-route, ends: left }
+      RB: { route: chip-release-route, note: "chip, then release to the flat" }
     fake: RB
     footwork: boot
     boot: left
     reads: [X, Y, Z]
     run: "QB can run to the end zone if X, Y and Z are covered (pump fake first)"
-    protection: "RB fakes, then pass protects; H/TE protect the blind side"
+    protection: "RB fakes, chips, then releases; TE protects the blind side"
     key: "the man on the left side"
     hash: "best from the middle or right hash; from the left hash, maybe flip it"
-    tags: [short-yardage, man]
-    notes: "QB sets X in motion behind, then when X reaches, Q hikes, fakes handoff to RB, boots left - he has 3 options: X, Y, and Z. RB is helping with blind side protection. QB can run to endzone if X Y Z are covered (add pump fake)."
+    tags: [goal-line, short-yardage, man]
+    notes: "QB sets X in motion, hikes, fakes handoff to RB, boots left - he has 3 options: X, Y, and Z. QB can run to endzone if X Y Z are covered (add pump fake). Owner: a goal line or gotta-have-it 4th and short pass."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 14
@@ -344,10 +349,15 @@ plays:
       Y: { route: quick-out-route }
       H: { route: go-route }
       Z: { route: curl-route }
-      RB: { route: check-release, note: "up the middle" }
+      RB: { route: check-release, note: "between the LT and LG" }
+    footwork: three-step-drop
+    reads:
+      press: [X, RB]
+      default: [H, Y, Z]
+    key: "the nickel"
+    alert: { if: blitz, who: X, route: slant-route }
     tags: [man]
-    questions:
-      - "His reads in order, footwork, and what the 'alert' is?"
+    notes: "Owner: 3 step. If he likes the 1-on-1 (press man) on the X he can go to X; if X is covered, look for the RB. Otherwise read the nickel and go H, Y, Z. If blitz, change X's route to a slant."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 15
@@ -363,13 +373,18 @@ plays:
       Y: { side: right, align: wide }
       RB: { side: left, align: beside-qb }
     routes:
-      H: { route: in-route, break: 4 }
+      H: { route: shallow-route, note: "shallow drag" }
       X: { route: out-route, break: 8 }
-      RB: { route: texas-route }
+      RB: { route: texas-route, note: "around the LT" }
       Z: { route: go-route }
-      Y: { route: out-route, break: 4 }
-    questions:
-      - "No notes in the PDF: his reads, footwork and key?"
+      Y: { route: quick-out-route }
+    footwork: { default: three-step-drop, long: five-step-drop }
+    reads:
+      default: [Y, RB]
+      press: [Z, RB]
+      must_convert: [RB]
+    key: "the boundary corner on the side away from Y: way too deep, hit Y; if not, the Texas (RB)"
+    notes: "Owner: 3 step. On 1st/2nd down read the boundary corner opposite Y - if he's way too deep hit Y, if not hit the Texas. If press, hit Z or the Texas. Not a good 3rd/4th and long play; if it is, hit the Texas and sell the deep pass with a 5-step drop."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 16, 18
@@ -382,17 +397,21 @@ plays:
       X: { side: left, align: wide, on_line: true }
       Y: { side: left, align: slot }
       H: { side: right, align: slot, on_line: true }
-      Z: { side: right, align: stack, behind: H }
+      Z: { side: right, align: beside, of: H, out: 1.5, depth: 1.7 }   # owner: 1 yard off, next to H on his right
       RB: { side: right, align: beside-qb }
     motion: { who: Y, kind: jet-motion }
     routes:
       X: { route: stalk-block }
       H: { route: slant-route }
       Z: { route: bubble-route }
-    ball: RB
-    reads: [run, H, Z]
-    questions:
-      - "Which defender does he read for give / slant / bubble?"
+      Y: { route: carry, gap: outside, side: right, note: "the jet sweep" }
+    ball: Y
+    reads:
+      blitz: [H, Z]
+      default: [run]
+      press: { short: [Z], long: "signal H to run a seam" }
+    key: "the DB covering H and the linebacker on the right side"
+    notes: "Owner: read the DB covering H and the LB on the right side. If the LB steps up or gets ready to blitz, hit H then Z. If all stay back, give to Y on the jet. If one DB presses: short yardage hit Z; long, signal H to run a seam instead."
     reviewed: false
   - id: bubble-stack-slant-rpo
     number: 18
@@ -403,6 +422,14 @@ plays:
     players:
       Y: { side: right, align: wing }
     motion: null
+    routes:
+      Y: { route: carry, gap: outside, side: right }
+    reads:
+      press_man: [run]
+      blitz: [H]
+      default: [Z]
+    key: "the outside corner (bubble)"
+    notes: "Owner: the bubble is read off the outside CB; give to Y if press man; on a blitz look, go to H."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 17
@@ -417,16 +444,18 @@ plays:
       Z: { side: right, align: wide }
       H: { side: right, align: slot, depth: 3 }
       RB: { side: left, align: beside-qb }
+    motion: { who: RB, kind: back-motion, note: "motions to the right", end: { side: right, align: beside-qb } }
     routes:
-      X: { route: out-route, break: 12 }
+      X: { route: in-route, break: 5 }
       Y: { route: post-route, break: 8 }
-      Z: { route: post-route, note: "post from the outside" }
-      H: { route: wheel-route }
-    fake: { kind: screen, to: H }
-    protection: "RB fakes a block"
+      Z: { route: post-route }
+      H: { route: flat-route }
+      RB: { route: wheel-route, note: "to the deep right boundary" }
     signal: { if: "you like the 1-on-1 and the LBs are scooting up or blitzing", who: X, route: slant-route, note: "look off to the trips side" }
     tags: [cover-0, own-territory]
-    notes: "RB fakes block. If you like the 1v1 matchup and LBs are scooting up or blitz, signal to 1v1 slant and look off to trips side."
+    notes: "If you like the 1v1 matchup and LBs are scooting up or blitz, signal to 1v1 slant and look off to trips side."
+    questions:
+      - "His reads in order and his footwork?"
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 20
@@ -443,10 +472,10 @@ plays:
       RB: { side: right, align: beside-qb }
     routes:
       X: { route: post-route, break: 17 }
-      H: { route: post-route, break: 10 }
-      Y: { route: go-route, note: "show RPO screen, then go" }
-      Z: { route: shallow-route }
-      RB: { route: swing-route, note: "play action, then swing (left)" }
+      Y: { route: post-route, break: 10 }
+      H: { route: go-route, note: "fakes a bubble, then a streak" }
+      Z: { route: deep-cross-route, ends: left, note: "deep drag" }
+      RB: { route: flat-route, ends: left, note: "fake handoff, then the flat on the other side (left boundary)" }
     fake: RB
     footwork: three-step-drop
     look_off: "the opposite side of the pass (look off the safeties)"
@@ -454,7 +483,7 @@ plays:
     audible: { call: Dunkin, when: "cover 2 press with the safeties close to the box" }
     protection: "O-line man-to-man down blocking"
     tags: [cover-2, play-action, first-down, cover-1, man]
-    notes: "QB identify cover 2 press and safeties close to box. Call audible 'Dunkin'. Snap, play action, 3 step to the opposite side of your pass (look off safeties), pass to swing. Cover 2 press beater with safeties close to the box."
+    notes: "QB identify cover 2 press and safeties close to box. Call audible 'Dunkin'. Snap, play action, 3 step to the opposite side of your pass (look off safeties), pass to the RB. Cover 2 press beater with safeties close to the box."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 21
@@ -472,15 +501,16 @@ plays:
     routes:
       X: { route: go-route }
       Y: { route: curl-route, break: 10 }
-      H: { route: out-route, break: 10 }
+      H: { route: sail-route, note: "sail: meshes with Z" }
       Z: { route: go-route }
       RB: { route: swing-route, note: "watch the delayed blitz; none: swing to the flip smash side" }
+    footwork: three-step-drop
     reads: { pick_side: true, right: [H, Z], left: [Y, X] }
     checkdown: RB
     tags: [cover-2, plus-territory, long-yardage, open-field, first-down, cover-1, man, zone]
-    notes: "QB choose the side you like based on matchup and defensive alignments. RB watch delayed blitz, if none, run a swing route to the flip smash side. Good when the box is stacked with at least 7 players and the sides are loose. Ohio: sail concept (H 10 yd out, Z streak). Flip Smash: Hank concept (Y 10 yard curl, X streak)."
+    notes: "QB choose the side you like based on matchup and defensive alignments. RB watch delayed blitz, if none, run a swing route to the flip smash side. Good when the box is stacked with at least 7 players and the sides are loose. Ohio: sail concept (H, Z streak). Flip Smash: Hank concept (Y 10 yard curl, X streak)."
     questions:
-      - "Footwork: 3-step or 5-step?"
+      - "Ohio: is it H on the sail (deep out to the boundary) under Z's streak, crossing him? Your note said H meshes with Z, who runs an out to the boundary."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 22
@@ -500,12 +530,14 @@ plays:
       Y: { route: go-route, team_word: "90" }
       H: { route: go-route, team_word: "90" }
       Z: { route: stalk-block }
-      RB: { route: slip-screen, note: "don't block, leak and slip to the side away from trips" }
-    footwork: backpedal
+      RB: { route: slip-screen, note: "slips through between C and RG for the screen" }
+    footwork: seven-step-drop
     reads: [RB]
+    check: { if: "a defender is deeper than 7 yards", to: "the 90s become 10-yard hitches" }
+    key: "the DBs: anyone deeper than 7 yards, and are they backpedaling"
     protection: "O-line heavy screen"
     tags: [screen, long-yardage, cover-1]
-    notes: "QB snaps and backpedals until RB finished leaking, passes to him in stride. This is a 4th and long play / gotta have it."
+    notes: "Owner: for 3rd/4th and long. QB takes a 7-step drop to draw the blitz and let the routes develop. If any defender is deeper than 7 yards from the ball, change the routes to a 10-yard hitch. If no one is that deep, throw to the RB; make sure the DBs are backpedaling, because they might jump the route."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 23
@@ -521,16 +553,21 @@ plays:
       Z: { side: right, align: wide, on_line: true }
       RB: { side: right, align: beside-qb, depth: 6.5 }
     routes:
-      X: { route: post-route, team_word: "90" }
-      Y: { route: flat-route }
-      H: { route: corner-route }
-      Z: { route: post-route }
-    footwork: five-step-drop
-    key: "the boundary corner on the trips side"
-    reads: [H, Z]
+      X: { route: post-route, note: "rubs with Y" }
+      Y: { route: corner-route, note: "rubs with X" }
+      H: { route: out-route, break: 7, note: "quick deep out" }
+      Z: { route: go-route }
+      RB: { route: pass-block }
+    footwork: { short: three-step-drop, must_convert_long: five-step-drop }
+    reads:
+      short: [X, Y]
+      long: [H, Z]
+    key:
+      short: "the boundary corner opposite X (check first that the slot defender on the other side is not in cloud)"
+      long: "the safety on the left side of the offense"
     protection: "RB pass pro (blitz pickup); O-line pass pro"
     tags: [cover-2, long-yardage, cover-1]
-    notes: "QB 5 step no hitch - read boundary CB on trips side. Identify trips vs 2 CBs. H or Z should be open. RB pick up blitz or help with protection."
+    notes: "QB 5 step no hitch - read boundary CB on trips side. Identify trips vs 2 CBs. H or Z should be open. Owner: 3-step on short yardage, 5-step on 3rd/4th and long. Short: make sure the slot opposite Y is not cloud, then read the boundary CB opposite X to hit X or Y. Long: read the safety on the left side."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 24
@@ -545,11 +582,11 @@ plays:
       H: { side: right, align: slot }
       Z: { side: right, align: wide, on_line: true }
       RB: { side: middle, align: pistol-back }
-    motion: { who: RB, kind: back-motion, note: "toward the swing route, then hike" }
+    motion: { who: RB, kind: back-motion, note: "toward the swing route, then hike", end: { side: left, align: beside-qb } }
     routes:
-      X: { route: corner-route, note: "rub with Y" }
-      Y: { route: post-route, note: "rub with X" }
-      H: { route: deep-cross-route, ends: left }
+      X: { route: post-route, note: "meshes with Y" }
+      Y: { route: corner-route, note: "meshes with X" }
+      H: { route: shallow-route, ends: left, note: "drag" }
       Z: { route: go-route }
       RB: { route: swing-route, note: "decoy: fake screen" }
     footwork: five-step-drop
@@ -568,55 +605,48 @@ plays:
     players:
       X: { side: left, align: wide }
       Y: { side: left, align: slot, on_line: true }
-      TE: { side: left, align: stack, behind: Y }
+      TE: { side: left, align: stack, behind: Y, gap: 2 }
       Z: { side: right, align: wide, on_line: true }
       RB: { side: left, align: beside-qb }
     routes:
       X: { route: stalk-block }
       Y: { route: stalk-block }
-      TE: { route: bubble-route }
+      TE: { route: flat-route, note: "shallow flat (the bubble)" }
       Z: { route: go-route, team_word: "9" }
+      RB: { route: carry, gap: A, side: right, note: "no handoff: blocks the middle" }
     ball: RB
     reads: [TE, run, Z]
-    protection: "RB, if bubble or X: pass pro in the A gap"
+    protection: "RB, if no handoff: blocks the middle"
     tags: [screen]
-    notes: "QB Pass to bubble first, if not, give to RB, if you like the 9 matchup, pass to 9. Play is designed to pass to the bubble (H), need to run outside. If you don't like the look, give to RB or pass to the 9 route."
+    notes: "QB Pass to bubble first, if not, give to RB, if you like the 9 matchup, pass to 9. If you don't like the look, give to RB or pass to the 9 route."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 26-27
   - id: pistol-full-house-action-inside-zone
     number: 26
     name: Pistol Full House Action Inside Zone
+    cancelled: "owner, 2026-11-04"
     qb: pistol
     kind: play-action
-    players:
-      Z: { side: left, align: slot, on_line: true }
-      TE: { side: right, align: attached, on_line: true }
-      H: { side: left, align: beside-qb }
-      F: { side: right, align: beside-qb }
-      RB: { side: middle, align: pistol-back }
-    routes:
-      Z: { route: post-route }
-      H: { route: wheel-route }
-      F: { route: flat-route, note: "crosses to the left flat" }
-    fake: RB
-    footwork: roll-out
-    boot: left
-    tags: [wildcat, play-action]
-    notes: "Fake handoff to RB, roll out to the weak side."
-    questions:
-      - "His reads in order?"
+    players: {}
     reviewed: false
   - id: pistol-full-house-23-dive
     number: 27
     name: Pistol Full House 23 Dive
-    same_as: pistol-full-house-action-inside-zone
     qb: pistol
     kind: run
     players:
       X: { side: left, align: wide, on_line: true }
       Z: { side: right, align: wide, on_line: true }
-      TE: null
+      H: { side: left, align: beside-qb }
+      F: { side: right, align: beside-qb }
+      RB: { side: middle, align: pistol-back }
+    routes:
+      RB: { route: carry, gap: B, side: left }
+      H: { route: down-block }
+      F: { route: down-block }
+      X: { route: stalk-block, note: "run off the DBs, then block" }
+      Z: { route: stalk-block, note: "run off the DBs, then block" }
     ball: RB
     hole: "B gap (3 hole)"
     protection: "H and F down block, O-line down block, X and Z run off the DBs and block"
@@ -635,10 +665,16 @@ plays:
       H: { side: left, align: slot }
       F: { side: right, align: slot }
       Z: { side: right, align: wide, on_line: true }
-    motion: { who: H, kind: jet-motion, snap: "when H is at the tackle" }
+    motion: { who: H, kind: jet-motion, snap: "when H is at the tackle", end: { side: right, align: spot, x: 2.8, depth: 3 } }
+    routes:
+      X: { route: go-route }
+      Y: { route: deep-slant-route }
+      H: { route: shallow-wheel-route, note: "the jet sweep: gets the ball and runs to the boundary" }
+      F: { route: stalk-block, note: "blocks the LB" }
+      Z: { route: stalk-block, note: "blocks the DB" }
     ball: H
-    protection: "RT and RG double team the edge; F and Z block their DBs"
-    notes: "QB hikes when H is at the tackle and hands off. H run full speed, get ball, run to boundary. This is to attack zone where the DE is the extra defender lurking for the bubble."
+    protection: "RT and RG double team the edge; F and Z block the LB and the DB"
+    notes: "QB hikes when H is at the tackle and hands off. H runs full speed, gets the ball, runs to the boundary. This attacks zone where the DE is the extra defender lurking for the bubble."
     reviewed: false
   - id: trips-stack-jet-wheel-f-slant
     number: 29
@@ -646,17 +682,20 @@ plays:
     same_as: trips-stack-h-sweep
     qb: gun
     kind: pass
-    motion: { who: H, kind: jet-motion, snap: "when H passes the far tackle" }
+    players:
+      Z: { side: right, align: slot, depth: 0.7, on_line: true }   # owner: a bit closer to F, leaving room for H's wheel
+      F: { side: right, align: inside-slot }
+    motion: { who: H, kind: jet-motion, snap: "when H passes the far tackle", end: { side: right, align: spot, x: 2.8, depth: 3 } }
     routes:
       X: { route: go-route }
-      Y: { route: hitch-route }
-      H: { route: wheel-route }
-      F: { route: slant-route, note: "no forward steps" }
+      Y: { route: curl-route }
+      H: { route: shallow-wheel-route }
+      F: { route: slant-route, note: "quick slant, no forward steps" }
       Z: { route: go-route }
     footwork: one-step-drop
     reads: [F]
     tags: [long-yardage, first-down]
-    notes: "QB 1-step quick pass otherwise the DB will get there. The edge will jump at the slot, DB will jump the bubble and the boundary DB will cover the go and wheel. The target here is the F running a slant. Later on if we have decent protection we can hit the deep routes. Complement of 28."
+    notes: "QB 1-step quick pass otherwise the DB will get there. The edge jumps the slot, the DB jumps the bubble and the boundary DB covers the go and wheel: the target is the F slant. Later, with decent protection, the deep routes. Complement of 28."
     reviewed: false
   - id: trips-stack-rub-y-seam-ohio
     number: 30
@@ -664,18 +703,18 @@ plays:
     same_as: trips-stack-h-sweep
     qb: gun
     kind: pass
-    motion: { who: Y, kind: short-motion, to: slot, snap: "when he sets" }
+    motion: { who: Y, kind: short-motion, to: "the hash", snap: "when he sets", end: { side: left, align: spot, x: 6, depth: 1.7 } }
     routes:
-      X: { route: flat-route }
-      H: { route: out-route, note: "rub with X" }
+      X: { route: slant-route, note: "meshes with H" }
+      H: { route: quick-out-route, note: "meshes with X" }
       Y: { route: seam-route }
-      F: { route: out-route, break: 10 }
+      F: { route: quick-out-route, note: "meshes with Z" }
       Z: { route: go-route }
     footwork: three-step-drop
     reads:
       ohio_inside_db_off: { key: "the outside DB", bails: F, stays: Z }
       zone_trips_side: { key: "the safety", up: Y, down: "the off DB: throw to the opening (boundary DB off: H)" }
-    notes: "Motion stack (Y) to slot, then hike. If you see the inside DB on the Ohio off, read the outside DB: if he bails pass to F, if he stays pass easy up to Z. If you see zone on the trips side read the S first, if he's up, the the Y (3-step), if he's down - read the off DB and throw to the opening (example, if the boundary DB is off, pass to H)."
+    notes: "Motion Y to the hash, then hike. If you see the inside DB on the Ohio off, read the outside DB: if he bails pass to F, if he stays pass easy up to Z. If you see zone on the trips side read the S first, if he's up, the Y (3-step), if he's down - read the off DB and throw to the opening (example, if the boundary DB is off, pass to H)."
     reviewed: false
   - id: trips-stack-h-jet-bubble-toss
     number: 31
@@ -683,19 +722,19 @@ plays:
     same_as: trips-stack-h-sweep
     qb: gun
     kind: screen
-    motion: { who: H, kind: jet-motion, snap: "when he passes the C" }
+    motion: { who: H, kind: jet-motion, snap: "when he passes the C", end: { side: right, align: spot, x: 1, depth: 3 } }
     routes:
-      X: { route: stalk-block }
-      Y: { route: bubble-route }
-      H: { route: flat-route, note: "flat wide" }
-      F: { route: stalk-block }
-      Z: { route: stalk-block }
+      X: { route: down-block }
+      Y: { route: quick-screen-route, note: "quick curl, backward" }
+      H: { route: flat-route }
+      F: { route: down-block }
+      Z: { route: down-block }
     reads: { pick_side: true, left: [Y], right: [H] }
     checkdown: Y
     signal: { if: "you like the X (0 or 1 safety with a mismatch DB)", who: X, route: go-route, team_word: "9", how: "helmet tap", then: "hike at the near tackle, fake handoff and boot out" }
     footwork: { left: one-step-drop, right: three-step-drop }
     tags: [screen]
-    notes: "Motion H, hike when he passes the C. Depending on the pre-snap look: if you like the matchup on the left pass to the bubble (Y) 1-step, if you like the matchup to the right 3-step pass to H as he goes flat wide. WRs aggressive blocking."
+    notes: "Motion H, hike when he passes the C. If you like the matchup on the left pass to the Y 1-step, if you like the matchup to the right 3-step pass to H as he goes flat wide. WRs aggressive blocking."
     reviewed: false
   - id: trips-stack-slant-go-y-orbit-wheel
     number: 32
@@ -703,16 +742,18 @@ plays:
     same_as: trips-stack-h-sweep
     qb: gun
     kind: pass
-    motion: { who: Y, kind: orbit-motion, snap: "when Y gets behind, between F and Z" }
+    motion: { who: Y, kind: orbit-motion, snap: "when Y gets behind, between F and Z", end: { side: right, align: spot, x: 8, depth: 3 } }
     routes:
       X: { route: slant-route }
       H: { route: go-route }
-      Y: { route: wheel-route }
+      Y: { route: wheel-route, note: "to the right boundary" }
       F: { route: go-route }
       Z: { route: slant-route }
     reads: { pick_side: true, note: "man or zone: the slant-go side you like better" }
     run: "against man he can run to the opposite side"
-    notes: "Y runs behind QB, QB hikes when Y gets behind between F and Z. Depending on man or zone, go to the Slant-Go concept on the side you like better. If man QB can also run to the opposite concept side."
+    notes: "Y runs behind QB, QB hikes when Y gets behind between F and Z. Depending on man or zone, go to the slant-go concept on the side you like better. If man QB can also run to the opposite concept side."
+    questions:
+      - "His footwork?"
     reviewed: false
   - id: trips-stack-slant-bubble-ohio
     number: 33
@@ -720,17 +761,17 @@ plays:
     same_as: trips-stack-h-sweep
     qb: gun
     kind: pass
-    motion: { who: H, kind: short-motion, note: "slight motion to the boundary, 3 yards off, like he is about to run a 9" }
+    motion: { who: H, kind: short-motion, note: "from the slot to the boundary, 1 yard behind Y, looking like a 9", end: { side: left, align: spot, x: 19.7, depth: 3.2 } }
     routes:
       X: { route: fade-route }
       Y: { route: slant-route }
       H: { route: bubble-route }
-      F: { route: out-route, break: 10 }
+      F: { route: out-route, break: 10, note: "full out to the boundary, meshing with Z" }
       Z: { route: go-route }
     key: "the DB over H: if he bites, Y slant; if not, H"
     reads: [Y, H]
     tags: [short-yardage, first-down]
-    notes: "QB hike, H slight motion to boundary (3 yards off) looking like about to run a 9. If the DB bites you hit the Y (slant), if not you hit the H and Y+X are blocking. Go to the Ohio if you like the look."
+    notes: "QB hike, H slight motion to the boundary looking like about to run a 9. If the DB bites hit the Y (slant), if not hit the H and Y+X are blocking. Go to the Ohio if you like the look."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 34-35
@@ -745,11 +786,14 @@ plays:
       Y: { side: right, align: wing }
       F: { side: middle, align: fullback }
       RB: { side: middle, align: i-back }
-    motion: { who: Y, kind: jet-motion, to: "the weak side" }
+    motion: { who: Y, kind: jet-motion, to: "the weak side", end: { side: left, align: wing } }
+    routes:
+      RB: { route: carry, gap: outside, side: right, note: "outside zone" }
+      F: { route: down-block, note: "blocks to the right of H" }
+      Y: { route: down-block, note: "blocks to the left of the LT" }
     ball: RB
-    hole: "4 or 6 hole"
-    protection: "F blocks the edge or the DT"
-    notes: "Y motions to weak side QB hikes, F blocks edge or DT, RB hits 4 or 6 holes."
+    hole: "outside zone to the right"
+    notes: "Owner: Y motions across the formation to block to the left of the LT. F blocks to the right of H. RB runs outside zone."
     reviewed: false
   - id: i-right-y-trade-boot-left-flood
     number: 35
@@ -759,66 +803,43 @@ plays:
     kind: play-action
     routes:
       X: { route: go-route }
-      Y: { route: flat-route, note: "block, release, stay shallow" }
-      H: { route: deep-cross-route, ends: left }
-      RB: { route: flat-route, note: "after the fake, to the left" }
+      Y: { route: chip-release-route, note: "motions to the left of the line, chips, releases" }
+      H: { route: deep-cross-route, ends: left, note: "chip, then a deep drag" }
+      RB: { route: pass-block, note: "after the fake" }
+      F: { route: pass-block }
     fake: RB
     footwork: boot
     boot: left
-    reads: [X, H, Y]
+    reads: [Y, H, X]
     run: "he can run"
     tags: [short-yardage, goal-line, play-action]
-    notes: "Same as Y Trade 36 but play action roll to left side. QB has X, Y, and H, and can run. Important: Y is block-releasing, stays shallow, H is doing deep cross."
+    notes: "Same as Y Trade 26 but play action, roll to the left. QB has Y, H or X open, and can run."
     reviewed: false
 
-  # ------------------------------------------------------------------------------------------------ 36-46, 52: runs and the rest
-  - id: slot-bunch
-    number: 36
-    name: Slot Bunch R/L
-    qb: under
-    kind: run
-    players:
-      X: { side: left, align: wide, on_line: true }
-      Y: { side: right, align: wing }
-      Z: { side: right, align: slot, on_line: true }
-      F: { side: right, align: beside-qb, depth: 2.5 }
-      H: { side: middle, align: i-back }
-    ball: H
-    notes: "RB run left or right."
-    reviewed: false
+  # ------------------------------------------------------------------------------------------------ 36-46, 52
+  - { id: slot-bunch, number: 36, name: Slot Bunch R/L, cancelled: "owner, 2026-11-04", qb: under, kind: run, players: {}, reviewed: false }
   - id: trips-stack-h-jet-pass
     number: 37
     name: Trips Stack H Jet Pass
     qb: gun
-    kind: pass
+    kind: screen
     players:
       X: { side: left, align: wide, on_line: true }
       Z: { side: right, align: wide, on_line: true }
       Y: { side: right, align: stack, behind: Z }
       H: { side: right, align: slot }
       RB: { side: right, align: beside-qb }
-    motion: { who: H, kind: jet-motion }
+    motion: { who: H, kind: jet-motion, note: "across the whole formation", end: { side: left, align: slot } }
     routes:
       X: { route: fade-route }
-      Z: { route: curl-route, break: 12 }
-    questions:
-      - "No notes in the PDF: what do Y, H and the RB do, and what are his reads?"
+      Y: { route: bubble-route, note: "backward step" }
+      Z: { route: stalk-block, note: "blocks for Y" }
+      RB: { route: pass-block }
+    reads: [Y, X]
+    key: "the DBs on the right: numbers for the screen (1 DB on 2 receivers, the LB or safety far enough that Z can block the outside corner)"
+    notes: "Owner: RB blocks, Y runs a bubble screen. He reads the DBs on the right side for numbers (1 DB vs 2 WRs, with the LB or S far enough so Z can block the outside CB). Without the numbers, try the X."
     reviewed: false
-  - id: bunch-student-body
-    number: 38
-    name: Bunch Student Body R/L
-    qb: under
-    kind: run
-    players:
-      X: { side: left, align: wide, on_line: true }
-      H: { side: right, align: wing }
-      Y: { side: right, align: slot, on_line: true }
-      Z: { side: right, align: slot, depth: 1.5 }
-      F: { side: right, align: beside-qb, depth: 2.5 }
-    tags: [wildcat]
-    questions:
-      - "Who carries the ball, and to which hole?"
-    reviewed: false
+  - { id: bunch-student-body, number: 38, name: Bunch Student Body R/L, cancelled: "owner, 2026-11-04", qb: under, kind: run, players: {}, reviewed: false }
   - id: trips-h-sweep-option-smash
     number: 39
     name: Trips H Sweep Option Smash
@@ -829,16 +850,19 @@ plays:
       H: { side: right, align: wing }
       Y: { side: right, align: slot, on_line: true }
       Z: { side: right, align: wide }
-      F: { side: right, align: beside-qb }
+      F: { side: right, align: spot, x: 2.8, depth: 2.2 }   # owner: behind the RT, to block the edge
+    motion: { who: H, kind: jet-motion, note: "right to left", end: { side: left, align: spot, x: 1.5, depth: 3 } }
     ball: H
     routes:
-      X: { route: curl-route }
+      H: { route: carry, gap: outside, side: left, note: "the jet sweep" }
+      X: { route: stalk-block }
       Y: { route: corner-route }
-      Z: { route: hitch-route }
-    reads: [run, X, smash]
-    protection: "LT has to hold his block; F helps double the edge"
+      Z: { route: curl-route, break: 3 }
+      F: { route: pass-block, note: "the edge" }
+    reads: [run, smash]
+    key: "the edge on the sweep side (LT has to hold his block)"
     tags: [cover-2]
-    notes: "Give to H if you like the look and - LT has to hold his block. If not, look for X matchup. If cover 2 go to Smash. F help double the Edge."
+    notes: "Give to H if you like the look and the LT holds his block; if not, hit the smash on the right side. If cover 2 go to Smash. F helps double the edge."
     reviewed: false
   - id: quads-h-delay-out
     number: 40
@@ -853,62 +877,48 @@ plays:
       Z: { side: right, align: wide, on_line: true }
     routes:
       X: { route: fade-route }
-      Y: { route: corner-route }
+      Y: { route: post-route }
       H: { route: delay-out-route, note: "delays by less than 1 second" }
       F: { route: curl-route }
       Z: { route: go-route }
-    questions:
-      - "His reads, footwork and key?"
+    footwork: { short: three-step-drop, long: five-step-drop }
+    reads:
+      short: [X, H]
+      long: [X, Y, F]
+      matchup: "go Z if he likes the matchup (cloud)"
+    key:
+      short: "the boundary corner opposite X"
+      long: "the safety on the left side"
+    notes: "Owner: 3 step for short yardage, high-low (X then H); 5-step for deeper passes, X or Y, then F. Go Z if he likes the matchup (cloud)."
     reviewed: false
-  - id: florida-bunch-z-motion
-    number: 41
-    name: Florida Bunch L/R Z Motion
-    qb: gun
-    kind: run
-    players:
-      Y: { side: right, align: slot, on_line: true }
-      H: { side: right, align: wing }
-      Z: { side: right, align: slot }
-      X: { side: right, align: wide, on_line: true }
-      RB: { side: left, align: beside-qb }
-    motion: { who: Z, kind: jet-motion }
-    questions:
-      - "No notes: who carries the ball (RB inside or Z on the jet), and is there a read?"
-    reviewed: false
-  - id: pro-f-dive-h-counter
-    number: 42
-    name: Pro R/L F Dive or H Counter
-    qb: gun
-    kind: run
-    players:
-      X: { side: left, align: wide, on_line: true }
-      Z: { side: left, align: slot }
-      Y: { side: right, align: attached, on_line: true }
-      F: { side: right, align: beside-qb }
-      H: { side: middle, align: pistol-back }
-    questions:
-      - "How does he choose the F dive or the H counter?"
-    reviewed: false
+  - { id: florida-bunch-z-motion, number: 41, name: Florida Bunch L/R Z Motion, cancelled: "owner, 2026-11-04", qb: gun, kind: run, players: {}, reviewed: false }
+  - { id: pro-f-dive-h-counter, number: 42, name: Pro R/L F Dive or H Counter, cancelled: "owner, 2026-11-04", qb: gun, kind: run, players: {}, reviewed: false }
   - id: doubles-orbit-rpo-boot
     number: 43
     name: Doubles Orbit RPO (Boot Option)
-    qb: gun
-    kind: rpo
+    qb: under
+    kind: option
     players:
       Z: { side: left, align: wide, on_line: true }
       Y: { side: left, align: slot }
       H: { side: right, align: slot }
       X: { side: right, align: wide, on_line: true }
-      RB: { side: left, align: beside-qb }
-    motion: { who: Y, kind: orbit-motion }
+      RB: { side: left, align: beside-qb, depth: 4.5 }
+    motion: { who: Y, kind: orbit-motion, note: "orbits the QB from behind", end: { side: right, align: spot, x: 3, depth: 3.5 } }
     routes:
       Z: { route: go-route }
-      Y: { route: flat-route, note: "after the orbit, to the right flat" }
+      Y: { route: carry, gap: outside, side: right, note: "the toss on the orbit" }
       H: { route: shallow-route }
-      X: { route: post-route }
+      X: { route: skinny-post-route }
+    ball: Y
+    footwork: boot
+    boot: left
+    reads:
+      loaded_box: [Z, H]
+      default: [run]
+    key: "the box: loaded, boot left (fake the toss to Y); if not, toss to Y"
     tags: [play-action]
-    questions:
-      - "His reads and the boot side?"
+    notes: "Owner: if the box is loaded, boot (snap, fake the toss to Y as he orbits, then run left and hit Z or H). If not, toss to Y on the orbit."
     reviewed: false
   - id: doubles-shift-zone-read
     number: 44
@@ -921,54 +931,36 @@ plays:
       Y: { side: left, align: slot }
       H: { side: right, align: slot }
       X: { side: right, align: wide, on_line: true }
-      RB: { side: left, align: beside-qb }
-    motion: { who: H, kind: jet-motion, note: "shifts across to the left" }
+      RB: { side: left, align: spot, x: 2.6, depth: 6 }   # owner: slightly behind and more to the left
+    motion: { who: H, kind: jet-motion, note: "shifts across to the left", end: { side: left, align: wing } }
+    routes:
+      RB: { route: carry, gap: A, side: right }
     ball: RB
     read_option: true
-    questions:
-      - "Which defender does he read (give or keep)?"
+    key: "the DE on the right side"
     reviewed: false
-  - id: tampa-bay
-    number: 45
-    name: Tampa Bay - Bluff Split Zone Jet Sweep
-    qb: under
-    kind: option
-    players:
-      X: { side: left, align: wide, on_line: true }
-      Z: { side: right, align: wide, on_line: true }
-      Y: { side: right, align: wing }
-      F: { side: right, align: slot }
-      H: { side: middle, align: i-back }
-    motion: { who: F, kind: jet-motion }
-    questions:
-      - "Who gets the ball: the jet sweep (F) or the split zone (H), and how does he decide?"
-    reviewed: false
+  - { id: tampa-bay, number: 45, name: Tampa Bay - Bluff Split Zone Jet Sweep, cancelled: "owner, 2026-11-04", qb: under, kind: option, players: {}, reviewed: false }
   - id: sahar
     number: 46
     name: Sahar
     qb: gun
-    kind: run
+    kind: option
     players:
       Z: { side: left, align: wide }
       Y: { side: left, align: slot, on_line: true }
       H: { side: left, align: wing }
       X: { side: right, align: wide, on_line: true }
       RB: { side: left, align: beside-qb }
+    routes:
+      RB: { route: carry, gap: outside, side: left, note: "then pitches back to the QB as he runs wide left" }
+      Y: { route: chip-release-route, note: "block, release, quick out" }
+      Z: { route: stalk-block }
+      H: { route: down-block }
+      X: { route: stalk-block }
     ball: RB
+    reads: [run, Y]
+    notes: "Owner: the RB carries, then passes to the QB as he runs wide left; Y blocks, releases into a quick out; the QB runs or throws to Y."
     questions:
-      - "Who carries (the RB pitch to the left?), and what are the QB's jobs?"
+      - "Who blocks for the QB as he runs wide left?"
     reviewed: false
-  - id: pro-f-handoff-h-toss
-    number: 52
-    name: Pro F Handoff / H Toss
-    qb: gun
-    kind: run
-    players:
-      X: { side: left, align: wide, on_line: true }
-      Z: { side: left, align: slot }
-      Y: { side: right, align: attached, on_line: true }
-      F: { side: right, align: beside-qb }
-      H: { side: middle, align: pistol-back }
-    questions:
-      - "F handoff or H toss: how does he pick?"
-    reviewed: false
+  - { id: pro-f-handoff-h-toss, number: 52, name: Pro F Handoff / H Toss, cancelled: "owner, 2026-11-04", qb: gun, kind: run, players: {}, reviewed: false }

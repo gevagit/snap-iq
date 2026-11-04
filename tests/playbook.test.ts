@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadRawContent } from '../src/content/load';
-import { onLineCount, place, resolve, routePath, type Formations, type Playbook } from '../src/playbook';
+import { active, onLineCount, place, resolve, routePath, routeStart, type Formations, type Playbook } from '../src/playbook';
 
 const raw = loadRawContent();
 const book = raw.playbook as Playbook;
@@ -10,13 +10,13 @@ const HALF = (raw.geometry as { field: { width: number } }).field.width / 2;
 
 describe('our playbook (content/playbook/plays.yaml)', () => {
   it('every play lines up 11 with 7 on the line, and every route is a known route word', () => {
-    for (const { id } of book.plays) {
+    for (const { id } of book.plays.filter(active)) {
       const p = resolve(book, id);
       const placed = place(book, formations, p, HALF);
-      expect(placed.length, id).toBe(11);
+      expect(placed.filter((q) => !q.ghost).length, id).toBe(11);
       expect(onLineCount(placed), id).toBe(7);
       for (const [who, call] of Object.entries(p.routes)) {
-        const from = placed.find((q) => q.id === who);
+        const from = routeStart(placed, who);
         expect(from, `${id}: ${who}`).toBeTruthy();
         expect(() => routePath(book, routes, p, from!, call)).not.toThrow();
       }

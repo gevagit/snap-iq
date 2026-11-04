@@ -2109,8 +2109,7 @@ terms:
     category: offense
     batch: 7
     definition: "A quick screen: the receiver bows back behind the line and turns upfield to catch the ball in stride, with his teammates blocking in front."
-    aliases: [bubble, "0"]
-    notes: "Our playbook calls it a 0 (owner confirmed, 2026-11-04)."
+    aliases: [bubble]
     reviewed: false
 
   - id: wheel-route
@@ -2134,7 +2133,7 @@ terms:
     category: offense
     batch: 7
     definition: "Crosses the field from one side to the other, climbing to 12 to 15 yards deep."
-    aliases: [deep cross, cross]
+    aliases: [deep cross, cross, deep drag]
     reviewed: false
 
   - id: in-route
@@ -2247,4 +2246,77 @@ terms:
     batch: 7
     definition: "The quarterback checks out of the called run into a pass because the defense's look is bad for the run."
     aliases: [check to pass, can it]
+    reviewed: false
+
+  - id: quick-screen-route
+    term: Quick screen (0)
+    category: offense
+    batch: 7
+    definition: "A receiver steps a yard upfield, then comes back toward the quarterback to catch a quick throw behind the line, with his teammates blocking."
+    aliases: ["0", mini curl]
+    notes: "Our playbook calls it a 0 (owner, 2026-11-04)."
+    reviewed: false
+
+  - id: shallow-wheel-route
+    term: Shallow wheel
+    category: offense
+    batch: 7
+    definition: "A wheel that stays low: out to the flat, then up the sideline only a few yards."
+    aliases: [low wheel]
+    reviewed: false
+
+  - id: skinny-post-route
+    term: Skinny post
+    category: offense
+    batch: 7
+    definition: "A post that angles only slightly toward the middle, staying between the hash and the numbers."
+    aliases: [skinny]
+    reviewed: false
+
+  - id: deep-slant-route
+    term: Deep slant
+    category: offense
+    batch: 7
+    definition: "A slant that breaks a few yards deeper than a quick slant."
+    aliases: [quick deep slant]
+    reviewed: false
+
+  - id: chip-release-route
+    term: Chip release
+    category: offense
+    batch: 7
+    definition: "A tight end or back hits a pass rusher (a chip) to slow him, then releases into a route."
+    aliases: [chip and release, chip]
+    reviewed: false
+
+  - id: arrow-route
+    term: Arrow route
+    category: offense
+    batch: 7
+    definition: "A back runs diagonally out toward the sideline, a few yards deep."
+    aliases: [diagonal route]
+    reviewed: false
+
+  - id: seven-step-drop
+    term: Seven-step drop
+    category: quarterback
+    batch: 7
+    definition: "Seven steps back from under center (or the gun equivalent): time for deep routes or to draw the rush on a screen."
+    aliases: [7-step]
+    reviewed: false
+
+  - id: jet-sweep
+    term: Jet sweep
+    category: offense
+    batch: 7
+    definition: "A receiver in jet motion takes a handoff at full speed and runs to the edge."
+    aliases: [jet sweep handoff]
+    reviewed: false
+
+  - id: outside-zone
+    term: Outside zone
+    category: offense
+    batch: 7
+    definition: "A run where the line steps the same way and the back aims for the edge, cutting up where a crease opens."
+    aliases: [stretch, wide zone]
     reviewed: false

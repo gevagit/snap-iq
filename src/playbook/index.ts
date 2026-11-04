@@ -6,9 +6,9 @@
  */
 
 export type Side = 'left' | 'right' | 'middle';
-export interface Spot { side: Side; align: string; on_line?: boolean; depth?: number; behind?: string; slot?: number }
-export interface RouteCall { route: string; break?: number; ends?: 'left' | 'right'; note?: string; team_word?: string }
-export interface Motion { who: string; kind?: string; to?: string; snap?: string; note?: string }
+export interface Spot { side: Side; align: string; on_line?: boolean; depth?: number; behind?: string; slot?: number; x?: number; of?: string; out?: number; gap?: number }
+export interface RouteCall { route: string; break?: number; ends?: 'left' | 'right'; note?: string; team_word?: string; gap?: string; side?: 'left' | 'right' }
+export interface Motion { who: string; kind?: string; to?: string; snap?: string; note?: string; end?: Spot }
 export interface TeamPlay {
   id: string; number: number; name: string; qb: 'under' | 'gun' | 'pistol'; kind: string;
   players: Record<string, Spot>; routes: Record<string, RouteCall>; motion?: Motion | null;
@@ -17,10 +17,12 @@ export interface TeamPlay {
   [k: string]: unknown;
 }
 export interface Playbook {
-  alignment: { wing: { outside_end_man: number; depth: number }; stack: { behind: number }; 'up-back': { x: number; depth: number }; 'beside-qb': { x: number }; quads: { spacing: number } };
+  alignment: { gaps: Record<string, number>; wing: { outside_end_man: number; depth: number }; stack: { behind: number }; 'up-back': { x: number; depth: number }; 'beside-qb': { x: number }; quads: { spacing: number } };
   routes: { id: string; waypoints: [number, number][] }[];
   plays: TeamPlay[];
 }
+/** A play the owner took out of the game (kept in content with the reason). */
+export const active = (p: { cancelled?: unknown }) => !p.cancelled;
 export interface Formations {
   alignment: {
     line: { split: number; depth: number };
@@ -32,7 +34,7 @@ export interface Formations {
     backs: Record<string, { x: number; depth: number }>;
   };
 }
-export interface Placed { id: string; x: number; y: number; onLine: boolean; lineman: boolean }
+export interface Placed { id: string; x: number; y: number; onLine: boolean; lineman: boolean; ghost?: boolean }
 
 const LINE = ['LT', 'LG', 'C', 'RG', 'RT'] as const;
 const sign = (s: Side) => (s === 'left' ? -1 : s === 'right' ? 1 : 0);
@@ -77,10 +79,10 @@ export function place(book: Playbook, f: Formations, p: TeamPlay, halfWidth: num
   const wideX = Math.min(A.wide.max_from_ball, Math.max(A.wide.min_from_ball, halfWidth - A.wide.from_sideline));
   const offY = -line.depth - 1;
   const done = new Map<string, Placed>();
-  const at = (id: string): Placed => {
+  const at = (id: string, spot?: Spot): Placed => {
     const have = done.get(id) ?? out.find((q) => q.id === id);
     if (have) return have;
-    const s = p.players[id];
+    const s = spot ?? p.players[id];
     if (!s) throw new Error(`${p.id}: no player ${id}`);
     const sg = sign(s.side) || 1, on = !!s.on_line;
     const lineY = on ? -line.depth : offY;
@@ -95,7 +97,9 @@ export function place(book: Playbook, f: Formations, p: TeamPlay, halfWidth: num
       case 'attached': x = sg * (tackle + A.attached.outside_tackle); y = -line.depth; break;
       case 'wing': x = sg * (endMan(sg) + B.wing.outside_end_man); y = -line.depth - B.wing.depth; break;
       case 'quads': x = sg * (endMan(sg) + B.quads.spacing * (s.slot ?? 1)); break;
-      case 'stack': { const front = at(s.behind!); x = front.x; y = front.y - B.stack.behind; break; }
+      case 'stack': { const front = at(s.behind!); x = front.x; y = front.y - (s.gap ?? B.stack.behind); break; }
+      case 'beside': { const next = at(s.of!); x = next.x + sg * (s.out ?? 1.5); y = -(s.depth ?? -offY); break; }
+      case 'spot': x = sg * (s.x ?? 0); y = -(s.depth ?? -offY); break;
       case 'beside-qb': x = sg * B['beside-qb'].x; y = -(s.depth ?? qbDepth); break;
       case 'up-back': x = 0; y = -B['up-back'].depth; break;
       default: {
@@ -104,21 +108,28 @@ export function place(book: Playbook, f: Formations, p: TeamPlay, halfWidth: num
         x = sign(s.side) * back.x; y = -(s.depth ?? back.depth);
       }
     }
-    if (s.depth != null && !['beside-qb', 'i-back', 'fullback', 'pistol-back'].includes(s.align)) y = -s.depth;
+    if (s.depth != null && !['beside-qb', 'i-back', 'fullback', 'pistol-back', 'beside', 'spot'].includes(s.align)) y = -s.depth;
     const q: Placed = { id, x, y, onLine: on || s.align === 'attached', lineman: false };
     done.set(id, q);
     return q;
   };
   for (const id of Object.keys(p.players)) out.push(at(id));
+  // where a motion man is at the snap (`motion.end`): his route starts there
+  if (p.motion?.end) out.push({ ...at(`${p.motion.who}*`, p.motion.end), onLine: false, ghost: true });
   return out;
 }
 
 /** A route as points on the field: its waypoints from his spot, toward his own sideline (to the middle for a back
  * in the middle: toward the side `ends` names), the break moved to the PDF's yards. */
 export function routePath(book: Playbook, routes: { id: string; waypoints: [number, number][] }[], p: TeamPlay, from: Placed, call: RouteCall, maxX = Infinity): [number, number][] {
+  if (call.route === 'carry') {
+    // a run: to the gap (content/playbook/plays.yaml alignment gaps), then downhill
+    const gx = (call.side === 'left' ? -1 : 1) * (book.alignment.gaps[call.gap ?? 'A'] ?? 0);
+    return [[from.x, from.y], [gx, -0.4], [gx + Math.sign(gx) * 1.5, 4]];
+  }
   const def = [...routes, ...book.routes].find((r) => r.id === call.route);
   if (!def) throw new Error(`${p.id}: unknown route ${call.route}`);
-  const s = p.players[from.id];
+  const s = from.ghost ? undefined : p.players[from.id];
   let toward = s ? sign(s.side) : 0;
   if (call.ends) toward = call.ends === 'left' ? 1 : -1; // a crosser runs to the middle (negative x of his side) and ends on `ends`
   if (!toward) toward = from.x < 0 ? -1 : 1;
@@ -129,4 +140,6 @@ export function routePath(book: Playbook, routes: { id: string; waypoints: [numb
 }
 
 /** Players on the line of scrimmage (a legal formation has 7, the five linemen among them). */
-export const onLineCount = (placed: Placed[]) => placed.filter((q) => q.onLine).length;
+export const onLineCount = (placed: Placed[]) => placed.filter((q) => q.onLine && !q.ghost).length;
+/** Where a player's route starts: where his motion ends, if he motions. */
+export const routeStart = (placed: Placed[], who: string) => placed.find((q) => q.id === `${who}*`) ?? placed.find((q) => q.id === who);
