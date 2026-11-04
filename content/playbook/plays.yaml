@@ -131,8 +131,7 @@ plays:
       man: [Z, X, Y]
     protection: "LG pulls to block the DE"
     notes: "QB sets X in motion, hikes when X is next to Y. LG pulls to block the DE. RBs might get the ball - make sure they pay attention! Owner: high-low, Z then X; against man Z, X, Y."
-    questions:
-      - "Footwork: 3-step or 5-step?"
+    footwork: five-step-drop
     reviewed: false
 
   - id: gun-jet-fake-toss-rg-pull-pass
@@ -266,8 +265,6 @@ plays:
     protection: "LT takes the DE"
     tags: [cover-2]
     notes: "RB motions around QB, gets back to original position, then snap. WR need to run hard PAY ATTENTION TO LEVELS. LT takes the DE. Owner: 5 step. If blitz hit the Z or RB (if man). For longer distance downs go high-low from X to Y then RB and read the safety/nickel."
-    questions:
-      - "Your note says 'The is doing a skinny shallow post': I gave it to the TE. Right?"
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 11
@@ -454,8 +451,8 @@ plays:
     signal: { if: "you like the 1-on-1 and the LBs are scooting up or blitzing", who: X, route: slant-route, note: "look off to the trips side" }
     tags: [cover-0, own-territory]
     notes: "If you like the 1v1 matchup and LBs are scooting up or blitz, signal to 1v1 slant and look off to trips side."
-    questions:
-      - "His reads in order and his footwork?"
+    reads: [Y, Z, RB, H]
+    notes_reads: "Owner: high-low on Y, then Z, RB, H."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 20
@@ -509,8 +506,6 @@ plays:
     checkdown: RB
     tags: [cover-2, plus-territory, long-yardage, open-field, first-down, cover-1, man, zone]
     notes: "QB choose the side you like based on matchup and defensive alignments. RB watch delayed blitz, if none, run a swing route to the flip smash side. Good when the box is stacked with at least 7 players and the sides are loose. Ohio: sail concept (H, Z streak). Flip Smash: Hank concept (Y 10 yard curl, X streak)."
-    questions:
-      - "Ohio: is it H on the sail (deep out to the boundary) under Z's streak, crossing him? Your note said H meshes with Z, who runs an out to the boundary."
     reviewed: false
 
   # ------------------------------------------------------------------------------------------------ 22
@@ -752,8 +747,8 @@ plays:
     reads: { pick_side: true, note: "man or zone: the slant-go side you like better" }
     run: "against man he can run to the opposite side"
     notes: "Y runs behind QB, QB hikes when Y gets behind between F and Z. Depending on man or zone, go to the slant-go concept on the side you like better. If man QB can also run to the opposite concept side."
-    questions:
-      - "His footwork?"
+    footwork: { short: three-step-drop, medium: three-step-drop, deep: five-step-drop }
+    footwork_note: "Owner: 3-step for short and medium yardage, 5-step for the seams or the wheel (deeper)."
     reviewed: false
   - id: trips-stack-slant-bubble-ohio
     number: 33
@@ -960,7 +955,6 @@ plays:
     ball: RB
     reads: [run, Y]
     notes: "Owner: the RB carries, then passes to the QB as he runs wide left; Y blocks, releases into a quick out; the QB runs or throws to Y."
-    questions:
-      - "Who blocks for the QB as he runs wide left?"
+    protection: "Z blocks; Y chip-releases (owner)"
     reviewed: false
   - { id: pro-f-handoff-h-toss, number: 52, name: Pro F Handoff / H Toss, cancelled: "owner, 2026-11-04", qb: gun, kind: run, players: {}, reviewed: false }
