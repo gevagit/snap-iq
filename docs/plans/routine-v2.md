@@ -25,6 +25,8 @@ a **scorecard**. The owner can **edit every right answer** in the web app.
    look good for this run?" Yes / Can to pass (no pass play named yet). Starting rule for the key, to confirm: can
    to pass when the box has more defenders than the play has blockers plus one.
 7. **Reads.** Taps his progression: **1, 2, checkdown**. Only on plays that have a progression (the play says so).
+   **Look off the safety** (owner, 2026-11-04): when one of his reads is deep (go, post, corner, seam, wheel), he
+   taps the safety who guards that throw and the side he looks to first to move him (to confirm: the other side).
 8. **Footwork.** His drop for this play: 1-step / 3-step / 5-step / gun catch-and-throw / boot / sprint-out
    (the menu comes from the playbook).
 9. **Key defender.** Taps the defender whose move tells him where to go with the ball.

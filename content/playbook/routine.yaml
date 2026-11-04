@@ -18,6 +18,7 @@ steps:
   - { id: protection, name: "Protection" }
   - { id: run-check, name: "Is this look good for this run?", only: run, choices: [yes, can-to-pass] }
   - { id: reads, name: "Reads", only: pass }
+  - { id: look-off, name: "Look off the safety", only: pass, when: deep-read, answers: [safety, look-first] }
   - { id: footwork, name: "Footwork", only: pass }
   - { id: key, name: "Key defender" }
   - { id: run-lane, name: "Run lane" }
@@ -39,6 +40,16 @@ down_distance:
 reads_rule:
   must_convert: first-past-the-sticks
   otherwise: play-order
+  reviewed: false
+
+# Look off the safety (owner, 2026-11-04): on a pass play where one of his reads is a deep route, he plans how to move
+# the safety before the snap: which safety guards that throw, and which way he looks first. A starting rule for the
+# answer key, to confirm: the safety is the deep safety on the deep read's side (the only one, in a one-high shell);
+# he looks first to the other side of the field (the glossary's look-off).
+look_off:
+  deep_routes: [go-route, post-route, corner-route, seam-route, wheel-route, fade-route]
+  safety: deep-safety-on-target-side
+  look_first: away-from-target
   reviewed: false
 
 # The run check (owner, 2026-11-04): "Yes" or "Can to pass". A starting rule for the answer key, to confirm: the look
