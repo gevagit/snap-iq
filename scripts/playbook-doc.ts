@@ -78,6 +78,10 @@ const list = (v: unknown): string => {
 const KIND: Record<string, string> = { pass: 'Pass', 'play-action': 'Play action', screen: 'Screen', rpo: 'RPO', option: 'Option', run: 'Run' };
 const groupOf = (n: number) => Object.entries(looks.groups).find(([, g]) => g.plays.includes(n))?.[0] ?? 'heavy';
 
+/** An answer box: saved to the page's shared store as he types (read back by Claude). */
+const box = (key: string, play: number, q: string) =>
+  `<textarea id="${key}" data-key="${key}" data-play="${play}" data-q="${esc(q)}" rows="2" placeholder="Type your answer" disabled></textarea><span class="saved" data-for="${key}"></span>`;
+
 function card(id: string): string {
   const p = resolve(book, id);
   const { svg, problems } = diagram(p);
@@ -95,7 +99,8 @@ function card(id: string): string {
   <div class="field">${svg}</div>
   <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
   ${p.notes ? `<p class="notes">${esc(p.notes)}</p>` : ''}
-  ${qs.length ? `<div class="ask"><b>For you to answer</b><ul>${qs.map((q) => `<li>${esc(q)}</li>`).join('')}</ul></div>` : ''}
+  ${qs.length ? `<div class="ask"><b>For you to answer</b><ol>${qs.map((q, k) => `<li><label for="a-${p.number}-${k + 1}">${esc(q)}</label>${box(`a-${p.number}-${k + 1}`, p.number, q)}</li>`).join('')}</ol></div>` : ''}
+  <div class="fix"><label for="a-${p.number}-fix">Anything wrong in this drawing or card?</label>${box(`a-${p.number}-fix`, p.number, 'Corrections to the drawing or card')}</div>
 </article>`;
 }
 
@@ -182,17 +187,70 @@ dt { font-family: var(--display); font-weight: 700; text-transform: uppercase; l
 dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .notes { margin: 0; font-size: 13px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 8px; }
 .ask { background: var(--ask-bg); color: var(--ask-ink); padding: 8px 10px; font-size: 14px; }
-.ask ul { margin: 4px 0 0; padding-left: 18px; }
+.ask ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 10px; }
+.ask label, .fix label { display: block; }
+.fix { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; font: 15px/1.4 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; resize: vertical; }
+textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+textarea:disabled { opacity: 0.6; }
+.saved { display: block; min-height: 1.2em; font-size: 12px; color: var(--muted); }
+.status { margin: 0; padding: 8px 12px; border: 1px solid var(--line); background: var(--panel); font-size: 14px; }
 </style>
 <main>
   <div class="intro">
     <h1>Chargers 11U playbook in SNAP IQ</h1>
     <p>Each play from your PDF, redrawn from the game's own content: check that every player, route and read matches what you coach. The yellow boxes are what the PDF does not say. The defensive looks at the top of each group are the defenses the game will line up against those plays; each one also says what it may change to during his last scan.</p>
     <div class="stats"><span><b>${total}</b> plays</span><span><b>${looks.looks.length}</b> defensive looks</span><span><b>${asks}</b> questions for you</span></div>
+    <p class="status" id="status">Loading the answer boxes...</p>
     <nav>${Object.entries(looks.groups).map(([gid, g]) => `<a href="#${gid}">${esc(g.name.split(' (')[0])}</a>`).join('')}</nav>
   </div>
   ${groupsHtml}
 </main>
+<script>
+(function () {
+  const status = document.getElementById('status');
+  const boxes = Array.from(document.querySelectorAll('textarea[data-key]'));
+  const say = (t) => { status.textContent = t; };
+  const mark = (key, t) => { const el = document.querySelector('.saved[data-for="' + key + '"]'); if (el) el.textContent = t; };
+  let timer = null;
+  const fail = setTimeout(() => say('The answer boxes could not load. Answer in the chat with Claude instead (by play number).'), 10000);
+  if (!window.claude || !window.claude.use) { clearTimeout(fail); say('Answer boxes work when this page is open in Claude. Otherwise, answer in the chat by play number.'); return; }
+  window.claude.use('db').then((db) => {
+    if (!db) { clearTimeout(fail); say('Sign in to Claude to use the answer boxes, or answer in the chat by play number.'); return; }
+    const col = db.collection('answers');
+    const pending = {};
+    for (const b of boxes) {
+      b.disabled = false;
+      b.addEventListener('input', () => {
+        pending[b.dataset.key] = b.value; mark(b.dataset.key, 'Saving...');
+        clearTimeout(timer);
+        timer = setTimeout(flush, 800);
+      });
+      b.addEventListener('blur', flush);
+    }
+    function flush() {
+      clearTimeout(timer);
+      for (const key of Object.keys(pending)) {
+        const b = document.getElementById(key), text = pending[key];
+        delete pending[key];
+        col.doc(key).set({ play: Number(b.dataset.play), question: b.dataset.q, text, at: new Date().toISOString() })
+          .then(() => mark(key, text ? 'Saved' : ''))
+          .catch((e) => { pending[key] = text; mark(key, e && e.code === 'not_granted' ? 'You can read this page but not save answers.' : 'Not saved yet: it will retry when you type again.'); });
+      }
+    }
+    col.onSnapshot((snap) => {
+      clearTimeout(fail);
+      let n = 0;
+      for (const d of snap.docs) {
+        const v = d.data() || {}, b = document.getElementById(d.id);
+        if (v.text) n++;
+        if (b && document.activeElement !== b && !(d.id in pending)) { b.value = v.text || ''; if (v.text) mark(d.id, 'Saved'); }
+      }
+      say(n ? n + ' answer' + (n === 1 ? '' : 's') + ' saved. Claude reads them from here: tell Claude in the chat when you are done.' : 'Type in the boxes under each play: answers save as you type. Tell Claude in the chat when you are done.');
+    }, () => { clearTimeout(fail); say('The answer boxes stopped syncing. Reload the page; your saved answers stay.'); });
+  });
+})();
+</script>
 `;
 mkdirSync(join(ROOT, 'docs/playbook'), { recursive: true });
 writeFileSync(join(ROOT, 'docs/playbook/review.html'), html);
