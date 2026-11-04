@@ -23,6 +23,10 @@ fronts:
   - { id: four-four, name: "4-4", note: "4 down, 4 linebackers, 3 defensive backs: an 8-man box", reviewed: false }
   - { id: five-three, name: "5-3", note: "5 down (a nose on the center), 3 linebackers, 3 defensive backs", reviewed: false }
   - { id: six-two, name: "6-2", note: "6 down, 2 linebackers, 3 defensive backs: goal line and short yardage", reviewed: false }
+  - { id: three-four, name: "3-4", note: "3 down, 4 linebackers (the outside two stand up on the edges), 4 defensive backs (owner, 2026-11-04)", reviewed: false }
+
+# Defensive backs (owner, 2026-11-04): content/playbook/routine.yaml defensive_backs (off 5-7, one presses about every
+# 4th or 5th play, all press man 5%). A look's corner depth is its usual one; the drill applies those rates on top.
 
 looks:
   # -------------------------------------------------------------------------------------------- vs 2 by 2
@@ -191,4 +195,31 @@ looks:
     last_scan:
       - { change: "a linebacker drops back to the middle", affects: [box, reads] }
     attack: "short yardage and goal line: everyone close, nobody deep"
+    reviewed: false
+
+  # -------------------------------------------------------------------------------------------- 3-4 (owner, 2026-11-04)
+  - id: three-four-cover-3
+    name: "3-4, Cover 3, outside linebacker pressure"
+    groups: [doubles, trips]
+    front: three-four
+    coverage: cover-3
+    safeties: { depth: deep, position: "free safety in the middle of the field; strong safety low over #2", stance: "square" }
+    corners: { depth: "off 5-7", leverage: outside, stance: "square, ready to bail" }
+    box: { down: 3, edges: 2, linebackers: 4, blitzers: [outside-linebacker] }
+    last_scan:
+      - { change: "the outside linebacker on his blind side creeps up to rush", affects: [box, protection] }
+      - { change: "the strong safety drops back: two high", affects: [safeties, key, reads] }
+    attack: "edge pressure from a stand-up linebacker; the hot read is where he came from"
+    reviewed: false
+  - id: three-four-cover-1
+    name: "3-4, Cover 1"
+    groups: [heavy, doubles]
+    front: three-four
+    coverage: cover-1
+    safeties: { depth: deep, position: "middle of the field", stance: "square" }
+    corners: { depth: "off 5-7", leverage: inside, stance: "turned in on the receiver" }
+    box: { down: 3, edges: 2, linebackers: 4, blitzers: [inside-linebacker] }
+    last_scan:
+      - { change: "an inside linebacker walks up into the A gap", affects: [box, protection, run-check] }
+    attack: "man outside with a single high safety; seven in the box against the run"
     reviewed: false

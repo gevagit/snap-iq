@@ -26,6 +26,7 @@ export const CONTENT_FILES = {
   rooftop: 'content/rooftop/rules.yaml',
   playbook: 'content/playbook/plays.yaml',
   looks: 'content/playbook/looks.yaml',
+  routine2: 'content/playbook/routine.yaml',
 } as const;
 export type ContentKey = keyof typeof CONTENT_FILES;
 

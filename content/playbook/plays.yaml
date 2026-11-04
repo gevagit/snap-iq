@@ -205,7 +205,6 @@ plays:
     tags: [cover-1]
     notes: "X and Z show block look and release to 90. A and Y run a 0. RB blocks."
     questions:
-      - "What are a '90' and a '0' in your route words? (I read 90 as a go route and 0 as a quick screen behind the line.)"
       - "How does he pick the side?"
     reviewed: false
   - id: gun-doubles-stack-screen-draw

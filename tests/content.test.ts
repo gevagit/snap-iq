@@ -27,7 +27,7 @@ describe('Football Bible content (batch 1)', () => {
     const g = raw.glossary as { terms: { id: string; batch?: number; reviewed: boolean; reviewer?: string }[] };
     expect(g.terms.filter((t) => (t.batch ?? 1) <= 5).every((t) => t.reviewed && t.reviewer === 'owner')).toBe(true);
     const pending = g.terms.filter((t) => !t.reviewed);
-    expect(pending.every((t) => t.batch === 6)).toBe(true);
+    expect(pending.every((t) => t.batch === 6 || t.batch === 7)).toBe(true);
     expect((raw.pocket as { reviewed: boolean }).reviewed).toBe(true);
     expect(r.counts.batch2.needsReview).toBe(0);
     expect(r.counts.needsReview).toBe(pending.length);

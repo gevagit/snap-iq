@@ -901,7 +901,8 @@ terms:
     category: offense
     batch: 2
     definition: A straight sprint down the field.
-    aliases: [go, fly, vertical, clear]
+    aliases: [go, fly, vertical, clear, streak, "9", "90"]
+    notes: "Our playbook calls it a streak, a 9 or a 90 (owner confirmed, 2026-11-04)."
     reviewed: true
     reviewer: owner
     reviewed_at: "2026-10-26"
@@ -2100,4 +2101,150 @@ terms:
     definition: "More rushers than the offense can block, with no deep safety behind them (often with Cover 0): the ball has to come out hot."
     aliases: [zero blitz, max blitz]
     see: [blitz, hot-route, cover-0]
+    reviewed: false
+
+  # Batch 7 (2026-11-04): words from our own playbook (content/playbook) and the routine v2, for the owner to review.
+  - id: bubble-route
+    term: Bubble route
+    category: offense
+    batch: 7
+    definition: "A quick screen: the receiver bows back behind the line and turns upfield to catch the ball in stride, with his teammates blocking in front."
+    aliases: [bubble, "0"]
+    notes: "Our playbook calls it a 0 (owner confirmed, 2026-11-04)."
+    reviewed: false
+
+  - id: wheel-route
+    term: Wheel route
+    category: offense
+    batch: 7
+    definition: "Starts toward the flat, then turns straight up the sideline."
+    aliases: [wheel]
+    reviewed: false
+
+  - id: comeback-route
+    term: Comeback route
+    category: offense
+    batch: 7
+    definition: "Runs straight downfield, then stops and comes back toward his own sideline."
+    aliases: [comeback]
+    reviewed: false
+
+  - id: deep-cross-route
+    term: Deep cross
+    category: offense
+    batch: 7
+    definition: "Crosses the field from one side to the other, climbing to 12 to 15 yards deep."
+    aliases: [deep cross, cross]
+    reviewed: false
+
+  - id: in-route
+    term: In route
+    category: offense
+    batch: 7
+    definition: "Runs downfield, then breaks flat toward the middle."
+    aliases: [in]
+    reviewed: false
+
+  - id: delay-out-route
+    term: Delay out
+    category: offense
+    batch: 7
+    definition: "Waits a moment (under a second) as if blocking or idle, then runs to the flat."
+    aliases: [delayed out]
+    reviewed: false
+
+  - id: texas-route
+    term: Texas route
+    category: offense
+    batch: 7
+    definition: "A back's route: out toward the flat, then sharply back inside over the middle."
+    aliases: [texas, angle route]
+    reviewed: false
+
+  - id: stalk-block
+    term: Stalk block
+    category: offense
+    batch: 7
+    definition: "A receiver comes off the ball like a route, then squares up and blocks the defender over him."
+    aliases: [stalk]
+    reviewed: false
+
+  - id: slip-screen
+    term: Slip screen
+    category: offense
+    batch: 7
+    definition: "The back fakes a block, slips out to the side and catches a screen pass behind the line with linemen in front."
+    aliases: [slip]
+    reviewed: false
+
+  - id: play-action
+    term: Play action
+    category: offense
+    batch: 7
+    definition: "The quarterback fakes a handoff before he throws, to pull the linebackers and safeties up."
+    aliases: [PA, action]
+    reviewed: false
+
+  - id: boot
+    term: Boot
+    category: offense
+    batch: 7
+    definition: "After a fake one way, the quarterback rolls out the other way, usually with a receiver in the flat and one deeper on that side."
+    aliases: [bootleg, boot action]
+    reviewed: false
+
+  - id: rpo
+    term: RPO
+    category: offense
+    batch: 7
+    definition: "Run-pass option: the quarterback reads one defender after the snap and either hands off or throws a quick pass."
+    aliases: [run-pass option]
+    reviewed: false
+
+  - id: read-option
+    term: Read option
+    category: offense
+    batch: 7
+    definition: "The quarterback reads an unblocked defender and either gives the ball to the back or keeps it."
+    aliases: [zone read, option read]
+    reviewed: false
+
+  - id: wing
+    term: Wing
+    category: offense
+    batch: 7
+    definition: "A player lined up just off the line of scrimmage, a step outside the end man."
+    aliases: [wingback]
+    reviewed: false
+
+  - id: stack-alignment
+    term: Stack
+    category: offense
+    batch: 7
+    definition: "Two receivers lined up one behind the other."
+    aliases: [stacked receivers]
+    reviewed: false
+
+  - id: quads
+    term: Quads
+    category: offense
+    batch: 7
+    definition: "Four receivers to one side of the formation."
+    aliases: [four by one]
+    reviewed: false
+
+  - id: must-convert-down
+    term: Must-convert down
+    category: situation
+    batch: 7
+    definition: "A down where the offense has to reach the line to gain: third down (punt or try on 4th) and fourth down."
+    aliases: [money down]
+    reviewed: false
+
+  - id: can-to-pass
+    term: Can to pass
+    category: quarterback
+    batch: 7
+    definition: "The quarterback checks out of the called run into a pass because the defense's look is bad for the run."
+    aliases: [check to pass, can it]
     reviewed: false

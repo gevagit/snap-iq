@@ -1,0 +1,63 @@
+# The pre-snap routine v2 (docs/plans/routine-v2.md): the steps, in order, how each is answered and graded, and the
+# rules the answer keys come from. Owner decisions 2026-11-04; football rules here are `reviewed: false` until he
+# confirms them. Every answer can be overridden per play and look in the answer editor (web app).
+version: 1
+batch: 7
+
+clock: 40            # seconds for the whole operation, from breaking the huddle to the snap
+
+# The steps, in order. `pass` steps are skipped on run plays; `run` steps appear only on run plays (owner: a run
+# play runs the full routine without reads and footwork, plus the run check).
+steps:
+  - { id: down-distance, name: "Down & distance", answers: [yardage, must-convert] }
+  - { id: call, name: "The call" }
+  - { id: alignment, name: "Everyone set" }
+  - { id: safeties, name: "Safeties", answers: [depth, position, stance] }
+  - { id: corners, name: "Corners", answers: [depth, leverage, stance] }
+  - { id: box, name: "Box", answers: [down-linemen, edges, linebackers, blitzers] }
+  - { id: protection, name: "Protection" }
+  - { id: run-check, name: "Is this look good for this run?", only: run, choices: [yes, can-to-pass] }
+  - { id: reads, name: "Reads", only: pass }
+  - { id: footwork, name: "Footwork", only: pass }
+  - { id: key, name: "Key defender" }
+  - { id: run-lane, name: "Run lane" }
+  - { id: last-scan, name: "Last scan", choices: [same-look, changed] }
+
+# Step 1: down & distance (glossary: short, medium and long yardage; must-convert down).
+down_distance:
+  yardage: { short: [1, 2], medium: [3, 6], long: [7, 99] }   # as in the glossary (signed off 2026-10-26)
+  must_convert: [3, 4]                                         # downs where he must reach the line to gain
+  # How often each down comes up in the drill, and the distances dealt.
+  downs: { 1: 0.3, 2: 0.25, 3: 0.3, 4: 0.15 }
+  first_down_distance: 10
+  distance: [1, 15]
+  reviewed: false
+
+# Reads depend on the down & distance (owner, 2026-11-04: rule + editor). On a must-convert down his first read is the
+# first route in the play's order that gets past the line to gain; on 1st and 2nd down, the play's own order. The
+# editor can set the reads for any play and situation.
+reads_rule:
+  must_convert: first-past-the-sticks
+  otherwise: play-order
+  reviewed: false
+
+# The run check (owner, 2026-11-04): "Yes" or "Can to pass". A starting rule for the answer key, to confirm: the look
+# is bad for the run (can to pass) when the box has more defenders than the play has blockers plus `extra`.
+run_check:
+  can_when_box_exceeds_blockers_by: 1
+  reviewed: false
+
+# Defensive backs (owner, 2026-11-04): usually 5-7 yards off; on about every 4th or 5th play at least one presses;
+# on 5% of plays everyone presses in man.
+defensive_backs:
+  off_depth: [5, 7]
+  one_presses: 0.22
+  all_press_man: 0.05
+  reviewed: false
+
+# Alignment faults (owner, 2026-11-04): everyone lines up right on 70% of reps.
+faults: { rate: 0.3 }
+
+# The last scan: how often the defense changes its look while he works (one change from the look's last_scan list).
+last_scan: { rate: 0.35, at: [12, 30] }   # seconds into his clock
+reviewed: false
