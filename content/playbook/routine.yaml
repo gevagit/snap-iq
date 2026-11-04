@@ -66,6 +66,26 @@ defensive_backs:
   all_press_man: 0.05
   reviewed: false
 
+# The situation the coach calls a play in, from its tags (a play tagged long yardage comes on 2nd-4th and long, etc).
+situation_from_tags:
+  long-yardage: { downs: [2, 3, 4], distance: [7, 15] }
+  short-yardage: { downs: [2, 3, 4], distance: [1, 2] }
+  goal-line: { downs: [1, 2, 3, 4], distance: [1, 3] }
+  first-down: { downs: [1], distance: [10, 10] }
+  reviewed: false
+
+# Who counts where (protection, the run check, the run lane).
+counting:
+  box_width: 5.5          # a defender within this many yards of the ball, and 6 or less deep, is in the box
+  box_depth: 6
+  blocking_routes: [pass-block, down-block, chip-release-route, check-release]
+  rb_first_read_wins: true
+  reviewed: false
+
+# Run lane (if the snap is bad or nobody is open): toward his throwing hand, unless more edge defenders show on that
+# side (content/offense/quarterback.yaml escape, signed off).
+run_lane: { edge_outside_tackle: 0.5, within_depth: 3.0, reviewed: false }
+
 # Alignment faults (owner, 2026-11-04): everyone lines up right on 70% of reps.
 faults: { rate: 0.3 }
 

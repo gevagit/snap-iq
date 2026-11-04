@@ -6,15 +6,14 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, loadRawContent } from '../src/content/load';
-import { active, onLineCount, place, resolve, routePath, routeStart, type Formations, type Playbook, type TeamPlay } from '../src/playbook';
+import { active, resolve, type Formations, type Playbook, type TeamPlay } from '../src/playbook';
+import { playSvg } from '../src/playbook/svg';
+import { contentFrom, repFor, type Looks } from '../src/routine2';
 
 const raw = loadRawContent();
 const book = raw.playbook as Playbook;
-const looks = raw.looks as {
-  groups: Record<string, { name: string; plays: number[] }>;
-  fronts: { id: string; name: string; note: string }[];
-  looks: { id: string; name: string; groups: string[]; front: string; coverage: string; safeties: Record<string, string>; corners: Record<string, string>; box: { down: number; edges: number; linebackers: number; blitzers: string[] }; last_scan: { change: string }[]; attack: string }[];
-};
+const looks = raw.looks as Looks;
+const C = contentFrom(raw);
 const formations = raw.formations as Formations;
 const routes = (raw.routes as { routes: { id: string; waypoints: [number, number][] }[] }).routes;
 const geo = raw.geometry as { field: { width: number; hash_from_sideline: number } };
@@ -22,58 +21,20 @@ const HALF = geo.field.width / 2;
 const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const words = (s: string) => s.replace(/-route$/, '').replace(/-/g, ' ');
 
-// ----------------------------------------------------------------------------------------------- the diagram
-const Y_TOP = 26, Y_BOT = -9, S = 10;
-const X = (x: number) => ((x + HALF) * S).toFixed(1);
-const Y = (y: number) => ((Y_TOP - y) * S).toFixed(1);
-function diagram(p: TeamPlay): { svg: string; problems: string[] } {
-  const problems: string[] = [];
-  let placed: ReturnType<typeof place> = [];
-  try { placed = place(book, formations, p, HALF); } catch (e) { problems.push((e as Error).message); }
-  const w = HALF * 2 * S, h = (Y_TOP - Y_BOT) * S;
-  const g: string[] = [];
-  for (let y = -5; y <= 25; y += 5) if (y !== 0) g.push(`<line class="yl" x1="0" x2="${w}" y1="${Y(y)}" y2="${Y(y)}"/>`);
-  const hx = HALF - geo.field.hash_from_sideline;
-  for (let y = -8; y <= 25; y++) for (const sx of [-hx, hx]) g.push(`<line class="hash" x1="${X(sx - 0.35)}" x2="${X(sx + 0.35)}" y1="${Y(y)}" y2="${Y(y)}"/>`);
-  g.push(`<line class="los" x1="0" x2="${w}" y1="${Y(0)}" y2="${Y(0)}"/>`);
-  const BLOCKS = ['stalk-block', 'pass-block', 'down-block'];
-  for (const [id, call] of Object.entries(p.routes)) {
-    const from = routeStart(placed, id);
-    if (!from) { problems.push(`a route for ${id}, who is not in the formation`); continue; }
-    try {
-      const pts = routePath(book, routes, p, from, call, HALF - (raw.routes as { sideline_room: number }).sideline_room);
-      const block = BLOCKS.includes(call.route), carry = call.route === 'carry';
-      g.push(`<polyline class="${block ? 'block' : carry ? 'carry' : 'route'}" marker-end="url(#${block ? 'bar' : carry ? 'arrow-c' : 'arrow'})" points="${pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')}"/>`);
-    } catch (e) { problems.push((e as Error).message); }
-  }
-  if (p.motion) {
-    const m = placed.find((q) => q.id === p.motion!.who), end = placed.find((q) => q.id === `${p.motion!.who}*`);
-    if (m && end) {
-      // around the QB for an orbit (behind him), straight across otherwise
-      const qb = placed.find((q) => q.id === 'QB')!;
-      const pts: [number, number][] = p.motion.kind === 'orbit-motion' ? [[m.x, m.y], [qb.x, qb.y - 2], [end.x, end.y]] : [[m.x, m.y], [end.x, end.y]];
-      g.push(`<polyline class="motion" marker-end="url(#arrow-m)" points="${pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')}"/>`);
-    } else if (m) {
-      const dir = m.x > 0.5 ? -1 : m.x < -0.5 ? 1 : 1;
-      const len = p.motion.kind === 'short-motion' ? 3 : p.motion.kind === 'return-motion' ? 2.5 : 10;
-      g.push(`<line class="motion" marker-end="url(#arrow-m)" x1="${X(m.x)}" y1="${Y(m.y)}" x2="${X(m.x + dir * len)}" y2="${Y(m.y)}"/>`);
-    }
-  }
-  for (const q of placed) {
-    if (q.ghost) continue;
-    if (q.lineman) g.push(`<rect class="ol" x="${(Number(X(q.x)) - 7).toFixed(1)}" y="${(Number(Y(q.y)) - 7).toFixed(1)}" width="14" height="14" rx="2"/>`);
-    else g.push(`<g class="${q.id === 'QB' ? 'qb' : p.ball === q.id ? 'carrier' : 'skill'}"><circle cx="${X(q.x)}" cy="${Y(q.y)}" r="11"/><text x="${X(q.x)}" y="${Y(q.y)}">${esc(q.id)}</text></g>`);
-  }
-  g.push(`<path class="ball" d="M ${X(0)} ${Y(0.05)} m -4 0 a 4 2.6 0 1 0 8 0 a 4 2.6 0 1 0 -8 0"/>`);
-  const on = onLineCount(placed);
-  if (placed.length && on !== 7) problems.push(`${on} players on the line of scrimmage (a legal formation has 7)`);
-  const svg = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(p.name)}, top-down"><defs>
-<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
-<marker id="arrow-c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahc"/></marker>
-<marker id="arrow-m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahm"/></marker>
-<marker id="bar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M5,0 L5,10" class="bar"/></marker></defs>
-<rect class="turf" width="${w}" height="${h}"/>${g.join('')}</svg>`;
-  return { svg, problems };
+const FIELD = { halfWidth: HALF, hashX: HALF - geo.field.hash_from_sideline, sidelineRoom: (raw.routes as { sideline_room: number }).sideline_room };
+let drawn = 0;
+const diagram = (p: TeamPlay) => playSvg(book, formations, routes, p, FIELD, `p${++drawn}`);
+
+const POS: Record<string, string> = { 'over-2': 'over #2', box: 'in the box', hash: 'over the hash', middle: 'middle of the field', shaded: 'shaded to the strength' };
+/** A look drawn against a sample play from its group: our formation, and the defense as the game places it. */
+function lookSvg(lookId: string, playId: string | undefined): string {
+  if (!playId) return '';
+  const rep = repFor(C, playId, lookId, 7);
+  const S = 10, X = (x: number) => ((x + HALF) * S).toFixed(1), Y = (y: number) => ((26 - y) * S).toFixed(1);
+  const tag: Record<string, string> = { DL: 'DL', EDGE: 'E', LB: 'LB', CB: 'C', N: 'N', S: 'S' };
+  const d = rep.defense.map((q) => `<g class="def${q.blitz ? ' blz' : ''}"><circle cx="${X(q.x)}" cy="${Y(q.y)}" r="10"/><text x="${X(q.x)}" y="${Y(q.y)}">${tag[q.role]}</text></g>`).join('');
+  const { svg } = diagram({ ...rep.play, routes: {}, motion: null } as TeamPlay);
+  return `<div class="field">${svg.replace('</svg>', `${d}</svg>`)}</div><p class="meta">Against ${esc(rep.play.name)} (${rep.play.number}). Orange: may blitz.</p>`;
 }
 
 // ----------------------------------------------------------------------------------------------- the play card
@@ -121,10 +82,11 @@ const groupsHtml = Object.entries(looks.groups).map(([gid, g]) => {
   <p class="meta">${plays.length} plays · ${ls.length} defensive looks</p>
   <div class="looks">${ls.map((l) => `<div class="look"><h4>${esc(l.name)}</h4>
     <p>${esc(l.attack)}</p>
-    <dl><dt>Safeties</dt><dd>${esc(l.safeties.depth)}, ${esc(l.safeties.position)}; ${esc(l.safeties.stance)}</dd>
-    <dt>Corners</dt><dd>${esc(l.corners.depth)}, ${esc(l.corners.leverage)} leverage; ${esc(l.corners.stance)}</dd>
-    <dt>Box</dt><dd>${l.box.down} down, ${l.box.edges} edges, ${l.box.linebackers} linebackers${l.box.blitzers.length ? `; may blitz: ${esc(l.box.blitzers.join(', ').replace(/-/g, ' '))}` : ''}</dd>
-    <dt>Last scan</dt><dd>${l.last_scan.map((c) => esc(c.change)).join('<br>')}</dd></dl></div>`).join('')}</div>
+    ${lookSvg(l.id, plays[0]?.id)}
+    <dl><dt>Safeties</dt><dd>${l.safeties.map((x) => `${esc(x.depth)}, ${esc(POS[x.position] ?? x.position)}; ${esc(x.stance)}`).join('<br>')}</dd>
+    <dt>Corners</dt><dd>${esc(l.corners.depth === 'off' ? 'off 5-7' : 'press')}, ${esc(l.corners.leverage)} leverage; ${esc(l.corners.stance)}</dd>
+    <dt>Front</dt><dd>${esc(looks.fronts.find((f) => f.id === l.front)?.name ?? l.front)}${l.blitzers.length ? `; may blitz: ${esc(l.blitzers.join(', ').replace(/-/g, ' '))}` : ''}</dd>
+    <dt>Last scan</dt><dd>${l.last_scan.map((c) => esc(c.text)).join('<br>')}</dd></dl></div>`).join('')}</div>
   <div class="plays">${plays.map((p) => card(p.id)).join('')}</div>
 </section>`;
 }).join('');
@@ -193,6 +155,8 @@ nav a:focus-visible, nav a:hover { border-color: var(--accent); outline: none; }
 .skill text, .qb text, .carrier text { fill: #FFFFFF; font: 700 10px var(--body); text-anchor: middle; dominant-baseline: central; }
 .carrier text { fill: #1C1407; }
 .ball { fill: #8B5A2B; }
+.def circle { fill: #B5122B; stroke: #FFFFFF; stroke-width: 1.5; } .def text { fill: #FFFFFF; font: 700 9px var(--body); text-anchor: middle; dominant-baseline: central; }
+.def.blz circle { fill: #FF7A1A; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; margin: 0; font-size: 14px; }
 dt { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }

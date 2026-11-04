@@ -561,7 +561,7 @@ plays:
       short: "the boundary corner opposite X (check first that the slot defender on the other side is not in cloud)"
       long: "the safety on the left side of the offense"
     protection: "RB pass pro (blitz pickup); O-line pass pro"
-    tags: [cover-2, long-yardage, cover-1]
+    tags: [cover-2, long-yardage, short-yardage, cover-1]   # short yardage: the owner's answer (3-step, X or Y)
     notes: "QB 5 step no hitch - read boundary CB on trips side. Identify trips vs 2 CBs. H or Z should be open. Owner: 3-step on short yardage, 5-step on 3rd/4th and long. Short: make sure the slot opposite Y is not cloud, then read the boundary CB opposite X to hit X or Y. Long: read the safety on the left side."
     reviewed: false
 
