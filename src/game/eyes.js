@@ -100,6 +100,26 @@ export function sceneFor(rep, opts = {}) {
   return S;
 }
 
+/**
+ * A scene from plain players (the routine v2 game: our playbook against a look). spec.players: { id, side 'O'|'D',
+ * role (a pose: OL C DL BLZ LB CB CBpress S WR TE RB), num, label, pos(t) -> [x, y] }; spec.qb(t) -> [x, y];
+ * spec.T1: the last moment drawn; spec.field: { xl, xr, hashes, los }.
+ */
+export function sceneFromPlayers(spec) {
+  const players = spec.players.map((p) => ({ lookT: 0.9, engT: null, mate: null, ...p }));
+  const byId = {}; players.forEach((p) => { byId[p.id] = p; });
+  const S = {
+    rep: { play: { sim: { steps: Math.ceil(spec.T1 * 20), dt: 0.05, tStart: 0 } } },
+    players, byId, field: spec.field, T0: -1.2, T1: spec.T1,
+    cam: (t) => { const q = spec.qb(t); return { x: q[0], y: q[1], eye: 1.64 }; },
+    Tt: Infinity, Tc: Infinity, target: null, catchPt: null, release: null, runFrom: null, yawOverride: 0,
+    readId: null, readText: '', turnAt: Infinity,
+  };
+  S.yaw = () => 0;
+  precompute(S);
+  return S;
+}
+
 /** He keeps it and runs from time t. */
 export function setRun(S, t) {
   S.runFrom = t;

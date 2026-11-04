@@ -4,7 +4,8 @@ import raw from 'virtual:content';
 import { parsePlayContent } from '../play/content';
 import { makeRep, grade, recordRep, finishWorkout, newProgress, rank, catchPoint, withChanges, withReads, recommendedReads, routeMenu, emptyAnswers, posAt } from './drill';
 import { explain, CORNER_LABEL } from './explain';
-import { createEyes, sceneFor, setThrow, setRun, setRollOut, SHAPES } from './eyes.js';
+import { createEyes, sceneFor, setThrow, setRun, setRollOut, SHAPES, sceneFromPlayers } from './eyes.js';
+import { initOps } from './ops.js';
 import { drawBoard, drawCall } from './board.js';
 import { callSheet } from './call';
 import { initRooftop } from './rooftop.js';
@@ -46,9 +47,11 @@ function renderHome() {
   $('rankNext').textContent = r.next ? `${r.next - progress.xp} XP to the next rank` : 'Top rank';
   $('rankBar').style.width = (r.next ? ((progress.xp - r.floor) / (r.next - r.floor)) * 100 : 100) + '%';
   $('sXp').textContent = progress.xp; $('sStreak').textContent = progress.streak; $('sReps').textContent = progress.reps;
-  for (const b of document.querySelectorAll('#tierSeg button')) b.setAttribute('aria-pressed', String(b.dataset.tier === progress.tier));
-  $('tierNote').textContent = `${progress.tier === 'youth' ? 'Youth' : 'JV'}: ${R.tiers[progress.tier].clock} seconds at the line for your routine. Coverages: ${R.tiers[progress.tier].coverages.map((id) => C.coverages.coverages.find((c) => c.id === id).name).join(', ')}.`;
-  $('startSub').textContent = `${R.reps} plays · routine, snap, read · about 5 minutes`;
+  // difficulty: how long he has for the whole routine (owner, 2026-11-04)
+  const lvl = progress.opsLevel || ops.defaultLevel;
+  for (const b of document.querySelectorAll('#levelSeg button')) b.setAttribute('aria-pressed', String(b.dataset.level === lvl));
+  $('levelNote').textContent = `${ops.clocks[lvl]} seconds for your whole routine, from down & distance to the snap.`;
+  $('startSub').textContent = `6 plays from your playbook · down & distance, your routine in ${ops.clocks[progress.opsLevel || ops.defaultLevel]} s, snap, scorecard`;
   $('playtest').checked = progress.playtest;
   const anyReviewed = makeRep(C, progress.tier, 1, 0, false) !== null;
   const b = $('playtestBanner');
@@ -59,8 +62,6 @@ function renderHome() {
       ? '<b>Playtest: some of this isn\'t signed off yet.</b><span>Content changed after the owner\'s playtest is back in review until it is signed off.</span>'
       : '<b>Waiting for sign-off.</b><span>The routine game uses football content the owner hasn\'t reviewed yet. To playtest it now, turn on playtest in Parent settings.</span><button class="plain" id="ptQuick" type="button">Playtest now</button>';
   const q = $('ptQuick'); if (q) q.addEventListener('click', () => { progress.playtest = true; save(); renderHome(); });
-  $('startBtn').disabled = !anyReviewed && !progress.playtest;
-  $('startBtn').style.opacity = $('startBtn').disabled ? 0.45 : 1;
   // Rooftop Run: best score and the looks it has earned
   const roof = progress.rooftop || {};
   $('roofSub').textContent = `Dodge the drones, toss to the lit lantern, keep the streak${roof.best ? ` · best ${roof.best.toLocaleString()}` : ''}`;
@@ -83,9 +84,9 @@ $('locker').addEventListener('click', (e) => {
   progress.rooftop = { ...(progress.rooftop || {}), [b.dataset.kind === 'jackets' ? 'jacket' : 'trail']: b.dataset.id };
   save(); renderHome();
 });
-$('tierSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; progress.tier = b.dataset.tier; save(); renderHome(); });
+$('levelSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; progress.opsLevel = b.dataset.level; save(); renderHome(); });
 $('playtest').addEventListener('change', () => { progress.playtest = $('playtest').checked; save(); renderHome(); });
-$('resetBtn').addEventListener('click', () => { const keep = { tier: progress.tier, playtest: progress.playtest }; progress = { ...newProgress(), ...keep }; save(); renderHome(); });
+$('resetBtn').addEventListener('click', () => { const keep = { tier: progress.tier, playtest: progress.playtest, opsLevel: progress.opsLevel }; progress = { ...newProgress(), ...keep }; save(); renderHome(); });
 
 // ---------------------------------------------------------------- the workout
 const canvas = $('view');
@@ -109,7 +110,11 @@ function startWorkout() {
   show('rep');
   requestAnimationFrame(() => { eyes.resize(); nextRep(); });
 }
-$('startBtn').addEventListener('click', startWorkout);
+// the routine v2 (our playbook) replaces the classic workout on the start button (owner, 2026-11-04)
+const ops = initOps({ raw, $, show, progress: () => progress, save, renderHome, createEyes, sceneFromPlayers });
+$('startBtn').addEventListener('click', () => ops.start());
+$('keysBtn').addEventListener('click', () => ops.openEditor());
+void startWorkout; // the classic workout stays in the code, off the home screen
 $('quitBtn').addEventListener('click', endWorkout);
 
 function nextRep() {
